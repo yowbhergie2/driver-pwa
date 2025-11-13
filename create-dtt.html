@@ -14,6 +14,9 @@
   <!-- Gmail-Style Modal System -->
   <link rel="stylesheet" href="modal-styles.css">
 
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -547,6 +550,191 @@
       document.getElementById('distanceTravelled').value = distance >= 0 ? distance : 0;
     }
 
+    // Generate DTT PDF
+    function generateDttPdf(dttData) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // DPWH Header
+      doc.setFillColor(0, 63, 135); // DPWH Blue
+      doc.rect(0, 0, 210, 25, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('DPWH REGIONAL OFFICE II', 105, 10, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text('DRIVER\'S TRIP TICKET', 105, 17, { align: 'center' });
+
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+
+      let y = 35;
+
+      // DTT ID and Date
+      doc.setFont(undefined, 'bold');
+      doc.text(`DTT ID: ${dttData.dttId}`, 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, y);
+
+      y += 10;
+
+      // Trip Information Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('TRIP INFORMATION', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Destination:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(dttData.destination, 60, y);
+      y += 7;
+
+      doc.setFont(undefined, 'bold');
+      doc.text('Purpose:', 20, y);
+      doc.setFont(undefined, 'normal');
+      const purposeLines = doc.splitTextToSize(dttData.purpose, 130);
+      doc.text(purposeLines, 60, y);
+      y += (purposeLines.length * 7);
+
+      doc.setFont(undefined, 'bold');
+      doc.text('Period Covered:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(`${dttData.periodFrom} to ${dttData.periodTo}`, 60, y);
+      y += 10;
+
+      // Vehicle Information Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('VEHICLE INFORMATION', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Plate Number:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(dttData.plateNo, 60, y);
+      y += 7;
+
+      doc.setFont(undefined, 'bold');
+      doc.text('Driver:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(dttData.driverName, 60, y);
+      y += 7;
+
+      if (dttData.passengers && dttData.passengers.length > 0) {
+        doc.setFont(undefined, 'bold');
+        doc.text('Passengers:', 20, y);
+        doc.setFont(undefined, 'normal');
+        const passengerText = dttData.passengers.join(', ');
+        const passengerLines = doc.splitTextToSize(passengerText, 130);
+        doc.text(passengerLines, 60, y);
+        y += (passengerLines.length * 7);
+      }
+
+      y += 3;
+
+      // Odometer Reading Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('ODOMETER READING', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Start:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(`${dttData.speedometerStart || 0} km`, 60, y);
+      y += 10;
+
+      // Fuel Information Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('FUEL INFORMATION', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Fuel Balance Start:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(`${dttData.fuelBalanceStart || 0} L`, 60, y);
+      y += 7;
+
+      if (dttData.requestFuel) {
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(234, 134, 0); // Orange
+        doc.text('FUEL REQUESTED', 20, y);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.requisitionQty} Liters`, 60, y);
+        y += 10;
+      } else {
+        y += 3;
+      }
+
+      // Gasoline Details (if provided)
+      if (dttData.totalGasoline && dttData.totalGasoline > 0) {
+        doc.setFont(undefined, 'bold');
+        doc.text('Gasoline Issued:', 20, y);
+        y += 7;
+        doc.setFont(undefined, 'normal');
+        doc.text(`Balance in Tank: ${dttData.balanceInTank || 0} L`, 30, y);
+        y += 7;
+        doc.text(`Issued by Office: ${dttData.issuedByOffice || 0} L`, 30, y);
+        y += 7;
+        doc.text(`Purchased During Trip: ${dttData.purchasedDuringTrip || 0} L`, 30, y);
+        y += 7;
+        doc.setFont(undefined, 'bold');
+        doc.text(`Total: ${dttData.totalGasoline} L`, 30, y);
+        y += 10;
+      }
+
+      // Remarks
+      if (dttData.remarks) {
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(12);
+        doc.text('REMARKS', 20, y);
+        doc.line(20, y + 2, 190, y + 2);
+        y += 10;
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const remarkLines = doc.splitTextToSize(dttData.remarks, 170);
+        doc.text(remarkLines, 20, y);
+        y += (remarkLines.length * 7) + 10;
+      } else {
+        y += 10;
+      }
+
+      // Signature Section
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFontSize(10);
+      doc.text('_________________________', 20, y + 20);
+      doc.text('Driver\'s Signature', 20, y + 27);
+      doc.text('Date: ______________', 20, y + 34);
+
+      doc.text('_________________________', 110, y + 20);
+      doc.text('Approved by (Division Chief)', 110, y + 27);
+      doc.text('Date: ______________', 110, y + 34);
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text('Generated by DPWH Vehicle Management System', 105, 285, { align: 'center' });
+
+      return doc;
+    }
+
     // Submit DTT
     async function submitDtt() {
       // Get form values
@@ -611,68 +799,127 @@
         const user = auth.currentUser;
         const dttId = 'DTT_' + Date.now();
 
-        // Create DTT document
-        await db.collection('dtts').doc(dttId).set({
+        // Prepare DTT data
+        const dttData = {
           dttId: dttId,
           driverUid: user.uid,
           driverEmail: user.email,
           driverName: user.displayName || user.email,
           plateNo: plateNo,
-          
+
           // Trip Info
           destination: destination,
           periodFrom: periodFrom,
           periodTo: periodTo,
           purpose: purpose,
           passengers: passengers,
-          
+
           // Trip Details
           timeDepartOffice: document.getElementById('timeDepartOffice').value,
           timeArrivalDest: document.getElementById('timeArrivalDest').value,
           timeDepartDest: document.getElementById('timeDepartDest').value,
           timeArrivalOffice: document.getElementById('timeArrivalOffice').value,
           approximateDistance: parseFloat(document.getElementById('approximateDistance').value) || 0,
-          
+
           // Gasoline
           balanceInTank: parseFloat(document.getElementById('balanceInTank').value) || 0,
           issuedByOffice: parseFloat(document.getElementById('issuedByOffice').value) || 0,
           purchasedDuringTrip: parseFloat(document.getElementById('purchasedDuringTrip').value) || 0,
           totalGasoline: parseFloat(document.getElementById('totalGasoline').value) || 0,
-          
+
           // Other fluids
           gearOil: parseFloat(document.getElementById('gearOil').value) || 0,
           lubOil: parseFloat(document.getElementById('lubOil').value) || 0,
           grease: parseFloat(document.getElementById('grease').value) || 0,
-          
+
           // Speedometer
           speedometerStart: parseFloat(document.getElementById('speedometerStart').value) || 0,
           speedometerEnd: parseFloat(document.getElementById('speedometerEnd').value) || 0,
           distanceTravelled: parseFloat(document.getElementById('distanceTravelled').value) || 0,
-          
+
           // Remarks
           remarks: document.getElementById('remarks').value.trim(),
-          
+
           // Fuel Request
           fuelBalanceStart: currentFuelBalance,
           requestFuel: requestFuel,
           requisitionQty: fuelQty,
-          
+
           status: 'Draft',
+          pdfGenerated: true,
+          // TODO Phase 2: Add pdfDriveUrl when Cloud Function uploads to Drive
+          // Google Drive Folder ID: 1sQbu0kRzgnSqG7areh5WQnVlo_C2YTBM
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+
+        // Create DTT document
+        await db.collection('dtts').doc(dttId).set(dttData);
+
+        // Generate PDF
+        const pdf = generateDttPdf(dttData);
 
         // Hide loading
         modalManager.close(loadingId);
 
-        // Success
-        await modalManager.alert({
-          title: 'Success',
-          message: `Trip ticket created successfully!\n\nDTT ID: ${dttId}`,
-          type: 'success'
-        });
+        // Show success with PDF options
+        const successModal = modalManager.show({
+          title: 'Trip Ticket Created Successfully!',
+          content: `
+            <div class="text-center mb-3">
+              <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+            </div>
 
-        window.location.href = 'index.html';
+            <div class="modal-info-row">
+              <div class="modal-info-label">DTT ID</div>
+              <div class="modal-important-info">${dttId}</div>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Destination</div>
+              <div class="modal-important-info">${destination}</div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+              <i class="bi bi-file-pdf me-2"></i>
+              <strong>PDF Ready:</strong> Your trip ticket PDF has been generated and is ready to download.
+            </div>
+
+            <p class="text-muted mt-3 small">
+              <i class="bi bi-info-circle me-1"></i>
+              Download and print this DTT for signatures before your trip.
+            </p>
+          `,
+          size: 'medium',
+          closable: false,
+          buttons: [
+            {
+              label: 'Download PDF',
+              type: 'primary',
+              icon: 'download',
+              onClick: () => {
+                pdf.save(`DTT_${dttId}.pdf`);
+              },
+              closeOnClick: false
+            },
+            {
+              label: 'View PDF',
+              type: 'secondary',
+              icon: 'eye',
+              onClick: () => {
+                window.open(pdf.output('bloburl'), '_blank');
+              },
+              closeOnClick: false
+            },
+            {
+              label: 'Done',
+              type: 'success',
+              onClick: () => {
+                window.location.href = 'index.html';
+              }
+            }
+          ]
+        });
 
       } catch (error) {
         console.error('Error creating DTT:', error);

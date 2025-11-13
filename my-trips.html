@@ -14,6 +14,9 @@
   <!-- Gmail-Style Modal System -->
   <link rel="stylesheet" href="modal-styles.css">
 
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -264,6 +267,336 @@
       }
     }
 
+    // Generate DTT PDF
+    function generateDttPdf(dttData) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // DPWH Header
+      doc.setFillColor(0, 63, 135); // DPWH Blue
+      doc.rect(0, 0, 210, 25, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('DPWH REGIONAL OFFICE II', 105, 10, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text('DRIVER\'S TRIP TICKET', 105, 17, { align: 'center' });
+
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+
+      let y = 35;
+
+      // DTT ID and Date
+      doc.setFont(undefined, 'bold');
+      doc.text(`DTT ID: ${dttData.dttId}`, 20, y);
+      doc.setFont(undefined, 'normal');
+      const createdDate = dttData.createdAt ? new Date(dttData.createdAt.toDate()).toLocaleDateString() : new Date().toLocaleDateString();
+      doc.text(`Date: ${createdDate}`, 150, y);
+
+      y += 10;
+
+      // Trip Information Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('TRIP INFORMATION', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Destination:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(dttData.destination, 60, y);
+      y += 7;
+
+      doc.setFont(undefined, 'bold');
+      doc.text('Purpose:', 20, y);
+      doc.setFont(undefined, 'normal');
+      const purposeLines = doc.splitTextToSize(dttData.purpose, 130);
+      doc.text(purposeLines, 60, y);
+      y += (purposeLines.length * 7);
+
+      doc.setFont(undefined, 'bold');
+      doc.text('Period Covered:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(`${dttData.periodFrom} to ${dttData.periodTo}`, 60, y);
+      y += 10;
+
+      // Vehicle Information Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('VEHICLE INFORMATION', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Plate Number:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(dttData.plateNo, 60, y);
+      y += 7;
+
+      doc.setFont(undefined, 'bold');
+      doc.text('Driver:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(dttData.driverName || dttData.driverEmail, 60, y);
+      y += 7;
+
+      if (dttData.passengers && dttData.passengers.length > 0) {
+        doc.setFont(undefined, 'bold');
+        doc.text('Passengers:', 20, y);
+        doc.setFont(undefined, 'normal');
+        const passengerText = dttData.passengers.join(', ');
+        const passengerLines = doc.splitTextToSize(passengerText, 130);
+        doc.text(passengerLines, 60, y);
+        y += (passengerLines.length * 7);
+      }
+
+      y += 3;
+
+      // Odometer Reading Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('ODOMETER READING', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Start:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(`${dttData.speedometerStart || 0} km`, 60, y);
+      y += 7;
+
+      // If trip is closed, show end reading and distance
+      if (dttData.status === 'Closed' && dttData.speedometerEnd) {
+        doc.setFont(undefined, 'bold');
+        doc.text('End:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.speedometerEnd} km`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Distance Traveled:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.distanceTraveled || 0} km`, 60, y);
+        y += 7;
+      }
+
+      y += 3;
+
+      // Fuel Information Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('FUEL INFORMATION', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Fuel Balance Start:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(`${dttData.fuelBalanceStart || 0} L`, 60, y);
+      y += 7;
+
+      if (dttData.status === 'Closed' && dttData.fuelBalanceEnd !== undefined) {
+        doc.setFont(undefined, 'bold');
+        doc.text('Fuel Balance End:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.fuelBalanceEnd} L`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Fuel Used:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.fuelUsed || 0} L`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Fuel Efficiency:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.kmPerLiter ? dttData.kmPerLiter.toFixed(2) : 0} km/L`, 60, y);
+        y += 7;
+      }
+
+      if (dttData.requestFuel) {
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(234, 134, 0); // Orange
+        doc.text('FUEL REQUESTED', 20, y);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.requisitionQty} Liters`, 60, y);
+        y += 7;
+      }
+
+      y += 3;
+
+      // Gasoline Details (if provided)
+      if (dttData.totalGasoline && dttData.totalGasoline > 0) {
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(12);
+        doc.text('GASOLINE BREAKDOWN', 20, y);
+        doc.line(20, y + 2, 190, y + 2);
+        y += 10;
+        doc.setFontSize(10);
+
+        doc.text('Balance in Tank:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.balanceInTank || 0} L`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Issued by Office:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.issuedByOffice || 0} L`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Purchased During Trip:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.purchasedDuringTrip || 0} L`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Total Gasoline:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.totalGasoline} L`, 60, y);
+        y += 10;
+      }
+
+      // Remarks
+      if (dttData.remarks) {
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(12);
+        doc.text('REMARKS', 20, y);
+        doc.line(20, y + 2, 190, y + 2);
+        y += 10;
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const remarkLines = doc.splitTextToSize(dttData.remarks, 170);
+        doc.text(remarkLines, 20, y);
+        y += (remarkLines.length * 7) + 10;
+      } else {
+        y += 10;
+      }
+
+      // Signature Section
+      if (y > 240) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFontSize(10);
+      doc.text('_________________________', 20, y + 20);
+      doc.text('Driver\'s Signature', 20, y + 27);
+      doc.text('Date: ______________', 20, y + 34);
+
+      doc.text('_________________________', 110, y + 20);
+      doc.text('Approved by (Division Chief)', 110, y + 27);
+      doc.text('Date: ______________', 110, y + 34);
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text('Generated by DPWH Vehicle Management System', 105, 285, { align: 'center' });
+
+      return doc;
+    }
+
+    // View Trip PDF
+    async function viewTripPdf(dttId) {
+      try {
+        // Show loading
+        const loadingId = modalManager.loading({
+          title: 'Generating PDF',
+          message: 'Please wait...'
+        });
+
+        // Fetch DTT data
+        const doc = await db.collection('dtts').doc(dttId).get();
+        if (!doc.exists) {
+          modalManager.close(loadingId);
+          modalManager.alert({
+            title: 'Error',
+            message: 'Trip not found.',
+            type: 'error'
+          });
+          return;
+        }
+
+        const dttData = doc.data();
+
+        // Generate PDF
+        const pdf = generateDttPdf(dttData);
+
+        // Close loading
+        modalManager.close(loadingId);
+
+        // Show PDF options modal
+        modalManager.show({
+          title: `Trip Ticket PDF - ${dttData.destination}`,
+          content: `
+            <div class="text-center mb-3">
+              <i class="bi bi-file-pdf text-danger" style="font-size: 3rem;"></i>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">DTT ID</div>
+              <div class="modal-important-info">${dttData.dttId}</div>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Status</div>
+              <div><span class="badge bg-${getStatusColor(dttData.status)}">${dttData.status}</span></div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+              <i class="bi bi-info-circle me-2"></i>
+              Choose an option below to view or download this trip ticket PDF.
+            </div>
+          `,
+          size: 'medium',
+          closable: true,
+          buttons: [
+            {
+              label: 'Download PDF',
+              type: 'primary',
+              icon: 'download',
+              onClick: () => {
+                pdf.save(`DTT_${dttData.dttId}.pdf`);
+              },
+              closeOnClick: false
+            },
+            {
+              label: 'View PDF',
+              type: 'secondary',
+              icon: 'eye',
+              onClick: () => {
+                window.open(pdf.output('bloburl'), '_blank');
+              },
+              closeOnClick: false
+            },
+            {
+              label: 'Close',
+              type: 'default',
+              onClick: () => {}
+            }
+          ]
+        });
+
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        modalManager.alert({
+          title: 'Error',
+          message: 'Failed to generate PDF: ' + error.message,
+          type: 'error'
+        });
+      }
+    }
+
     // Create trip card
     function createTripCard(dtt) {
       const card = document.createElement('div');
@@ -330,6 +663,10 @@
         <div class="mt-3 d-grid gap-2">
           <button onclick="viewTripDetails('${dtt.dttId}')" class="btn btn-primary btn-sm">
             <i class="bi bi-eye me-2"></i>View Details
+          </button>
+
+          <button onclick="viewTripPdf('${dtt.dttId}')" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-file-pdf me-2"></i>View PDF
           </button>
 
           ${dtt.status === 'In-Progress' ? `

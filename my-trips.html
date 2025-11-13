@@ -14,6 +14,9 @@
   <!-- Gmail-Style Modal System -->
   <link rel="stylesheet" href="modal-styles.css">
 
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -71,6 +74,19 @@
   </style>
 </head>
 <body>
+
+  <!-- Loading Splash -->
+  <div id="auth-loading" class="container d-flex align-items-center justify-content-center min-vh-100">
+    <div class="text-center">
+      <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="text-muted">Loading...</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main-content" class="d-none">
 
   <!-- Header -->
   <div class="header-dpwh">
@@ -147,6 +163,8 @@
 
   </div>
 
+  </div> <!-- End main-content -->
+
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -173,8 +191,12 @@
     // Check auth
     auth.onAuthStateChanged(user => {
       if (!user) {
+        // Not logged in - redirect to login
         window.location.href = 'index.html';
       } else {
+        // Logged in - show content and load trips
+        document.getElementById('auth-loading').classList.add('d-none');
+        document.getElementById('main-content').classList.remove('d-none');
         loadTrips('active');
       }
     });
@@ -245,6 +267,336 @@
       }
     }
 
+    // Generate DTT PDF
+    function generateDttPdf(dttData) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // DPWH Header
+      doc.setFillColor(0, 63, 135); // DPWH Blue
+      doc.rect(0, 0, 210, 25, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('DPWH REGIONAL OFFICE II', 105, 10, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text('DRIVER\'S TRIP TICKET', 105, 17, { align: 'center' });
+
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+
+      let y = 35;
+
+      // DTT ID and Date
+      doc.setFont(undefined, 'bold');
+      doc.text(`DTT ID: ${dttData.dttId}`, 20, y);
+      doc.setFont(undefined, 'normal');
+      const createdDate = dttData.createdAt ? new Date(dttData.createdAt.toDate()).toLocaleDateString() : new Date().toLocaleDateString();
+      doc.text(`Date: ${createdDate}`, 150, y);
+
+      y += 10;
+
+      // Trip Information Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('TRIP INFORMATION', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Destination:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(dttData.destination, 60, y);
+      y += 7;
+
+      doc.setFont(undefined, 'bold');
+      doc.text('Purpose:', 20, y);
+      doc.setFont(undefined, 'normal');
+      const purposeLines = doc.splitTextToSize(dttData.purpose, 130);
+      doc.text(purposeLines, 60, y);
+      y += (purposeLines.length * 7);
+
+      doc.setFont(undefined, 'bold');
+      doc.text('Period Covered:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(`${dttData.periodFrom} to ${dttData.periodTo}`, 60, y);
+      y += 10;
+
+      // Vehicle Information Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('VEHICLE INFORMATION', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Plate Number:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(dttData.plateNo, 60, y);
+      y += 7;
+
+      doc.setFont(undefined, 'bold');
+      doc.text('Driver:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(dttData.driverName || dttData.driverEmail, 60, y);
+      y += 7;
+
+      if (dttData.passengers && dttData.passengers.length > 0) {
+        doc.setFont(undefined, 'bold');
+        doc.text('Passengers:', 20, y);
+        doc.setFont(undefined, 'normal');
+        const passengerText = dttData.passengers.join(', ');
+        const passengerLines = doc.splitTextToSize(passengerText, 130);
+        doc.text(passengerLines, 60, y);
+        y += (passengerLines.length * 7);
+      }
+
+      y += 3;
+
+      // Odometer Reading Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('ODOMETER READING', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Start:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(`${dttData.speedometerStart || 0} km`, 60, y);
+      y += 7;
+
+      // If trip is closed, show end reading and distance
+      if (dttData.status === 'Closed' && dttData.speedometerEnd) {
+        doc.setFont(undefined, 'bold');
+        doc.text('End:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.speedometerEnd} km`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Distance Traveled:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.distanceTraveled || 0} km`, 60, y);
+        y += 7;
+      }
+
+      y += 3;
+
+      // Fuel Information Section
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(12);
+      doc.text('FUEL INFORMATION', 20, y);
+      doc.line(20, y + 2, 190, y + 2);
+
+      y += 10;
+      doc.setFontSize(10);
+
+      doc.text('Fuel Balance Start:', 20, y);
+      doc.setFont(undefined, 'normal');
+      doc.text(`${dttData.fuelBalanceStart || 0} L`, 60, y);
+      y += 7;
+
+      if (dttData.status === 'Closed' && dttData.fuelBalanceEnd !== undefined) {
+        doc.setFont(undefined, 'bold');
+        doc.text('Fuel Balance End:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.fuelBalanceEnd} L`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Fuel Used:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.fuelUsed || 0} L`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Fuel Efficiency:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.kmPerLiter ? dttData.kmPerLiter.toFixed(2) : 0} km/L`, 60, y);
+        y += 7;
+      }
+
+      if (dttData.requestFuel) {
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(234, 134, 0); // Orange
+        doc.text('FUEL REQUESTED', 20, y);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.requisitionQty} Liters`, 60, y);
+        y += 7;
+      }
+
+      y += 3;
+
+      // Gasoline Details (if provided)
+      if (dttData.totalGasoline && dttData.totalGasoline > 0) {
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(12);
+        doc.text('GASOLINE BREAKDOWN', 20, y);
+        doc.line(20, y + 2, 190, y + 2);
+        y += 10;
+        doc.setFontSize(10);
+
+        doc.text('Balance in Tank:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.balanceInTank || 0} L`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Issued by Office:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.issuedByOffice || 0} L`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Purchased During Trip:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.purchasedDuringTrip || 0} L`, 60, y);
+        y += 7;
+
+        doc.setFont(undefined, 'bold');
+        doc.text('Total Gasoline:', 20, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`${dttData.totalGasoline} L`, 60, y);
+        y += 10;
+      }
+
+      // Remarks
+      if (dttData.remarks) {
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(12);
+        doc.text('REMARKS', 20, y);
+        doc.line(20, y + 2, 190, y + 2);
+        y += 10;
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        const remarkLines = doc.splitTextToSize(dttData.remarks, 170);
+        doc.text(remarkLines, 20, y);
+        y += (remarkLines.length * 7) + 10;
+      } else {
+        y += 10;
+      }
+
+      // Signature Section
+      if (y > 240) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFontSize(10);
+      doc.text('_________________________', 20, y + 20);
+      doc.text('Driver\'s Signature', 20, y + 27);
+      doc.text('Date: ______________', 20, y + 34);
+
+      doc.text('_________________________', 110, y + 20);
+      doc.text('Approved by (Division Chief)', 110, y + 27);
+      doc.text('Date: ______________', 110, y + 34);
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text('Generated by DPWH Vehicle Management System', 105, 285, { align: 'center' });
+
+      return doc;
+    }
+
+    // View Trip PDF
+    async function viewTripPdf(dttId) {
+      try {
+        // Show loading
+        const loadingId = modalManager.loading({
+          title: 'Generating PDF',
+          message: 'Please wait...'
+        });
+
+        // Fetch DTT data
+        const doc = await db.collection('dtts').doc(dttId).get();
+        if (!doc.exists) {
+          modalManager.close(loadingId);
+          modalManager.alert({
+            title: 'Error',
+            message: 'Trip not found.',
+            type: 'error'
+          });
+          return;
+        }
+
+        const dttData = doc.data();
+
+        // Generate PDF
+        const pdf = generateDttPdf(dttData);
+
+        // Close loading
+        modalManager.close(loadingId);
+
+        // Show PDF options modal
+        modalManager.show({
+          title: `Trip Ticket PDF - ${dttData.destination}`,
+          content: `
+            <div class="text-center mb-3">
+              <i class="bi bi-file-pdf text-danger" style="font-size: 3rem;"></i>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">DTT ID</div>
+              <div class="modal-important-info">${dttData.dttId}</div>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Status</div>
+              <div><span class="badge bg-${getStatusColor(dttData.status)}">${dttData.status}</span></div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+              <i class="bi bi-info-circle me-2"></i>
+              Choose an option below to view or download this trip ticket PDF.
+            </div>
+          `,
+          size: 'medium',
+          closable: true,
+          buttons: [
+            {
+              label: 'Download PDF',
+              type: 'primary',
+              icon: 'download',
+              onClick: () => {
+                pdf.save(`DTT_${dttData.dttId}.pdf`);
+              },
+              closeOnClick: false
+            },
+            {
+              label: 'View PDF',
+              type: 'secondary',
+              icon: 'eye',
+              onClick: () => {
+                window.open(pdf.output('bloburl'), '_blank');
+              },
+              closeOnClick: false
+            },
+            {
+              label: 'Close',
+              type: 'default',
+              onClick: () => {}
+            }
+          ]
+        });
+
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        modalManager.alert({
+          title: 'Error',
+          message: 'Failed to generate PDF: ' + error.message,
+          type: 'error'
+        });
+      }
+    }
+
     // Create trip card
     function createTripCard(dtt) {
       const card = document.createElement('div');
@@ -308,11 +660,21 @@
           </div>
         ` : ''}
 
-        ${dtt.status === 'In-Progress' ? `
-          <button onclick="closeDtt('${dtt.dttId}')" class="btn btn-success btn-sm w-100 mt-3">
-            <i class="bi bi-check-circle me-2"></i>Close Trip
+        <div class="mt-3 d-grid gap-2">
+          <button onclick="viewTripDetails('${dtt.dttId}')" class="btn btn-primary btn-sm">
+            <i class="bi bi-eye me-2"></i>View Details
           </button>
-        ` : ''}
+
+          <button onclick="viewTripPdf('${dtt.dttId}')" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-file-pdf me-2"></i>View PDF
+          </button>
+
+          ${dtt.status === 'In-Progress' ? `
+            <button onclick="closeDtt('${dtt.dttId}')" class="btn btn-success btn-sm">
+              <i class="bi bi-check-circle me-2"></i>Close Trip
+            </button>
+          ` : ''}
+        </div>
 
         ${dtt.status === 'Closed' && dtt.distanceTraveled ? `
           <div class="mt-3 pt-3 border-top">
@@ -337,46 +699,554 @@
       return card;
     }
 
+    // View Trip Details
+    async function viewTripDetails(dttId) {
+      try {
+        const doc = await db.collection('dtts').doc(dttId).get();
+        if (!doc.exists) {
+          modalManager.alert({
+            title: 'Error',
+            message: 'Trip not found.',
+            type: 'error'
+          });
+          return;
+        }
+
+        const dtt = doc.data();
+
+        // Format date
+        const formatDate = (timestamp) => {
+          if (!timestamp) return 'N/A';
+          return new Date(timestamp.toDate()).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        };
+
+        // Build detail content
+        let detailsHTML = `
+          <div class="modal-section-title">
+            <i class="bi bi-info-circle me-2"></i>Trip Information
+          </div>
+
+          <div class="modal-info-row">
+            <div>
+              <div class="modal-info-label">DTT ID</div>
+              <div class="modal-important-info">${dtt.dttId}</div>
+            </div>
+            <span class="badge bg-${getStatusColor(dtt.status)}">${dtt.status}</span>
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Destination</div>
+            <div class="modal-important-info">${dtt.destination}</div>
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Purpose</div>
+            <div>${dtt.purpose}</div>
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Period Covered</div>
+            <div><strong>${dtt.periodFrom || 'N/A'}</strong> to <strong>${dtt.periodTo || 'N/A'}</strong></div>
+          </div>
+
+          <div class="modal-section-title">
+            <i class="bi bi-truck me-2"></i>Vehicle Information
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Plate Number</div>
+            <div class="modal-important-info">${dtt.plateNo}</div>
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Driver</div>
+            <div>${dtt.driverName || dtt.driverEmail}</div>
+          </div>
+
+          ${dtt.passengers && dtt.passengers.length > 0 ? `
+            <div class="modal-info-row">
+              <div class="modal-info-label">Passengers (${dtt.passengers.length})</div>
+              <div>${dtt.passengers.join(', ')}</div>
+            </div>
+          ` : ''}
+        `;
+
+        // Fuel Information
+        if (dtt.requestFuel) {
+          detailsHTML += `
+            <div class="modal-section-title">
+              <i class="bi bi-fuel-pump me-2"></i>Fuel Request
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Fuel Requested</div>
+              <div class="modal-important-info">${dtt.requisitionQty || 0} Liters</div>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Starting Balance</div>
+              <div>${dtt.fuelBalanceStart || 0} L</div>
+            </div>
+
+            ${dtt.linkedRisId ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Linked RIS</div>
+                <div class="modal-important-info">${dtt.linkedRisId}</div>
+              </div>
+            ` : ''}
+          `;
+        }
+
+        // Trip Details (if closed)
+        if (dtt.status === 'Closed' && dtt.distanceTraveled) {
+          detailsHTML += `
+            <div class="modal-section-title">
+              <i class="bi bi-speedometer me-2"></i>Trip Summary
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Distance Traveled</div>
+              <div class="modal-important-info">${dtt.distanceTraveled || 0} km</div>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Fuel Used</div>
+              <div class="modal-important-info">${dtt.fuelUsed || 0} L</div>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Fuel Efficiency</div>
+              <div class="modal-important-info">${dtt.kmPerLiter ? dtt.kmPerLiter.toFixed(2) : 0} km/L</div>
+            </div>
+
+            ${dtt.speedometerStart ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Odometer Start</div>
+                <div>${dtt.speedometerStart} km</div>
+              </div>
+            ` : ''}
+
+            ${dtt.speedometerEnd ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Odometer End</div>
+                <div>${dtt.speedometerEnd} km</div>
+              </div>
+            ` : ''}
+          `;
+        }
+
+        // Gasoline Details
+        if (dtt.totalGasoline) {
+          detailsHTML += `
+            <div class="modal-section-title">
+              <i class="bi bi-droplet me-2"></i>Gasoline Breakdown
+            </div>
+
+            ${dtt.balanceInTank ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Balance in Tank</div>
+                <div>${dtt.balanceInTank} L</div>
+              </div>
+            ` : ''}
+
+            ${dtt.issuedByOffice ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Issued by Office</div>
+                <div>${dtt.issuedByOffice} L</div>
+              </div>
+            ` : ''}
+
+            ${dtt.purchasedDuringTrip ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Purchased During Trip</div>
+                <div>${dtt.purchasedDuringTrip} L</div>
+              </div>
+            ` : ''}
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Total Gasoline</div>
+              <div class="modal-important-info">${dtt.totalGasoline} L</div>
+            </div>
+          `;
+        }
+
+        // Timestamps
+        detailsHTML += `
+          <div class="modal-section-title">
+            <i class="bi bi-clock me-2"></i>Timeline
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Created</div>
+            <div>${formatDate(dtt.createdAt)}</div>
+          </div>
+
+          ${dtt.closedAt ? `
+            <div class="modal-info-row">
+              <div class="modal-info-label">Closed</div>
+              <div class="modal-important-info">${formatDate(dtt.closedAt)}</div>
+            </div>
+          ` : ''}
+
+          ${dtt.remarks ? `
+            <div class="modal-section-title">
+              <i class="bi bi-chat-left-text me-2"></i>Remarks
+            </div>
+            <div class="p-2 bg-light rounded">
+              ${dtt.remarks}
+            </div>
+          ` : ''}
+        `;
+
+        // Show modal
+        modalManager.show({
+          title: `Trip Details - ${dtt.destination}`,
+          content: detailsHTML,
+          size: 'large',
+          closable: true,
+          buttons: [
+            {
+              label: 'Close',
+              type: 'secondary',
+              onClick: () => {}
+            }
+          ]
+        });
+
+      } catch (error) {
+        console.error('Error loading trip details:', error);
+        modalManager.alert({
+          title: 'Error',
+          message: 'Failed to load trip details: ' + error.message,
+          type: 'error'
+        });
+      }
+    }
+
+    // Helper function for status badge color
+    function getStatusColor(status) {
+      const colors = {
+        'Draft': 'secondary',
+        'Approved': 'success',
+        'In-Progress': 'primary',
+        'Closed': 'dark'
+      };
+      return colors[status] || 'secondary';
+    }
+
     // Close DTT
     async function closeDtt(dttId) {
+      try {
+        // Fetch DTT data
+        const doc = await db.collection('dtts').doc(dttId).get();
+        if (!doc.exists) {
+          modalManager.alert({
+            title: 'Error',
+            message: 'Trip not found.',
+            type: 'error'
+          });
+          return;
+        }
+
+        const dtt = doc.data();
+
+        // Fetch vehicle data for standard km/L
+        const vehicleDoc = await db.collection('vehicles').doc(dtt.plateNo).get();
+        const vehicle = vehicleDoc.exists ? vehicleDoc.data() : null;
+        const standardKmPerLiter = vehicle ? vehicle.standardKmPerLiter || 10 : 10;
+
+        // Build close trip form
+        const formHTML = `
+          <div class="modal-section-title">
+            <i class="bi bi-speedometer me-2"></i>Trip Completion
+          </div>
+
+          <div class="alert alert-info mb-3">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Destination:</strong> <span class="modal-important-info">${dtt.destination}</span>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Odometer Reading at Start</label>
+            <input type="number" class="form-control" value="${dtt.speedometerStart || 0}" readonly>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Odometer Reading at End <span class="text-danger">*</span></label>
+            <input type="number" id="close-odometer-end" class="form-control"
+                   placeholder="Enter end reading" min="${dtt.speedometerStart || 0}" required>
+            <small class="text-muted">Current reading on vehicle odometer</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Distance Traveled (Auto-calculated)</label>
+            <div class="input-group">
+              <input type="number" id="close-distance" class="form-control" readonly
+                     value="0">
+              <span class="input-group-text">km</span>
+            </div>
+          </div>
+
+          <div class="modal-section-title mt-4">
+            <i class="bi bi-fuel-pump me-2"></i>Fuel Information
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Fuel Balance at Start</label>
+            <div class="input-group">
+              <input type="number" class="form-control" value="${dtt.fuelBalanceStart || 0}" readonly>
+              <span class="input-group-text">L</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Fuel Balance at End <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="number" id="close-fuel-end" class="form-control"
+                     placeholder="Enter remaining fuel" step="0.1" min="0" required>
+              <span class="input-group-text">L</span>
+            </div>
+            <small class="text-muted">Estimated fuel remaining in tank</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Fuel Used (Auto-calculated)</label>
+            <div class="input-group">
+              <input type="number" id="close-fuel-used" class="form-control" readonly value="0">
+              <span class="input-group-text">L</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Fuel Efficiency (Auto-calculated)</label>
+            <div class="input-group">
+              <input type="number" id="close-efficiency" class="form-control" readonly value="0">
+              <span class="input-group-text">km/L</span>
+            </div>
+            <small class="text-muted">Standard: ${standardKmPerLiter} km/L</small>
+          </div>
+
+          <div class="modal-section-title mt-4">
+            <i class="bi bi-chat-left-text me-2"></i>Additional Information (Optional)
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Remarks</label>
+            <textarea id="close-remarks" class="form-control" rows="3"
+                      placeholder="Any additional notes or observations..."></textarea>
+          </div>
+        `;
+
+        // Show modal
+        const modal = modalManager.show({
+          title: `Close Trip - ${dtt.destination}`,
+          content: formHTML,
+          size: 'large',
+          closable: true,
+          buttons: [
+            {
+              label: 'Cancel',
+              type: 'secondary',
+              onClick: () => {}
+            },
+            {
+              label: 'Close Trip',
+              type: 'success',
+              icon: 'check-circle',
+              closeOnClick: false,
+              onClick: async () => {
+                await submitCloseDtt(dttId, dtt, standardKmPerLiter);
+              }
+            }
+          ]
+        });
+
+        // Add auto-calculation listeners
+        const odometerEndInput = modal.querySelector('#close-odometer-end');
+        const fuelEndInput = modal.querySelector('#close-fuel-end');
+        const distanceInput = modal.querySelector('#close-distance');
+        const fuelUsedInput = modal.querySelector('#close-fuel-used');
+        const efficiencyInput = modal.querySelector('#close-efficiency');
+
+        function calculateValues() {
+          const odometerEnd = parseFloat(odometerEndInput.value) || 0;
+          const fuelEnd = parseFloat(fuelEndInput.value) || 0;
+          const odometerStart = dtt.speedometerStart || 0;
+          const fuelStart = dtt.fuelBalanceStart || 0;
+
+          // Calculate distance
+          const distance = odometerEnd - odometerStart;
+          distanceInput.value = distance >= 0 ? distance.toFixed(1) : 0;
+
+          // Calculate fuel used
+          const fuelUsed = fuelStart - fuelEnd;
+          fuelUsedInput.value = fuelUsed >= 0 ? fuelUsed.toFixed(2) : 0;
+
+          // Calculate efficiency
+          if (distance > 0 && fuelUsed > 0) {
+            const efficiency = distance / fuelUsed;
+            efficiencyInput.value = efficiency.toFixed(2);
+
+            // Change color if below standard
+            if (efficiency < standardKmPerLiter * 0.8) {
+              efficiencyInput.style.color = '#d93025'; // Red
+            } else {
+              efficiencyInput.style.color = '#1e8e3e'; // Green
+            }
+          } else {
+            efficiencyInput.value = '0.00';
+            efficiencyInput.style.color = '';
+          }
+        }
+
+        odometerEndInput.addEventListener('input', calculateValues);
+        fuelEndInput.addEventListener('input', calculateValues);
+
+      } catch (error) {
+        console.error('Error loading trip for closing:', error);
+        modalManager.alert({
+          title: 'Error',
+          message: 'Failed to load trip data: ' + error.message,
+          type: 'error'
+        });
+      }
+    }
+
+    // Submit Close DTT
+    async function submitCloseDtt(dttId, originalDtt, standardKmPerLiter) {
+      // Get form values
+      const odometerEnd = parseFloat(document.getElementById('close-odometer-end').value);
+      const fuelEnd = parseFloat(document.getElementById('close-fuel-end').value);
+      const remarks = document.getElementById('close-remarks').value.trim();
+
+      // Validation
+      if (!odometerEnd || odometerEnd <= 0) {
+        modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please enter the end odometer reading.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      if (odometerEnd < originalDtt.speedometerStart) {
+        modalManager.alert({
+          title: 'Invalid Input',
+          message: 'End odometer reading cannot be less than start reading.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      if (fuelEnd === null || fuelEnd === undefined || fuelEnd < 0) {
+        modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please enter the fuel balance at end.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      // Calculate values
+      const distanceTraveled = odometerEnd - (originalDtt.speedometerStart || 0);
+      const fuelUsed = (originalDtt.fuelBalanceStart || 0) - fuelEnd;
+      const kmPerLiter = fuelUsed > 0 ? distanceTraveled / fuelUsed : 0;
+
+      // Confirm close
       const confirmed = await modalManager.confirm({
-        title: 'Close Trip',
-        message: 'Are you sure you want to close this trip? This action cannot be undone.',
-        confirmText: 'Close Trip',
+        title: 'Confirm Close Trip',
+        message: `
+          <div class="modal-info-row">
+            <div class="modal-info-label">Distance Traveled</div>
+            <div class="modal-important-info">${distanceTraveled.toFixed(1)} km</div>
+          </div>
+          <div class="modal-info-row">
+            <div class="modal-info-label">Fuel Used</div>
+            <div class="modal-important-info">${fuelUsed.toFixed(2)} L</div>
+          </div>
+          <div class="modal-info-row">
+            <div class="modal-info-label">Fuel Efficiency</div>
+            <div class="modal-important-info">${kmPerLiter.toFixed(2)} km/L</div>
+          </div>
+          <p class="mt-3">Are you sure you want to close this trip?</p>
+        `,
+        confirmText: 'Yes, Close Trip',
         cancelText: 'Cancel',
         confirmType: 'success'
       });
 
-      if (confirmed) {
-        try {
-          const loadingId = modalManager.loading({
-            title: 'Closing Trip',
-            message: 'Please wait...'
-          });
+      if (!confirmed) return;
 
-          await db.collection('dtts').doc(dttId).update({
-            status: 'Closed',
-            closedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+      // Show loading
+      const loadingId = modalManager.loading({
+        title: 'Closing Trip',
+        message: 'Please wait...'
+      });
 
-          modalManager.close(loadingId);
+      try {
+        // Update DTT
+        await db.collection('dtts').doc(dttId).update({
+          status: 'Closed',
+          speedometerEnd: odometerEnd,
+          distanceTraveled: distanceTraveled,
+          fuelBalanceEnd: fuelEnd,
+          fuelUsed: fuelUsed,
+          kmPerLiter: kmPerLiter,
+          remarks: remarks || originalDtt.remarks || '',
+          closedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
-          await modalManager.alert({
-            title: 'Success',
-            message: 'Trip has been closed successfully!',
-            type: 'success'
-          });
+        // TODO: In Phase 2, Cloud Function will update vehicle fuel balance
 
-          // Reload trips
-          loadTrips(currentTab);
-        } catch (error) {
-          modalManager.alert({
-            title: 'Error',
-            message: 'Failed to close trip: ' + error.message,
-            type: 'error'
-          });
-        }
+        modalManager.close(loadingId);
+
+        // Show success with summary
+        await modalManager.alert({
+          title: 'Trip Closed Successfully',
+          message: `
+            <div class="text-center mb-3">
+              <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+            </div>
+            <div class="modal-info-row">
+              <div class="modal-info-label">Trip</div>
+              <div class="modal-important-info">${originalDtt.destination}</div>
+            </div>
+            <div class="modal-info-row">
+              <div class="modal-info-label">Distance</div>
+              <div class="modal-important-info">${distanceTraveled.toFixed(1)} km</div>
+            </div>
+            <div class="modal-info-row">
+              <div class="modal-info-label">Fuel Efficiency</div>
+              <div class="modal-important-info">${kmPerLiter.toFixed(2)} km/L</div>
+            </div>
+            ${kmPerLiter < standardKmPerLiter * 0.8 ? `
+              <div class="alert alert-warning mt-3 mb-0">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Note:</strong> Fuel efficiency is below standard (${standardKmPerLiter} km/L)
+              </div>
+            ` : ''}
+          `,
+          type: 'success'
+        });
+
+        // Reload trips
+        loadTrips(currentTab);
+
+      } catch (error) {
+        console.error('Error closing trip:', error);
+        modalManager.close(loadingId);
+        modalManager.alert({
+          title: 'Error',
+          message: 'Failed to close trip: ' + error.message,
+          type: 'error'
+        });
       }
     }
 

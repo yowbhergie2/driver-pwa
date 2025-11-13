@@ -72,6 +72,19 @@
 </head>
 <body>
 
+  <!-- Loading Splash -->
+  <div id="auth-loading" class="container d-flex align-items-center justify-content-center min-vh-100">
+    <div class="text-center">
+      <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="text-muted">Loading...</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main-content" class="d-none">
+
   <!-- Header -->
   <div class="header-dpwh">
     <div class="container">
@@ -147,6 +160,8 @@
 
   </div>
 
+  </div> <!-- End main-content -->
+
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -173,8 +188,12 @@
     // Check auth
     auth.onAuthStateChanged(user => {
       if (!user) {
+        // Not logged in - redirect to login
         window.location.href = 'index.html';
       } else {
+        // Logged in - show content and load trips
+        document.getElementById('auth-loading').classList.add('d-none');
+        document.getElementById('main-content').classList.remove('d-none');
         loadTrips('active');
       }
     });

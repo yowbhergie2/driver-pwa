@@ -15,7 +15,10 @@
   
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-  
+
+  <!-- Gmail-Style Modal System -->
+  <link rel="stylesheet" href="modal-styles.css">
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -29,7 +32,7 @@
     }
     
     body {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
       min-height: 100vh;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
@@ -167,6 +170,9 @@
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-lock"></i></span>
               <input type="password" id="password" class="form-control" placeholder="••••••••" autocomplete="current-password">
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                <i class="bi bi-eye" id="password-toggle-icon"></i>
+              </button>
             </div>
           </div>
           
@@ -252,7 +258,7 @@
           <i class="bi bi-plus-circle me-2"></i>New Trip Ticket
         </button>
         
-        <button onclick="showMyTrips()" class="btn btn-outline-primary action-btn">
+        <button onclick="showMyTrips()" class="btn btn-primary action-btn" style="background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%); color: white; border: none;">
           <i class="bi bi-list-check me-2"></i>View My Trips
         </button>
         
@@ -299,6 +305,9 @@
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- Gmail-Style Modal System -->
+  <script src="modal-system.js"></script>
+
   <script>
     // Firebase Config
     const firebaseConfig = {
@@ -314,26 +323,58 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
     
+    // Toggle password visibility
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const toggleIcon = document.getElementById('password-toggle-icon');
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('bi-eye');
+        toggleIcon.classList.add('bi-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('bi-eye-slash');
+        toggleIcon.classList.add('bi-eye');
+      }
+    }
+
     // Login
     async function login() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      
+
       if (!email || !password) {
-        alert('Please enter email and password');
+        modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please enter both email and password.',
+          type: 'warning'
+        });
         return;
       }
-      
+
       try {
         await auth.signInWithEmailAndPassword(email, password);
       } catch (error) {
-        alert('Login failed: ' + error.message);
+        modalManager.alert({
+          title: 'Login Failed',
+          message: error.message,
+          type: 'error'
+        });
       }
     }
     
     // Logout
-    function logout() {
-      if (confirm('Are you sure you want to logout?')) {
+    async function logout() {
+      const confirmed = await modalManager.confirm({
+        title: 'Confirm Logout',
+        message: 'Are you sure you want to logout?',
+        confirmText: 'Logout',
+        cancelText: 'Cancel',
+        confirmType: 'danger'
+      });
+
+      if (confirmed) {
         auth.signOut();
       }
     }
@@ -383,7 +424,11 @@
     }
     
     function showRequestFuel() {
-      alert('Request Fuel page - coming soon!');
+      modalManager.alert({
+        title: 'Coming Soon',
+        message: 'Request Fuel page is currently under development.',
+        type: 'info'
+      });
     }
     
     function showHome() {
@@ -391,7 +436,11 @@
     }
     
     function showProfile() {
-      alert('Profile page - coming soon!');
+      modalManager.alert({
+        title: 'Coming Soon',
+        message: 'Profile page is currently under development.',
+        type: 'info'
+      });
     }
     
     // Register service worker

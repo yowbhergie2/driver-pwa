@@ -190,18 +190,18 @@
       document.getElementById('empty-state').classList.add('d-none');
 
       try {
-        // Query WITHOUT status in orderBy (to avoid composite index requirement)
+        // Simple query - no orderBy to avoid index requirement
         const snapshot = await db.collection('dtts')
           .where('driverUid', '==', user.uid)
-          .orderBy('createdAt', 'desc')
           .get();
 
         document.getElementById('loading').classList.add('d-none');
 
-        // Filter by status in JavaScript instead of Firestore
+        // Filter by status and sort in JavaScript
         let trips = [];
         snapshot.forEach(doc => {
           const dtt = doc.data();
+          dtt.id = doc.id; // Add document ID
           if (status === 'active') {
             if (['Draft', 'Approved', 'In-Progress'].includes(dtt.status)) {
               trips.push(dtt);
@@ -211,6 +211,13 @@
               trips.push(dtt);
             }
           }
+        });
+
+        // Sort by createdAt in JavaScript
+        trips.sort((a, b) => {
+          const timeA = a.createdAt ? a.createdAt.toDate().getTime() : 0;
+          const timeB = b.createdAt ? b.createdAt.toDate().getTime() : 0;
+          return timeB - timeA; // Descending order (newest first)
         });
 
         if (trips.length === 0) {
@@ -230,7 +237,11 @@
       } catch (error) {
         console.error('Error loading trips:', error);
         document.getElementById('loading').classList.add('d-none');
-        alert('Error loading trips: ' + error.message);
+        modalManager.alert({
+          title: 'Error Loading Trips',
+          message: 'Failed to load trips: ' + error.message,
+          type: 'error'
+        });
       }
     }
 

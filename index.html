@@ -145,7 +145,7 @@
 <body>
 
   <!-- Login Screen -->
-  <div id="login-screen" class="container d-flex align-items-center justify-content-center min-vh-100">
+  <div id="login-screen" class="container d-flex align-items-center justify-content-center min-vh-100" style="display: none !important;">
     <div class="col-12 col-md-6 col-lg-4">
       <div class="login-card">
         <div class="login-header">
@@ -169,13 +169,13 @@
             <label class="form-label">Password</label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-lock"></i></span>
-              <input type="password" id="password" class="form-control" placeholder="••••••••" autocomplete="current-password">
+              <input type="password" id="password" class="form-control" placeholder="••••••••" autocomplete="current-password" onkeypress="if(event.key==='Enter') login()">
               <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
                 <i class="bi bi-eye" id="password-toggle-icon"></i>
               </button>
             </div>
           </div>
-          
+
           <button onclick="login()" class="btn btn-primary-dpwh w-100 action-btn">
             <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
           </button>
@@ -382,12 +382,14 @@
     // Auto-login check
     auth.onAuthStateChanged(async (user) => {
       if (user) {
+        document.getElementById('login-screen').style.display = 'none';
         document.getElementById('login-screen').classList.add('d-none');
         document.getElementById('home-screen').classList.remove('d-none');
         document.getElementById('user-name').textContent = user.email;
         await loadDashboard();
       } else {
         document.getElementById('home-screen').classList.add('d-none');
+        document.getElementById('login-screen').style.display = '';
         document.getElementById('login-screen').classList.remove('d-none');
       }
     });

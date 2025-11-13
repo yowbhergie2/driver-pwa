@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Trip Ticket - DPWH</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  
+  <style>
+    :root {
+      --dpwh-blue: #003f87;
+      --dpwh-light-blue: #0056b3;
+    }
+    
+    body {
+      background: #f8f9fa;
+    }
+    
+    .header-dpwh {
+      background: linear-gradient(135deg, var(--dpwh-blue) 0%, var(--dpwh-light-blue) 100%);
+      color: white;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .form-section {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .section-title {
+      color: var(--dpwh-blue);
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--dpwh-blue);
+    }
+    
+    .auto-caps {
+      text-transform: uppercase;
+    }
+    
+    .passenger-item {
+      background: #f8f9fa;
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: between;
+      align-items: center;
+    }
+    
+    .btn-submit {
+      background: linear-gradient(135deg, var(--dpwh-blue) 0%, var(--dpwh-light-blue) 100%);
+      border: none;
+      padding: 1rem;
+      font-weight: 600;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header-dpwh">
+    <div class="container">
+      <div class="d-flex align-items-center">
+        <button onclick="goBack()" class="btn btn-outline-light btn-sm me-3">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+        <div>
+          <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>New Trip Ticket</h5>
+          <small>DPWH Regional Office II</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="container py-4 mb-5">
+    
+    <!-- PART 1: Basic Information -->
+    <div class="form-section">
+      <h6 class="section-title">
+        <i class="bi bi-1-circle me-2"></i>TRIP INFORMATION
+      </h6>
+      
+      <!-- Vehicle & Plate No. -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Vehicle <span class="text-danger">*</span></label>
+          <select id="vehicle" class="form-select">
+            <option value="">Loading vehicles...</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Plate No. <span class="text-danger">*</span></label>
+          <input type="text" id="plateNo" class="form-control auto-caps" readonly>
+        </div>
+      </div>
+
+      <!-- Fuel Balance Info -->
+      <div id="fuel-info" class="alert alert-info d-none mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-fuel-pump me-2"></i>Current Fuel Balance:</span>
+          <strong id="current-fuel" class="fs-5">0 L</strong>
+        </div>
+      </div>
+
+      <!-- Authorized Passengers -->
+      <div class="mb-3">
+        <label class="form-label">
+          Name of Authorized Passenger/s
+        </label>
+        
+        <div class="input-group mb-2">
+          <input type="text" id="passenger-input" class="form-control auto-caps" 
+                 placeholder="ENTER PASSENGER NAME">
+          <button onclick="addPassenger()" class="btn btn-primary" type="button">
+            <i class="bi bi-plus-lg"></i> Add
+          </button>
+        </div>
+        
+        <div id="passengers-list"></div>
+      </div>
+
+      <!-- Destination -->
+      <div class="mb-3">
+        <label class="form-label">Destination <span class="text-danger">*</span></label>
+        <input type="text" id="destination" class="form-control auto-caps" 
+               placeholder="E.G., TUGUEGARAO CITY">
+      </div>
+
+      <!-- Period Covered -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Period Covered - From <span class="text-danger">*</span></label>
+          <input type="date" id="periodFrom" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Period Covered - To <span class="text-danger">*</span></label>
+          <input type="date" id="periodTo" class="form-control">
+        </div>
+      </div>
+
+      <!-- Purpose -->
+      <div class="mb-3">
+        <label class="form-label">Purpose <span class="text-danger">*</span></label>
+        <textarea id="purpose" rows="3" class="form-control auto-caps" 
+                  placeholder="E.G., OFFICIAL TRAVEL TO CONDUCT INSPECTION"></textarea>
+      </div>
+    </div>
+
+    <!-- PART 2: Trip Details -->
+    <div class="form-section">
+      <h6 class="section-title">
+        <i class="bi bi-2-circle me-2"></i>TRIP DETAILS
+      </h6>
+
+      <!-- Time Records -->
+      <div class="row mb-3">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Time of departure from Office/garage</label>
+          <input type="time" id="timeDepartOffice" class="form-control">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Time of arrival at destination</label>
+          <input type="time" id="timeArrivalDest" class="form-control">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Time of departure from destination</label>
+          <input type="time" id="timeDepartDest" class="form-control">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Time of arrival back to office/garage</label>
+          <input type="time" id="timeArrivalOffice" class="form-control">
+        </div>
+      </div>
+
+      <!-- Distance -->
+      <div class="mb-3">
+        <label class="form-label">Approximate distance traveled (to and from)</label>
+        <div class="input-group">
+          <input type="number" id="approximateDistance" class="form-control" 
+                 placeholder="0" step="0.1">
+          <span class="input-group-text">km</span>
+        </div>
+      </div>
+
+      <!-- Gasoline Section -->
+      <h6 class="text-secondary mb-3 mt-4">Gasoline issued, purchased and consumed:</h6>
+      
+      <div class="row mb-3">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">a. Balance in tank</label>
+          <div class="input-group">
+            <input type="number" id="balanceInTank" class="form-control" 
+                   placeholder="0" step="0.1">
+            <span class="input-group-text">liters</span>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">b. Issued by office from stock</label>
+          <div class="input-group">
+            <input type="number" id="issuedByOffice" class="form-control" 
+                   placeholder="0" step="0.1">
+            <span class="input-group-text">liters</span>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">c. Add-Purchased during trip</label>
+          <div class="input-group">
+            <input type="number" id="purchasedDuringTrip" class="form-control" 
+                   placeholder="0" step="0.1">
+            <span class="input-group-text">liters</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-bold">TOTAL</label>
+        <div class="input-group">
+          <input type="number" id="totalGasoline" class="form-control bg-light" 
+                 readonly placeholder="0">
+          <span class="input-group-text">liters</span>
+        </div>
+      </div>
+
+      <!-- Other Fluids -->
+      <div class="row mb-3">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Gear oil issued</label>
+          <div class="input-group">
+            <input type="number" id="gearOil" class="form-control" 
+                   placeholder="0" step="0.1">
+            <span class="input-group-text">liters</span>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Lub. Oil issued</label>
+          <div class="input-group">
+            <input type="number" id="lubOil" class="form-control" 
+                   placeholder="0" step="0.1">
+            <span class="input-group-text">liters</span>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Grease issued</label>
+          <div class="input-group">
+            <input type="number" id="grease" class="form-control" 
+                   placeholder="0" step="0.1">
+            <span class="input-group-text">liters</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Speedometer Readings -->
+      <h6 class="text-secondary mb-3 mt-4">Speedometer readings, if any:</h6>
+      
+      <div class="row mb-3">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">At beginning of trip</label>
+          <div class="input-group">
+            <input type="number" id="speedometerStart" class="form-control" 
+                   placeholder="0">
+            <span class="input-group-text">miles/kms.</span>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">At end of trip</label>
+          <div class="input-group">
+            <input type="number" id="speedometerEnd" class="form-control" 
+                   placeholder="0">
+            <span class="input-group-text">miles/kms.</span>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Distance travelled</label>
+          <div class="input-group">
+            <input type="number" id="distanceTravelled" class="form-control bg-light" 
+                   readonly placeholder="0">
+            <span class="input-group-text">miles/kms.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks -->
+      <div class="mb-3">
+        <label class="form-label">Remarks</label>
+        <textarea id="remarks" rows="2" class="form-control auto-caps" 
+                  placeholder="ADDITIONAL NOTES OR COMMENTS"></textarea>
+      </div>
+    </div>
+
+    <!-- Request Fuel Section -->
+    <div class="form-section">
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="requestFuel" onchange="toggleFuelRequest()">
+        <label class="form-check-label fw-bold" for="requestFuel">
+          <i class="bi bi-fuel-pump-fill text-warning me-2"></i>
+          Request fuel for this trip
+        </label>
+      </div>
+
+      <div id="fuel-section" class="d-none">
+        <div class="alert alert-warning">
+          <label class="form-label">Liters Needed <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="number" id="fuel-qty" class="form-control" 
+                   placeholder="50" step="0.1" min="0">
+            <span class="input-group-text">liters</span>
+          </div>
+          <small class="text-muted">
+            Balance after refuel: <strong id="balance-after">0 L</strong>
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-grid gap-3">
+      <button onclick="submitDtt()" class="btn btn-primary btn-submit">
+        <i class="bi bi-check-circle me-2"></i>Submit Trip Ticket
+      </button>
+
+      <button onclick="goBack()" class="btn btn-outline-secondary">
+        <i class="bi bi-x-circle me-2"></i>Cancel
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Loading Modal -->
+  <div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-body text-center py-4">
+          <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mb-0">Submitting trip ticket...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTPngeGZviiOjv3N1V_wPTGvRUVFOPa14",
+      authDomain: "fuel-vehicle-management.firebaseapp.com",
+      projectId: "fuel-vehicle-management",
+      storageBucket: "fuel-vehicle-management.firebasestorage.app",
+      messagingSenderId: "821758027736",
+      appId: "1:821758027736:web:3b1924046e73cb0c9434ad"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentFuelBalance = 0;
+    let passengers = [];
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+
+    // Check auth
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = 'index.html';
+      } else {
+        loadVehicles();
+      }
+    });
+
+    // Auto-capitalize all inputs with auto-caps class
+    document.addEventListener('DOMContentLoaded', function() {
+      const autoCapsInputs = document.querySelectorAll('.auto-caps');
+      autoCapsInputs.forEach(input => {
+        input.addEventListener('input', function() {
+          this.value = this.value.toUpperCase();
+        });
+      });
+    });
+
+    // Load vehicles
+    async function loadVehicles() {
+      try {
+        const vehiclesSnapshot = await db.collection('vehicles').get();
+        const select = document.getElementById('vehicle');
+        
+        select.innerHTML = '<option value="">Select vehicle...</option>';
+        
+        vehiclesSnapshot.forEach(doc => {
+          const vehicle = doc.data();
+          const option = document.createElement('option');
+          option.value = vehicle.plateNo;
+          option.textContent = `${vehicle.brand} ${vehicle.model} (${vehicle.plateNo})`;
+          option.dataset.plateNo = vehicle.plateNo;
+          option.dataset.fuelBalance = vehicle.currentFuelBalance || 0;
+          select.appendChild(option);
+        });
+        
+        if (vehiclesSnapshot.empty) {
+          select.innerHTML = '<option value="">No vehicles found</option>';
+        }
+      } catch (error) {
+        console.error('Error loading vehicles:', error);
+      }
+    }
+
+    // Vehicle selection changed
+    document.getElementById('vehicle').addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      const plateNo = selectedOption.dataset.plateNo;
+      const fuelBalance = parseFloat(selectedOption.dataset.fuelBalance) || 0;
+      
+      if (plateNo) {
+        document.getElementById('plateNo').value = plateNo;
+        currentFuelBalance = fuelBalance;
+        document.getElementById('current-fuel').textContent = fuelBalance.toFixed(1) + ' L';
+        document.getElementById('fuel-info').classList.remove('d-none');
+      } else {
+        document.getElementById('plateNo').value = '';
+        document.getElementById('fuel-info').classList.add('d-none');
+      }
+    });
+
+    // Add passenger
+    function addPassenger() {
+      const input = document.getElementById('passenger-input');
+      const name = input.value.trim().toUpperCase();
+      
+      if (!name) {
+        alert('Please enter passenger name');
+        return;
+      }
+      
+      passengers.push(name);
+      input.value = '';
+      renderPassengers();
+    }
+
+    // Remove passenger
+    function removePassenger(index) {
+      passengers.splice(index, 1);
+      renderPassengers();
+    }
+
+    // Render passengers list
+    function renderPassengers() {
+      const list = document.getElementById('passengers-list');
+      if (passengers.length === 0) {
+        list.innerHTML = '<small class="text-muted">No passengers added yet</small>';
+        return;
+      }
+      
+      list.innerHTML = passengers.map((name, index) => `
+        <div class="passenger-item">
+          <span>${index + 1}. ${name}</span>
+          <button onclick="removePassenger(${index})" class="btn btn-sm btn-outline-danger ms-auto">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // Toggle fuel request
+    function toggleFuelRequest() {
+      const checked = document.getElementById('requestFuel').checked;
+      const section = document.getElementById('fuel-section');
+      
+      if (checked) {
+        section.classList.remove('d-none');
+      } else {
+        section.classList.add('d-none');
+      }
+    }
+
+    // Calculate fuel balance after refuel
+    document.getElementById('fuel-qty').addEventListener('input', function() {
+      const fuelNeeded = parseFloat(this.value) || 0;
+      const balanceAfter = currentFuelBalance + fuelNeeded;
+      document.getElementById('balance-after').textContent = balanceAfter.toFixed(1) + ' L';
+    });
+
+    // Auto-calculate total gasoline
+    ['balanceInTank', 'issuedByOffice', 'purchasedDuringTrip'].forEach(id => {
+      document.getElementById(id).addEventListener('input', calculateTotalGasoline);
+    });
+
+    function calculateTotalGasoline() {
+      const balance = parseFloat(document.getElementById('balanceInTank').value) || 0;
+      const issued = parseFloat(document.getElementById('issuedByOffice').value) || 0;
+      const purchased = parseFloat(document.getElementById('purchasedDuringTrip').value) || 0;
+      
+      const total = balance + issued + purchased;
+      document.getElementById('totalGasoline').value = total.toFixed(1);
+    }
+
+    // Auto-calculate distance travelled
+    ['speedometerStart', 'speedometerEnd'].forEach(id => {
+      document.getElementById(id).addEventListener('input', calculateDistance);
+    });
+
+    function calculateDistance() {
+      const start = parseFloat(document.getElementById('speedometerStart').value) || 0;
+      const end = parseFloat(document.getElementById('speedometerEnd').value) || 0;
+      
+      const distance = end - start;
+      document.getElementById('distanceTravelled').value = distance >= 0 ? distance : 0;
+    }
+
+    // Submit DTT
+    async function submitDtt() {
+      // Get form values
+      const vehicle = document.getElementById('vehicle').value;
+      const plateNo = document.getElementById('plateNo').value;
+      const destination = document.getElementById('destination').value.trim();
+      const periodFrom = document.getElementById('periodFrom').value;
+      const periodTo = document.getElementById('periodTo').value;
+      const purpose = document.getElementById('purpose').value.trim();
+      const requestFuel = document.getElementById('requestFuel').checked;
+      const fuelQty = requestFuel ? parseFloat(document.getElementById('fuel-qty').value) : 0;
+
+      // Validation
+      if (!vehicle) {
+        alert('Please select a vehicle');
+        return;
+      }
+      if (!destination) {
+        alert('Please enter destination');
+        return;
+      }
+      if (!periodFrom || !periodTo) {
+        alert('Please select period covered');
+        return;
+      }
+      if (!purpose || purpose.length < 10) {
+        alert('Please enter purpose (at least 10 characters)');
+        return;
+      }
+      if (requestFuel && (!fuelQty || fuelQty <= 0)) {
+        alert('Please enter fuel quantity needed');
+        return;
+      }
+
+      // Show loading
+      loadingModal.show();
+
+      try {
+        const user = auth.currentUser;
+        const dttId = 'DTT_' + Date.now();
+
+        // Create DTT document
+        await db.collection('dtts').doc(dttId).set({
+          dttId: dttId,
+          driverUid: user.uid,
+          driverEmail: user.email,
+          driverName: user.displayName || user.email,
+          plateNo: plateNo,
+          
+          // Trip Info
+          destination: destination,
+          periodFrom: periodFrom,
+          periodTo: periodTo,
+          purpose: purpose,
+          passengers: passengers,
+          
+          // Trip Details
+          timeDepartOffice: document.getElementById('timeDepartOffice').value,
+          timeArrivalDest: document.getElementById('timeArrivalDest').value,
+          timeDepartDest: document.getElementById('timeDepartDest').value,
+          timeArrivalOffice: document.getElementById('timeArrivalOffice').value,
+          approximateDistance: parseFloat(document.getElementById('approximateDistance').value) || 0,
+          
+          // Gasoline
+          balanceInTank: parseFloat(document.getElementById('balanceInTank').value) || 0,
+          issuedByOffice: parseFloat(document.getElementById('issuedByOffice').value) || 0,
+          purchasedDuringTrip: parseFloat(document.getElementById('purchasedDuringTrip').value) || 0,
+          totalGasoline: parseFloat(document.getElementById('totalGasoline').value) || 0,
+          
+          // Other fluids
+          gearOil: parseFloat(document.getElementById('gearOil').value) || 0,
+          lubOil: parseFloat(document.getElementById('lubOil').value) || 0,
+          grease: parseFloat(document.getElementById('grease').value) || 0,
+          
+          // Speedometer
+          speedometerStart: parseFloat(document.getElementById('speedometerStart').value) || 0,
+          speedometerEnd: parseFloat(document.getElementById('speedometerEnd').value) || 0,
+          distanceTravelled: parseFloat(document.getElementById('distanceTravelled').value) || 0,
+          
+          // Remarks
+          remarks: document.getElementById('remarks').value.trim(),
+          
+          // Fuel Request
+          fuelBalanceStart: currentFuelBalance,
+          requestFuel: requestFuel,
+          requisitionQty: fuelQty,
+          
+          status: 'Draft',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Hide loading
+        loadingModal.hide();
+
+        // Success
+        alert('✓ Trip ticket created successfully!\n\nDTT ID: ' + dttId);
+        window.location.href = 'index.html';
+
+      } catch (error) {
+        console.error('Error creating DTT:', error);
+        loadingModal.hide();
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Go back
+    function goBack() {
+      if (confirm('Are you sure you want to cancel? All data will be lost.')) {
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Initialize passengers list
+    renderPassengers();
+  </script>
+
+</body>
+</html>

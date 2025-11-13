@@ -327,11 +327,17 @@
           </div>
         ` : ''}
 
-        ${dtt.status === 'In-Progress' ? `
-          <button onclick="closeDtt('${dtt.dttId}')" class="btn btn-success btn-sm w-100 mt-3">
-            <i class="bi bi-check-circle me-2"></i>Close Trip
+        <div class="mt-3 d-grid gap-2">
+          <button onclick="viewTripDetails('${dtt.dttId}')" class="btn btn-primary btn-sm">
+            <i class="bi bi-eye me-2"></i>View Details
           </button>
-        ` : ''}
+
+          ${dtt.status === 'In-Progress' ? `
+            <button onclick="closeDtt('${dtt.dttId}')" class="btn btn-success btn-sm">
+              <i class="bi bi-check-circle me-2"></i>Close Trip
+            </button>
+          ` : ''}
+        </div>
 
         ${dtt.status === 'Closed' && dtt.distanceTraveled ? `
           <div class="mt-3 pt-3 border-top">
@@ -354,6 +360,247 @@
       `;
 
       return card;
+    }
+
+    // View Trip Details
+    async function viewTripDetails(dttId) {
+      try {
+        const doc = await db.collection('dtts').doc(dttId).get();
+        if (!doc.exists) {
+          modalManager.alert({
+            title: 'Error',
+            message: 'Trip not found.',
+            type: 'error'
+          });
+          return;
+        }
+
+        const dtt = doc.data();
+
+        // Format date
+        const formatDate = (timestamp) => {
+          if (!timestamp) return 'N/A';
+          return new Date(timestamp.toDate()).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        };
+
+        // Build detail content
+        let detailsHTML = `
+          <div class="modal-section-title">
+            <i class="bi bi-info-circle me-2"></i>Trip Information
+          </div>
+
+          <div class="modal-info-row">
+            <div>
+              <div class="modal-info-label">DTT ID</div>
+              <div class="modal-important-info">${dtt.dttId}</div>
+            </div>
+            <span class="badge bg-${getStatusColor(dtt.status)}">${dtt.status}</span>
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Destination</div>
+            <div class="modal-important-info">${dtt.destination}</div>
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Purpose</div>
+            <div>${dtt.purpose}</div>
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Period Covered</div>
+            <div><strong>${dtt.periodFrom || 'N/A'}</strong> to <strong>${dtt.periodTo || 'N/A'}</strong></div>
+          </div>
+
+          <div class="modal-section-title">
+            <i class="bi bi-truck me-2"></i>Vehicle Information
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Plate Number</div>
+            <div class="modal-important-info">${dtt.plateNo}</div>
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Driver</div>
+            <div>${dtt.driverName || dtt.driverEmail}</div>
+          </div>
+
+          ${dtt.passengers && dtt.passengers.length > 0 ? `
+            <div class="modal-info-row">
+              <div class="modal-info-label">Passengers (${dtt.passengers.length})</div>
+              <div>${dtt.passengers.join(', ')}</div>
+            </div>
+          ` : ''}
+        `;
+
+        // Fuel Information
+        if (dtt.requestFuel) {
+          detailsHTML += `
+            <div class="modal-section-title">
+              <i class="bi bi-fuel-pump me-2"></i>Fuel Request
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Fuel Requested</div>
+              <div class="modal-important-info">${dtt.requisitionQty || 0} Liters</div>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Starting Balance</div>
+              <div>${dtt.fuelBalanceStart || 0} L</div>
+            </div>
+
+            ${dtt.linkedRisId ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Linked RIS</div>
+                <div class="modal-important-info">${dtt.linkedRisId}</div>
+              </div>
+            ` : ''}
+          `;
+        }
+
+        // Trip Details (if closed)
+        if (dtt.status === 'Closed' && dtt.distanceTraveled) {
+          detailsHTML += `
+            <div class="modal-section-title">
+              <i class="bi bi-speedometer me-2"></i>Trip Summary
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Distance Traveled</div>
+              <div class="modal-important-info">${dtt.distanceTraveled || 0} km</div>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Fuel Used</div>
+              <div class="modal-important-info">${dtt.fuelUsed || 0} L</div>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Fuel Efficiency</div>
+              <div class="modal-important-info">${dtt.kmPerLiter ? dtt.kmPerLiter.toFixed(2) : 0} km/L</div>
+            </div>
+
+            ${dtt.speedometerStart ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Odometer Start</div>
+                <div>${dtt.speedometerStart} km</div>
+              </div>
+            ` : ''}
+
+            ${dtt.speedometerEnd ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Odometer End</div>
+                <div>${dtt.speedometerEnd} km</div>
+              </div>
+            ` : ''}
+          `;
+        }
+
+        // Gasoline Details
+        if (dtt.totalGasoline) {
+          detailsHTML += `
+            <div class="modal-section-title">
+              <i class="bi bi-droplet me-2"></i>Gasoline Breakdown
+            </div>
+
+            ${dtt.balanceInTank ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Balance in Tank</div>
+                <div>${dtt.balanceInTank} L</div>
+              </div>
+            ` : ''}
+
+            ${dtt.issuedByOffice ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Issued by Office</div>
+                <div>${dtt.issuedByOffice} L</div>
+              </div>
+            ` : ''}
+
+            ${dtt.purchasedDuringTrip ? `
+              <div class="modal-info-row">
+                <div class="modal-info-label">Purchased During Trip</div>
+                <div>${dtt.purchasedDuringTrip} L</div>
+              </div>
+            ` : ''}
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Total Gasoline</div>
+              <div class="modal-important-info">${dtt.totalGasoline} L</div>
+            </div>
+          `;
+        }
+
+        // Timestamps
+        detailsHTML += `
+          <div class="modal-section-title">
+            <i class="bi bi-clock me-2"></i>Timeline
+          </div>
+
+          <div class="modal-info-row">
+            <div class="modal-info-label">Created</div>
+            <div>${formatDate(dtt.createdAt)}</div>
+          </div>
+
+          ${dtt.closedAt ? `
+            <div class="modal-info-row">
+              <div class="modal-info-label">Closed</div>
+              <div class="modal-important-info">${formatDate(dtt.closedAt)}</div>
+            </div>
+          ` : ''}
+
+          ${dtt.remarks ? `
+            <div class="modal-section-title">
+              <i class="bi bi-chat-left-text me-2"></i>Remarks
+            </div>
+            <div class="p-2 bg-light rounded">
+              ${dtt.remarks}
+            </div>
+          ` : ''}
+        `;
+
+        // Show modal
+        modalManager.show({
+          title: `Trip Details - ${dtt.destination}`,
+          content: detailsHTML,
+          size: 'large',
+          closable: true,
+          buttons: [
+            {
+              label: 'Close',
+              type: 'secondary',
+              onClick: () => {}
+            }
+          ]
+        });
+
+      } catch (error) {
+        console.error('Error loading trip details:', error);
+        modalManager.alert({
+          title: 'Error',
+          message: 'Failed to load trip details: ' + error.message,
+          type: 'error'
+        });
+      }
+    }
+
+    // Helper function for status badge color
+    function getStatusColor(status) {
+      const colors = {
+        'Draft': 'secondary',
+        'Approved': 'success',
+        'In-Progress': 'primary',
+        'Closed': 'dark'
+      };
+      return colors[status] || 'secondary';
     }
 
     // Close DTT

@@ -605,44 +605,311 @@
 
     // Close DTT
     async function closeDtt(dttId) {
+      try {
+        // Fetch DTT data
+        const doc = await db.collection('dtts').doc(dttId).get();
+        if (!doc.exists) {
+          modalManager.alert({
+            title: 'Error',
+            message: 'Trip not found.',
+            type: 'error'
+          });
+          return;
+        }
+
+        const dtt = doc.data();
+
+        // Fetch vehicle data for standard km/L
+        const vehicleDoc = await db.collection('vehicles').doc(dtt.plateNo).get();
+        const vehicle = vehicleDoc.exists ? vehicleDoc.data() : null;
+        const standardKmPerLiter = vehicle ? vehicle.standardKmPerLiter || 10 : 10;
+
+        // Build close trip form
+        const formHTML = `
+          <div class="modal-section-title">
+            <i class="bi bi-speedometer me-2"></i>Trip Completion
+          </div>
+
+          <div class="alert alert-info mb-3">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Destination:</strong> <span class="modal-important-info">${dtt.destination}</span>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Odometer Reading at Start</label>
+            <input type="number" class="form-control" value="${dtt.speedometerStart || 0}" readonly>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Odometer Reading at End <span class="text-danger">*</span></label>
+            <input type="number" id="close-odometer-end" class="form-control"
+                   placeholder="Enter end reading" min="${dtt.speedometerStart || 0}" required>
+            <small class="text-muted">Current reading on vehicle odometer</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Distance Traveled (Auto-calculated)</label>
+            <div class="input-group">
+              <input type="number" id="close-distance" class="form-control" readonly
+                     value="0">
+              <span class="input-group-text">km</span>
+            </div>
+          </div>
+
+          <div class="modal-section-title mt-4">
+            <i class="bi bi-fuel-pump me-2"></i>Fuel Information
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Fuel Balance at Start</label>
+            <div class="input-group">
+              <input type="number" class="form-control" value="${dtt.fuelBalanceStart || 0}" readonly>
+              <span class="input-group-text">L</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Fuel Balance at End <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="number" id="close-fuel-end" class="form-control"
+                     placeholder="Enter remaining fuel" step="0.1" min="0" required>
+              <span class="input-group-text">L</span>
+            </div>
+            <small class="text-muted">Estimated fuel remaining in tank</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Fuel Used (Auto-calculated)</label>
+            <div class="input-group">
+              <input type="number" id="close-fuel-used" class="form-control" readonly value="0">
+              <span class="input-group-text">L</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Fuel Efficiency (Auto-calculated)</label>
+            <div class="input-group">
+              <input type="number" id="close-efficiency" class="form-control" readonly value="0">
+              <span class="input-group-text">km/L</span>
+            </div>
+            <small class="text-muted">Standard: ${standardKmPerLiter} km/L</small>
+          </div>
+
+          <div class="modal-section-title mt-4">
+            <i class="bi bi-chat-left-text me-2"></i>Additional Information (Optional)
+          </div>
+
+          <div class="mb-3">
+            <label class="modal-info-label">Remarks</label>
+            <textarea id="close-remarks" class="form-control" rows="3"
+                      placeholder="Any additional notes or observations..."></textarea>
+          </div>
+        `;
+
+        // Show modal
+        const modal = modalManager.show({
+          title: `Close Trip - ${dtt.destination}`,
+          content: formHTML,
+          size: 'large',
+          closable: true,
+          buttons: [
+            {
+              label: 'Cancel',
+              type: 'secondary',
+              onClick: () => {}
+            },
+            {
+              label: 'Close Trip',
+              type: 'success',
+              icon: 'check-circle',
+              closeOnClick: false,
+              onClick: async () => {
+                await submitCloseDtt(dttId, dtt, standardKmPerLiter);
+              }
+            }
+          ]
+        });
+
+        // Add auto-calculation listeners
+        const odometerEndInput = modal.querySelector('#close-odometer-end');
+        const fuelEndInput = modal.querySelector('#close-fuel-end');
+        const distanceInput = modal.querySelector('#close-distance');
+        const fuelUsedInput = modal.querySelector('#close-fuel-used');
+        const efficiencyInput = modal.querySelector('#close-efficiency');
+
+        function calculateValues() {
+          const odometerEnd = parseFloat(odometerEndInput.value) || 0;
+          const fuelEnd = parseFloat(fuelEndInput.value) || 0;
+          const odometerStart = dtt.speedometerStart || 0;
+          const fuelStart = dtt.fuelBalanceStart || 0;
+
+          // Calculate distance
+          const distance = odometerEnd - odometerStart;
+          distanceInput.value = distance >= 0 ? distance.toFixed(1) : 0;
+
+          // Calculate fuel used
+          const fuelUsed = fuelStart - fuelEnd;
+          fuelUsedInput.value = fuelUsed >= 0 ? fuelUsed.toFixed(2) : 0;
+
+          // Calculate efficiency
+          if (distance > 0 && fuelUsed > 0) {
+            const efficiency = distance / fuelUsed;
+            efficiencyInput.value = efficiency.toFixed(2);
+
+            // Change color if below standard
+            if (efficiency < standardKmPerLiter * 0.8) {
+              efficiencyInput.style.color = '#d93025'; // Red
+            } else {
+              efficiencyInput.style.color = '#1e8e3e'; // Green
+            }
+          } else {
+            efficiencyInput.value = '0.00';
+            efficiencyInput.style.color = '';
+          }
+        }
+
+        odometerEndInput.addEventListener('input', calculateValues);
+        fuelEndInput.addEventListener('input', calculateValues);
+
+      } catch (error) {
+        console.error('Error loading trip for closing:', error);
+        modalManager.alert({
+          title: 'Error',
+          message: 'Failed to load trip data: ' + error.message,
+          type: 'error'
+        });
+      }
+    }
+
+    // Submit Close DTT
+    async function submitCloseDtt(dttId, originalDtt, standardKmPerLiter) {
+      // Get form values
+      const odometerEnd = parseFloat(document.getElementById('close-odometer-end').value);
+      const fuelEnd = parseFloat(document.getElementById('close-fuel-end').value);
+      const remarks = document.getElementById('close-remarks').value.trim();
+
+      // Validation
+      if (!odometerEnd || odometerEnd <= 0) {
+        modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please enter the end odometer reading.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      if (odometerEnd < originalDtt.speedometerStart) {
+        modalManager.alert({
+          title: 'Invalid Input',
+          message: 'End odometer reading cannot be less than start reading.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      if (fuelEnd === null || fuelEnd === undefined || fuelEnd < 0) {
+        modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please enter the fuel balance at end.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      // Calculate values
+      const distanceTraveled = odometerEnd - (originalDtt.speedometerStart || 0);
+      const fuelUsed = (originalDtt.fuelBalanceStart || 0) - fuelEnd;
+      const kmPerLiter = fuelUsed > 0 ? distanceTraveled / fuelUsed : 0;
+
+      // Confirm close
       const confirmed = await modalManager.confirm({
-        title: 'Close Trip',
-        message: 'Are you sure you want to close this trip? This action cannot be undone.',
-        confirmText: 'Close Trip',
+        title: 'Confirm Close Trip',
+        message: `
+          <div class="modal-info-row">
+            <div class="modal-info-label">Distance Traveled</div>
+            <div class="modal-important-info">${distanceTraveled.toFixed(1)} km</div>
+          </div>
+          <div class="modal-info-row">
+            <div class="modal-info-label">Fuel Used</div>
+            <div class="modal-important-info">${fuelUsed.toFixed(2)} L</div>
+          </div>
+          <div class="modal-info-row">
+            <div class="modal-info-label">Fuel Efficiency</div>
+            <div class="modal-important-info">${kmPerLiter.toFixed(2)} km/L</div>
+          </div>
+          <p class="mt-3">Are you sure you want to close this trip?</p>
+        `,
+        confirmText: 'Yes, Close Trip',
         cancelText: 'Cancel',
         confirmType: 'success'
       });
 
-      if (confirmed) {
-        try {
-          const loadingId = modalManager.loading({
-            title: 'Closing Trip',
-            message: 'Please wait...'
-          });
+      if (!confirmed) return;
 
-          await db.collection('dtts').doc(dttId).update({
-            status: 'Closed',
-            closedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+      // Show loading
+      const loadingId = modalManager.loading({
+        title: 'Closing Trip',
+        message: 'Please wait...'
+      });
 
-          modalManager.close(loadingId);
+      try {
+        // Update DTT
+        await db.collection('dtts').doc(dttId).update({
+          status: 'Closed',
+          speedometerEnd: odometerEnd,
+          distanceTraveled: distanceTraveled,
+          fuelBalanceEnd: fuelEnd,
+          fuelUsed: fuelUsed,
+          kmPerLiter: kmPerLiter,
+          remarks: remarks || originalDtt.remarks || '',
+          closedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
-          await modalManager.alert({
-            title: 'Success',
-            message: 'Trip has been closed successfully!',
-            type: 'success'
-          });
+        // TODO: In Phase 2, Cloud Function will update vehicle fuel balance
 
-          // Reload trips
-          loadTrips(currentTab);
-        } catch (error) {
-          modalManager.alert({
-            title: 'Error',
-            message: 'Failed to close trip: ' + error.message,
-            type: 'error'
-          });
-        }
+        modalManager.close(loadingId);
+
+        // Show success with summary
+        await modalManager.alert({
+          title: 'Trip Closed Successfully',
+          message: `
+            <div class="text-center mb-3">
+              <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+            </div>
+            <div class="modal-info-row">
+              <div class="modal-info-label">Trip</div>
+              <div class="modal-important-info">${originalDtt.destination}</div>
+            </div>
+            <div class="modal-info-row">
+              <div class="modal-info-label">Distance</div>
+              <div class="modal-important-info">${distanceTraveled.toFixed(1)} km</div>
+            </div>
+            <div class="modal-info-row">
+              <div class="modal-info-label">Fuel Efficiency</div>
+              <div class="modal-important-info">${kmPerLiter.toFixed(2)} km/L</div>
+            </div>
+            ${kmPerLiter < standardKmPerLiter * 0.8 ? `
+              <div class="alert alert-warning mt-3 mb-0">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Note:</strong> Fuel efficiency is below standard (${standardKmPerLiter} km/L)
+              </div>
+            ` : ''}
+          `,
+          type: 'success'
+        });
+
+        // Reload trips
+        loadTrips(currentTab);
+
+      } catch (error) {
+        console.error('Error closing trip:', error);
+        modalManager.close(loadingId);
+        modalManager.alert({
+          title: 'Error',
+          message: 'Failed to close trip: ' + error.message,
+          type: 'error'
+        });
       }
     }
 

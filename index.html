@@ -221,7 +221,8 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container py-4 mb-5">
+    <!-- [GEMINI] FIX: Pinalitan ang 'mb-5' (3rem) ng inline style 'margin-bottom: 7rem;' para magbigay ng sapat na espasyo para sa fixed bottom nav -->
+    <div class="container py-4" style="margin-bottom: 7rem;">
       
       <!-- Stats Cards -->
       <div class="row g-3 mb-4">
@@ -240,7 +241,7 @@
             <div class="stat-icon">
               <i class="bi bi-fuel-pump"></i>
             </div>
-            <h3 class="mb-0" id="fuel-count">0</h3>
+            <h3 classm"mb-0" id="fuel-count">0</h3>
             <p class="text-muted mb-0 small">Fuel Requests</p>
           </div>
         </div>
@@ -275,7 +276,8 @@
           <i class="bi bi-list-check me-2"></i>View My Trips
         </button>
         
-        <button onclick="showRequestFuel()" class="btn btn-warning action-btn text-white">
+        <!-- [GEMINI] FIX: Pinalitan ang 'text-white' ng 'text-dark' para mas madaling mabasa ang text sa yellow button -->
+        <button onclick="showRequestFuel()" class="btn btn-warning action-btn text-dark">
           <i class="bi bi-fuel-pump-fill me-2"></i>Request Fuel
         </button>
       </div>

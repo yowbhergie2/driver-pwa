@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Setup - DPWH</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header bg-danger text-white">
+            <h4 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Admin Authentication Required</h4>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Admin Access Only</strong><br>
+              Please login with admin credentials to access vehicle import and setup.
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Admin Email</label>
+              <input type="email" id="admin-email" class="form-control" placeholder="admin@dpwh.gov.ph">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input type="password" id="admin-password" class="form-control">
+            </div>
+            <button onclick="adminLogin()" class="btn btn-danger w-100">
+              <i class="bi bi-box-arrow-in-right me-2"></i>Login as Admin
+            </button>
+            <div id="login-result" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Admin Panel -->
+  <div id="admin-panel" class="container mt-5 d-none">
+    <div class="row justify-content-center">
+      <div class="col-md-10">
+
+        <!-- Header -->
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Admin Setup - DPWH Vehicle Management</h4>
+            <button onclick="adminLogout()" class="btn btn-sm btn-light">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </button>
+          </div>
+          <div class="card-body">
+            <p class="mb-0">Setup EMD Staff account and import vehicles database.</p>
+          </div>
+        </div>
+
+        <!-- Step 1: Create EMD Account -->
+        <div class="card mb-4">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Step 1: Create EMD Staff Account</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" id="emd-email" class="form-control" placeholder="emd@dpwh.gov.ph">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input type="password" id="emd-password" class="form-control" placeholder="Minimum 6 characters">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="emd-name" class="form-control" placeholder="Juan Dela Cruz">
+            </div>
+            <button onclick="createEmdAccount()" class="btn btn-success">
+              <i class="bi bi-person-plus me-2"></i>Create EMD Account
+            </button>
+            <div id="emd-result" class="mt-3"></div>
+          </div>
+        </div>
+
+        <!-- Step 2: Import Vehicles -->
+        <div class="card mb-4">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Step 2: Import Service Vehicles</h5>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>Format:</strong> Paste your vehicle list in CSV format (one vehicle per line).
+              <br><small>Example: TOYOTA,VIOS,H1 5750,DPWH-001</small>
+              <br><small class="text-muted">Note: Special characters in plate numbers (/, spaces) will be handled automatically.</small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Vehicle List (CSV format: Brand,Model,PlateNo,DpwhNo)</label>
+              <textarea id="vehicle-csv" class="form-control" rows="10" placeholder="TOYOTA,VIOS,H1 5750,DPWH-001
+MITSUBISHI,STRADA,H1 5751,DPWH-002
+ISUZU,D-MAX,H1 5752,DPWH-003"></textarea>
+            </div>
+
+            <button onclick="importVehicles()" class="btn btn-info">
+              <i class="bi bi-upload me-2"></i>Import Vehicles
+            </button>
+            <div id="vehicle-result" class="mt-3"></div>
+          </div>
+        </div>
+
+        <!-- Step 3: Manual Add Vehicle -->
+        <div class="card mb-4">
+          <div class="card-header bg-warning">
+            <h5 class="mb-0">Step 3: Add Single Vehicle (Optional)</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Brand</label>
+                <input type="text" id="vehicle-brand" class="form-control text-uppercase" placeholder="TOYOTA">
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Model</label>
+                <input type="text" id="vehicle-model" class="form-control text-uppercase" placeholder="VIOS">
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Plate Number</label>
+                <input type="text" id="vehicle-plate" class="form-control text-uppercase" placeholder="H1 5750">
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">DPWH No.</label>
+                <input type="text" id="vehicle-dpwh" class="form-control text-uppercase" placeholder="DPWH-001">
+              </div>
+            </div>
+            <button onclick="addSingleVehicle()" class="btn btn-warning">
+              <i class="bi bi-plus-circle me-2"></i>Add Vehicle
+            </button>
+            <div id="single-vehicle-result" class="mt-3"></div>
+          </div>
+        </div>
+
+        <!-- Current Vehicles -->
+        <div class="card mb-4">
+          <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Current Vehicles in Database</h5>
+          </div>
+          <div class="card-body">
+            <button onclick="loadVehicles()" class="btn btn-secondary mb-3">
+              <i class="bi bi-arrow-clockwise me-2"></i>Refresh List
+            </button>
+            <div id="vehicles-list"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTPngeGZviiOjv3N1V_wPTGvRUVFOPa14",
+      authDomain: "fuel-vehicle-management.firebaseapp.com",
+      projectId: "fuel-vehicle-management",
+      storageBucket: "fuel-vehicle-management.firebasestorage.app",
+      messagingSenderId: "821758027736",
+      appId: "1:821758027736:web:3b1924046e73cb0c9434ad"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Create EMD Account
+    async function createEmdAccount() {
+      const email = document.getElementById('emd-email').value;
+      const password = document.getElementById('emd-password').value;
+      const name = document.getElementById('emd-name').value;
+      const resultDiv = document.getElementById('emd-result');
+
+      if (!email || !password || !name) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Please fill in all fields</div>';
+        return;
+      }
+
+      if (password.length < 6) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Password must be at least 6 characters</div>';
+        return;
+      }
+
+      try {
+        // Create user
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        // Create user document with EMD role
+        await db.collection('users').doc(user.uid).set({
+          email: email,
+          displayName: name,
+          role: 'emd', // EMD Staff role
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          assignedVehicles: []
+        });
+
+        resultDiv.innerHTML = `
+          <div class="alert alert-success">
+            <strong>Success!</strong><br>
+            EMD account created: ${email}<br>
+            UID: ${user.uid}<br>
+            Role: EMD Staff
+          </div>
+        `;
+
+        // Sign out immediately
+        await auth.signOut();
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="alert alert-danger">
+            <strong>Error:</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    // Import Vehicles from CSV
+    async function importVehicles() {
+      const csv = document.getElementById('vehicle-csv').value;
+      const resultDiv = document.getElementById('vehicle-result');
+
+      if (!csv.trim()) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Please enter vehicle data</div>';
+        return;
+      }
+
+      resultDiv.innerHTML = '<div class="alert alert-info">Importing vehicles...</div>';
+
+      const lines = csv.trim().split('\n');
+      let successCount = 0;
+      let errorCount = 0;
+      let errors = [];
+
+      for (const line of lines) {
+        const parts = line.split(',').map(p => p.trim());
+        if (parts.length < 4) continue;
+
+        const [brand, model, plateNo, dpwhNo] = parts;
+
+        try {
+          // Sanitize plate number for use as document ID
+          // Replace spaces, slashes, and special chars with underscore
+          const docId = plateNo.replace(/[\s\/\\.#\[\]$]/g, '_');
+
+          await db.collection('vehicles').doc(docId).set({
+            brand: brand.toUpperCase(),
+            model: model.toUpperCase(),
+            plateNo: plateNo.toUpperCase(),
+            dpwhNo: dpwhNo.toUpperCase(),
+            fuelCapacity: 50,
+            currentFuelBalance: 0,
+            status: 'Available',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          errors.push(`${plateNo}: ${error.message}`);
+        }
+      }
+
+      let resultHtml = `
+        <div class="alert alert-success">
+          <strong>Import Complete!</strong><br>
+          Successfully imported: ${successCount} vehicles<br>
+          ${errorCount > 0 ? `Errors: ${errorCount}<br>` : ''}
+        </div>
+      `;
+
+      if (errors.length > 0) {
+        resultHtml += '<div class="alert alert-warning"><strong>Errors:</strong><ul>';
+        errors.forEach(err => {
+          resultHtml += `<li>${err}</li>`;
+        });
+        resultHtml += '</ul></div>';
+      }
+
+      resultDiv.innerHTML = resultHtml;
+      loadVehicles();
+    }
+
+    // Add Single Vehicle
+    async function addSingleVehicle() {
+      const brand = document.getElementById('vehicle-brand').value;
+      const model = document.getElementById('vehicle-model').value;
+      const plateNo = document.getElementById('vehicle-plate').value;
+      const dpwhNo = document.getElementById('vehicle-dpwh').value;
+      const resultDiv = document.getElementById('single-vehicle-result');
+
+      if (!brand || !model || !plateNo || !dpwhNo) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Please fill in all required fields</div>';
+        return;
+      }
+
+      try {
+        // Sanitize plate number for use as document ID
+        const docId = plateNo.replace(/[\s\/\\.#\[\]$]/g, '_');
+
+        await db.collection('vehicles').doc(docId).set({
+          brand: brand.toUpperCase(),
+          model: model.toUpperCase(),
+          plateNo: plateNo.toUpperCase(),
+          dpwhNo: dpwhNo.toUpperCase(),
+          fuelCapacity: 50,
+          currentFuelBalance: 0,
+          status: 'Available',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        resultDiv.innerHTML = `
+          <div class="alert alert-success">
+            Vehicle added: ${brand} ${model} (${plateNo}) - ${dpwhNo}
+          </div>
+        `;
+
+        // Clear form
+        document.getElementById('vehicle-brand').value = '';
+        document.getElementById('vehicle-model').value = '';
+        document.getElementById('vehicle-plate').value = '';
+        document.getElementById('vehicle-dpwh').value = '';
+
+        loadVehicles();
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="alert alert-danger">
+            <strong>Error:</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    // Load and Display Vehicles
+    async function loadVehicles() {
+      const listDiv = document.getElementById('vehicles-list');
+      listDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+
+      try {
+        const snapshot = await db.collection('vehicles').get();
+
+        if (snapshot.empty) {
+          listDiv.innerHTML = '<div class="alert alert-info">No vehicles found</div>';
+          return;
+        }
+
+        let html = `
+          <table class="table table-striped table-sm">
+            <thead>
+              <tr>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Plate No</th>
+                <th>DPWH No</th>
+                <th>Capacity (L)</th>
+                <th>Balance (L)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        snapshot.forEach(doc => {
+          const vehicle = doc.data();
+          html += `
+            <tr>
+              <td>${vehicle.brand}</td>
+              <td>${vehicle.model}</td>
+              <td><strong>${vehicle.plateNo}</strong></td>
+              <td><strong>${vehicle.dpwhNo || 'N/A'}</strong></td>
+              <td>${vehicle.fuelCapacity}</td>
+              <td>${vehicle.currentFuelBalance || 0}</td>
+              <td><span class="badge bg-success">${vehicle.status}</span></td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        html += `<p class="text-muted">Total vehicles: ${snapshot.size}</p>`;
+
+        listDiv.innerHTML = html;
+      } catch (error) {
+        listDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+      }
+    }
+
+    // Admin Login
+    async function adminLogin() {
+      const email = document.getElementById('admin-email').value;
+      const password = document.getElementById('admin-password').value;
+      const resultDiv = document.getElementById('login-result');
+
+      if (!email || !password) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Please enter email and password</div>';
+        return;
+      }
+
+      resultDiv.innerHTML = '<div class="alert alert-info">Authenticating...</div>';
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        // Success - auth state listener will handle UI
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div class="alert alert-danger">
+            <strong>Login Failed:</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    // Admin Logout
+    async function adminLogout() {
+      try {
+        await auth.signOut();
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    }
+
+    // Auth state listener
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        // User is logged in
+        document.getElementById('login-screen').classList.add('d-none');
+        document.getElementById('admin-panel').classList.remove('d-none');
+        loadVehicles();
+      } else {
+        // User is logged out
+        document.getElementById('login-screen').classList.remove('d-none');
+        document.getElementById('admin-panel').classList.add('d-none');
+      }
+    });
+  </script>
+</body>
+</html>

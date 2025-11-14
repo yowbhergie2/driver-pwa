@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - DPWH</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+  <!-- Gmail-Style Modal System -->
+  <link rel="stylesheet" href="modal-styles.css">
+
+  <!-- Fix for getComputedStyle errors -->
+  <script src="fix-getcomputedstyle.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root {
+      --dpwh-blue: #003f87;
+      --dpwh-light-blue: #0056b3;
+    }
+
+    body {
+      background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+      min-height: 100vh;
+    }
+
+    .header-dpwh {
+      background: linear-gradient(135deg, var(--dpwh-blue) 0%, var(--dpwh-light-blue) 100%);
+      color: white;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .profile-card {
+      background: white;
+      border-radius: 15px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .profile-avatar {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, var(--dpwh-blue) 0%, var(--dpwh-light-blue) 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: white;
+      margin: 0 auto 1rem;
+    }
+
+    .info-row {
+      border-bottom: 1px solid #e0e0e0;
+      padding: 1rem 0;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: #6c757d;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      color: #212529;
+      font-size: 1.125rem;
+      font-weight: 500;
+      margin-top: 0.25rem;
+    }
+
+    .action-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      border-left: 4px solid var(--dpwh-blue);
+    }
+
+    .action-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+    }
+
+    .action-card.danger {
+      border-left-color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Splash -->
+  <div id="auth-loading" class="container d-flex align-items-center justify-content-center min-vh-100">
+    <div class="text-center">
+      <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="text-muted">Loading...</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main-content" class="d-none">
+
+  <!-- Header -->
+  <div class="header-dpwh">
+    <div class="container">
+      <div class="d-flex align-items-center">
+        <button onclick="goBack()" class="btn btn-outline-light btn-sm me-3">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+        <div>
+          <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>My Profile</h5>
+          <small>Account Information</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="container py-4" style="padding-bottom: 120px;">
+
+    <!-- Profile Info Card -->
+    <div class="profile-card">
+      <div class="profile-avatar">
+        <i class="bi bi-person-fill"></i>
+      </div>
+
+      <div class="text-center mb-4">
+        <h4 class="mb-1" id="display-name">Loading...</h4>
+        <p class="text-muted mb-0" id="user-role">Driver</p>
+      </div>
+
+      <div class="info-row">
+        <div class="info-label">Email Address</div>
+        <div class="info-value" id="user-email">loading@example.com</div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-label">User ID</div>
+        <div class="info-value">
+          <small class="text-muted" id="user-uid">xxxxxxxxxxxxxxxxx</small>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-label">Member Since</div>
+        <div class="info-value" id="member-since">January 2025</div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-label">Last Login</div>
+        <div class="info-value" id="last-login">Just now</div>
+      </div>
+    </div>
+
+    <!-- Assigned Vehicles Card -->
+    <div class="profile-card">
+      <h6 class="fw-bold mb-3">
+        <i class="bi bi-truck me-2"></i>Assigned Vehicles
+      </h6>
+      <div id="assigned-vehicles">
+        <div class="text-center text-muted py-3">
+          <i class="bi bi-hourglass-split"></i> Loading vehicles...
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <h6 class="fw-bold mb-3 mt-4">Quick Actions</h6>
+
+    <div class="action-card" onclick="changePassword()">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-key fs-3 me-3 text-primary"></i>
+        <div class="flex-grow-1">
+          <div class="fw-bold">Change Password</div>
+          <small class="text-muted">Update your account password</small>
+        </div>
+        <i class="bi bi-chevron-right text-muted"></i>
+      </div>
+    </div>
+
+    <div class="action-card" onclick="viewStatistics()">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-graph-up fs-3 me-3 text-success"></i>
+        <div class="flex-grow-1">
+          <div class="fw-bold">My Statistics</div>
+          <small class="text-muted">View your trip and fuel statistics</small>
+        </div>
+        <i class="bi bi-chevron-right text-muted"></i>
+      </div>
+    </div>
+
+    <div class="action-card danger" onclick="logout()">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-box-arrow-right fs-3 me-3 text-danger"></i>
+        <div class="flex-grow-1">
+          <div class="fw-bold text-danger">Logout</div>
+          <small class="text-muted">Sign out of your account</small>
+        </div>
+        <i class="bi bi-chevron-right text-muted"></i>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="fixed-bottom bg-white border-top shadow-lg">
+    <div class="container">
+      <div class="row text-center py-2">
+        <div class="col-3">
+          <a href="index.html" class="d-block text-decoration-none text-secondary">
+            <i class="bi bi-house fs-4 d-block"></i>
+            <small>Home</small>
+          </a>
+        </div>
+        <div class="col-3">
+          <a href="my-trips.html" class="d-block text-decoration-none text-secondary">
+            <i class="bi bi-clipboard-check fs-4 d-block"></i>
+            <small>Trips</small>
+          </a>
+        </div>
+        <div class="col-3">
+          <a href="request-fuel.html" class="d-block text-decoration-none text-secondary">
+            <i class="bi bi-fuel-pump fs-4 d-block"></i>
+            <small>Fuel</small>
+          </a>
+        </div>
+        <div class="col-3">
+          <a href="profile.html" class="d-block text-decoration-none" style="color: var(--dpwh-blue);">
+            <i class="bi bi-person-fill fs-4 d-block"></i>
+            <small class="fw-bold">Profile</small>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div> <!-- End main-content -->
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Gmail-Style Modal System -->
+  <script src="modal-system.js"></script>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTPngeGZviiOjv3N1V_wPTGvRUVFOPa14",
+      authDomain: "fuel-vehicle-management.firebaseapp.com",
+      projectId: "fuel-vehicle-management",
+      storageBucket: "fuel-vehicle-management.firebasestorage.app",
+      messagingSenderId: "821758027736",
+      appId: "1:821758027736:web:3b1924046e73cb0c9434ad"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Check auth
+    auth.onAuthStateChanged(async user => {
+      if (!user) {
+        window.location.href = 'index.html';
+      } else {
+        document.getElementById('auth-loading').classList.add('d-none');
+        document.getElementById('main-content').classList.remove('d-none');
+        await loadProfile(user);
+      }
+    });
+
+    // Load profile data
+    async function loadProfile(user) {
+      try {
+        // Display name
+        const displayName = user.displayName || user.email.split('@')[0];
+        document.getElementById('display-name').textContent = displayName;
+
+        // Email
+        document.getElementById('user-email').textContent = user.email;
+
+        // UID
+        document.getElementById('user-uid').textContent = user.uid;
+
+        // Member since
+        const creationDate = new Date(user.metadata.creationTime);
+        document.getElementById('member-since').textContent = creationDate.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+
+        // Last login
+        const lastLogin = new Date(user.metadata.lastSignInTime);
+        const now = new Date();
+        const diffMinutes = Math.floor((now - lastLogin) / 1000 / 60);
+
+        let lastLoginText;
+        if (diffMinutes < 1) {
+          lastLoginText = 'Just now';
+        } else if (diffMinutes < 60) {
+          lastLoginText = `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+        } else if (diffMinutes < 1440) {
+          const hours = Math.floor(diffMinutes / 60);
+          lastLoginText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        } else {
+          lastLoginText = lastLogin.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+        }
+        document.getElementById('last-login').textContent = lastLoginText;
+
+        // Load assigned vehicles
+        await loadAssignedVehicles(user.uid);
+
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      }
+    }
+
+    // Load assigned vehicles
+    async function loadAssignedVehicles(userId) {
+      try {
+        // Get user document to see assigned vehicles
+        const userDoc = await db.collection('users').doc(userId).get();
+
+        const vehiclesContainer = document.getElementById('assigned-vehicles');
+
+        if (userDoc.exists && userDoc.data().assignedVehicles) {
+          const assignedVehicles = userDoc.data().assignedVehicles;
+
+          if (assignedVehicles.length === 0) {
+            vehiclesContainer.innerHTML = `
+              <div class="text-center text-muted py-3">
+                <i class="bi bi-info-circle"></i> No vehicles assigned yet
+              </div>
+            `;
+            return;
+          }
+
+          vehiclesContainer.innerHTML = '';
+
+          // Load each vehicle details
+          for (const plateNo of assignedVehicles) {
+            const vehicleDoc = await db.collection('vehicles').doc(plateNo).get();
+            if (vehicleDoc.exists) {
+              const vehicle = vehicleDoc.data();
+              const vehicleCard = document.createElement('div');
+              vehicleCard.className = 'border rounded p-3 mb-2';
+              vehicleCard.innerHTML = `
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-truck fs-2 me-3" style="color: var(--dpwh-blue);"></i>
+                  <div class="flex-grow-1">
+                    <div class="fw-bold">${vehicle.brand} ${vehicle.model}</div>
+                    <small class="text-muted">${vehicle.plateNo}</small>
+                  </div>
+                  <div class="text-end">
+                    <div class="fw-bold text-success">${vehicle.currentFuelBalance || 0} L</div>
+                    <small class="text-muted">Fuel Balance</small>
+                  </div>
+                </div>
+              `;
+              vehiclesContainer.appendChild(vehicleCard);
+            }
+          }
+        } else {
+          // Get vehicles from DTTs (fallback)
+          const dttsSnapshot = await db.collection('dtts')
+            .where('driverUid', '==', userId)
+            .limit(5)
+            .get();
+
+          const uniquePlates = new Set();
+          dttsSnapshot.forEach(doc => {
+            const plateNo = doc.data().plateNo;
+            if (plateNo) uniquePlates.add(plateNo);
+          });
+
+          if (uniquePlates.size === 0) {
+            vehiclesContainer.innerHTML = `
+              <div class="text-center text-muted py-3">
+                <i class="bi bi-info-circle"></i> No vehicles used yet
+              </div>
+            `;
+            return;
+          }
+
+          vehiclesContainer.innerHTML = '';
+
+          for (const plateNo of uniquePlates) {
+            const vehicleDoc = await db.collection('vehicles').doc(plateNo).get();
+            if (vehicleDoc.exists) {
+              const vehicle = vehicleDoc.data();
+              const vehicleCard = document.createElement('div');
+              vehicleCard.className = 'border rounded p-3 mb-2';
+              vehicleCard.innerHTML = `
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-truck fs-2 me-3" style="color: var(--dpwh-blue);"></i>
+                  <div class="flex-grow-1">
+                    <div class="fw-bold">${vehicle.brand} ${vehicle.model}</div>
+                    <small class="text-muted">${vehicle.plateNo}</small>
+                  </div>
+                  <div class="text-end">
+                    <div class="fw-bold text-success">${vehicle.currentFuelBalance || 0} L</div>
+                    <small class="text-muted">Fuel Balance</small>
+                  </div>
+                </div>
+              `;
+              vehiclesContainer.appendChild(vehicleCard);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading vehicles:', error);
+        document.getElementById('assigned-vehicles').innerHTML = `
+          <div class="text-center text-danger py-3">
+            <i class="bi bi-exclamation-circle"></i> Error loading vehicles
+          </div>
+        `;
+      }
+    }
+
+    // Change password
+    async function changePassword() {
+      const user = auth.currentUser;
+
+      const result = await modalManager.confirm({
+        title: 'Change Password',
+        message: `
+          <p>To change your password, we'll send a password reset email to:</p>
+          <p class="fw-bold text-primary">${user.email}</p>
+          <p class="text-muted">Click the link in the email to reset your password.</p>
+        `,
+        confirmText: 'Send Email',
+        cancelText: 'Cancel',
+        confirmType: 'primary'
+      });
+
+      if (result) {
+        try {
+          await auth.sendPasswordResetEmail(user.email);
+          modalManager.alert({
+            title: 'Email Sent!',
+            message: `Password reset email has been sent to ${user.email}. Check your inbox.`,
+            type: 'success'
+          });
+        } catch (error) {
+          modalManager.alert({
+            title: 'Error',
+            message: 'Failed to send password reset email: ' + error.message,
+            type: 'error'
+          });
+        }
+      }
+    }
+
+    // View statistics
+    async function viewStatistics() {
+      const user = auth.currentUser;
+
+      try {
+        // Get trip stats
+        const tripsSnapshot = await db.collection('dtts')
+          .where('driverUid', '==', user.uid)
+          .get();
+
+        const totalTrips = tripsSnapshot.size;
+        let closedTrips = 0;
+        let totalDistance = 0;
+        let totalFuelUsed = 0;
+
+        tripsSnapshot.forEach(doc => {
+          const dtt = doc.data();
+          if (dtt.status === 'Closed') {
+            closedTrips++;
+            totalDistance += dtt.distanceTraveled || 0;
+            totalFuelUsed += dtt.fuelUsed || 0;
+          }
+        });
+
+        const avgEfficiency = totalFuelUsed > 0 ? (totalDistance / totalFuelUsed).toFixed(2) : 0;
+
+        // Get fuel requests
+        const risSnapshot = await db.collection('risRequests')
+          .where('requestedByUid', '==', user.uid)
+          .get();
+
+        const totalFuelRequests = risSnapshot.size;
+        let approvedRequests = 0;
+
+        risSnapshot.forEach(doc => {
+          const ris = doc.data();
+          if (ris.status === 'Finalized') {
+            approvedRequests++;
+          }
+        });
+
+        modalManager.show({
+          title: 'My Statistics',
+          content: `
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="text-center p-3 bg-light rounded">
+                  <div class="fs-3 fw-bold text-primary">${totalTrips}</div>
+                  <small class="text-muted">Total Trips</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="text-center p-3 bg-light rounded">
+                  <div class="fs-3 fw-bold text-success">${closedTrips}</div>
+                  <small class="text-muted">Completed</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="text-center p-3 bg-light rounded">
+                  <div class="fs-3 fw-bold text-info">${totalDistance.toFixed(1)} km</div>
+                  <small class="text-muted">Total Distance</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="text-center p-3 bg-light rounded">
+                  <div class="fs-3 fw-bold text-warning">${totalFuelUsed.toFixed(1)} L</div>
+                  <small class="text-muted">Fuel Used</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="text-center p-3 bg-light rounded">
+                  <div class="fs-3 fw-bold text-dark">${avgEfficiency} km/L</div>
+                  <small class="text-muted">Avg Efficiency</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="text-center p-3 bg-light rounded">
+                  <div class="fs-3 fw-bold text-primary">${totalFuelRequests}</div>
+                  <small class="text-muted">Fuel Requests</small>
+                </div>
+              </div>
+            </div>
+          `,
+          size: 'medium',
+          buttons: [
+            {
+              label: 'Close',
+              type: 'primary',
+              onClick: () => {}
+            }
+          ]
+        });
+      } catch (error) {
+        modalManager.alert({
+          title: 'Error',
+          message: 'Failed to load statistics: ' + error.message,
+          type: 'error'
+        });
+      }
+    }
+
+    // Logout
+    async function logout() {
+      const confirmed = await modalManager.confirm({
+        title: 'Confirm Logout',
+        message: 'Are you sure you want to logout?',
+        confirmText: 'Logout',
+        cancelText: 'Cancel',
+        confirmType: 'danger'
+      });
+
+      if (confirmed) {
+        await auth.signOut();
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Go back
+    function goBack() {
+      window.location.href = 'index.html';
+    }
+  </script>
+
+</body>
+</html>

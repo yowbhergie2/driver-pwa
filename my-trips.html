@@ -24,7 +24,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  
+
+  <!-- DTT PDF Generator & Google Drive Upload -->
+  <script src="dtt-pdf-generator.js"></script>
+  <script src="google-drive-utils.js"></script>
+
   <style>
     :root {
       --dpwh-blue: #003f87;
@@ -146,22 +150,29 @@
     <div class="tab-content">
       <div class="tab-pane fade show active" id="active-pane" role="tabpanel">
         <div id="active-trips"></div>
+        <!-- Empty State for Active Trips -->
+        <div id="empty-state-active" class="d-none empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-clipboard-x"></i>
+          </div>
+          <h5 class="mt-3">No active trips</h5>
+          <p class="text-muted mb-4">Create your first trip to get started!</p>
+          <button onclick="goToCreateDtt()" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Create Trip
+          </button>
+        </div>
       </div>
       <div class="tab-pane fade" id="closed-pane" role="tabpanel">
         <div id="closed-trips"></div>
+        <!-- Empty State for Closed Trips -->
+        <div id="empty-state-closed" class="d-none empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <h5 class="mt-3">No closed trips</h5>
+          <p class="text-muted mb-4">Complete your active trips to see them here.</p>
+        </div>
       </div>
-    </div>
-
-    <!-- Empty State -->
-    <div id="empty-state" class="d-none empty-state">
-      <div class="empty-state-icon">
-        <i class="bi bi-clipboard-x"></i>
-      </div>
-      <h5 class="mt-3">No trips yet</h5>
-      <p class="text-muted mb-4">Create your first trip to get started!</p>
-      <button onclick="goToCreateDtt()" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-2"></i>Create Trip
-      </button>
     </div>
 
   </div>
@@ -204,20 +215,25 @@
       }
     });
 
-    // Load trips (FIXED - removed status from orderBy to avoid index requirement)
+    // Load trips (OPTIMIZED - limit results and add pagination)
     async function loadTrips(status) {
       currentTab = status;
       const user = auth.currentUser;
-      
+
       document.getElementById('loading').classList.remove('d-none');
       document.getElementById('active-trips').innerHTML = '';
       document.getElementById('closed-trips').innerHTML = '';
-      document.getElementById('empty-state').classList.add('d-none');
+
+      // Hide both empty states
+      document.getElementById('empty-state-active').classList.add('d-none');
+      document.getElementById('empty-state-closed').classList.add('d-none');
 
       try {
-        // Simple query - no orderBy to avoid index requirement
+        // Optimized query - limit to recent 50 trips
+        // For better performance, only load what's needed
         const snapshot = await db.collection('dtts')
           .where('driverUid', '==', user.uid)
+          .limit(50)
           .get();
 
         document.getElementById('loading').classList.add('d-none');
@@ -245,13 +261,15 @@
           return timeB - timeA; // Descending order (newest first)
         });
 
+        // Show appropriate empty state if no trips
         if (trips.length === 0) {
-          document.getElementById('empty-state').classList.remove('d-none');
+          const emptyStateId = status === 'active' ? 'empty-state-active' : 'empty-state-closed';
+          document.getElementById(emptyStateId).classList.remove('d-none');
           return;
         }
 
-        const container = status === 'active' ? 
-          document.getElementById('active-trips') : 
+        const container = status === 'active' ?
+          document.getElementById('active-trips') :
           document.getElementById('closed-trips');
 
         trips.forEach(dtt => {
@@ -669,7 +687,7 @@
           </button>
 
           <button onclick="viewTripPdf('${dtt.dttId}')" class="btn btn-outline-danger btn-sm">
-            <i class="bi bi-file-pdf me-2"></i>View PDF
+            <i class="bi bi-file-pdf me-2"></i>Download PDF
           </button>
 
           ${dtt.status === 'In-Progress' ? `

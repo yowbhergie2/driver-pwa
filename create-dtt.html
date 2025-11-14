@@ -24,6 +24,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <!-- DTT PDF Generator -->
+  <script src="dtt-pdf-generator.js"></script>
   
   <style>
     :root {
@@ -119,7 +122,8 @@
   </div>
 
   <!-- Form -->
-  <div class="container py-4 mb-5">
+  <!-- [FIX] Changed mb-5 to inline style with 7rem bottom margin to prevent overlap with bottom navigation -->
+  <div class="container py-4" style="margin-bottom: 7rem;">
     
     <!-- PART 1: Basic Information -->
     <div class="form-section">
@@ -131,9 +135,14 @@
       <div class="row mb-3">
         <div class="col-md-6">
           <label class="form-label">Vehicle <span class="text-danger">*</span></label>
-          <select id="vehicle" class="form-select">
-            <option value="">Loading vehicles...</option>
-          </select>
+          <div class="input-group">
+            <input type="text" id="vehicle-search" class="form-control" placeholder="Search vehicle...">
+            <button type="button" class="btn btn-primary" onclick="showVehicleSearchModal()">
+              <i class="bi bi-search"></i> Search
+            </button>
+          </div>
+          <input type="hidden" id="vehicle" value="">
+          <div id="selected-vehicle" class="mt-2 text-muted"></div>
         </div>
         <div class="col-md-6">
           <label class="form-label">Plate No. <span class="text-danger">*</span></label>
@@ -177,160 +186,20 @@
       <div class="row mb-3">
         <div class="col-md-6">
           <label class="form-label">Period Covered - From <span class="text-danger">*</span></label>
-          <input type="date" id="periodFrom" class="form-control">
+          <input type="date" id="periodFrom" class="form-control" onchange="validatePeriodDates()">
         </div>
         <div class="col-md-6">
           <label class="form-label">Period Covered - To <span class="text-danger">*</span></label>
-          <input type="date" id="periodTo" class="form-control">
+          <input type="date" id="periodTo" class="form-control" onchange="validatePeriodDates()">
         </div>
       </div>
+      <div id="date-error" class="alert alert-danger d-none mb-3"></div>
 
       <!-- Purpose -->
       <div class="mb-3">
         <label class="form-label">Purpose <span class="text-danger">*</span></label>
         <textarea id="purpose" rows="3" class="form-control auto-caps" 
                   placeholder="E.G., OFFICIAL TRAVEL TO CONDUCT INSPECTION"></textarea>
-      </div>
-    </div>
-
-    <!-- PART 2: Trip Details -->
-    <div class="form-section">
-      <h6 class="section-title">
-        <i class="bi bi-2-circle me-2"></i>TRIP DETAILS
-      </h6>
-
-      <!-- Time Records -->
-      <div class="row mb-3">
-        <div class="col-md-6 mb-3">
-          <label class="form-label">Time of departure from Office/garage</label>
-          <input type="time" id="timeDepartOffice" class="form-control">
-        </div>
-        <div class="col-md-6 mb-3">
-          <label class="form-label">Time of arrival at destination</label>
-          <input type="time" id="timeArrivalDest" class="form-control">
-        </div>
-        <div class="col-md-6 mb-3">
-          <label class="form-label">Time of departure from destination</label>
-          <input type="time" id="timeDepartDest" class="form-control">
-        </div>
-        <div class="col-md-6 mb-3">
-          <label class="form-label">Time of arrival back to office/garage</label>
-          <input type="time" id="timeArrivalOffice" class="form-control">
-        </div>
-      </div>
-
-      <!-- Distance -->
-      <div class="mb-3">
-        <label class="form-label">Approximate distance traveled (to and from)</label>
-        <div class="input-group">
-          <input type="number" id="approximateDistance" class="form-control" 
-                 placeholder="0" step="0.1">
-          <span class="input-group-text">km</span>
-        </div>
-      </div>
-
-      <!-- Gasoline Section -->
-      <h6 class="text-secondary mb-3 mt-4">Gasoline issued, purchased and consumed:</h6>
-      
-      <div class="row mb-3">
-        <div class="col-md-4 mb-3">
-          <label class="form-label">a. Balance in tank</label>
-          <div class="input-group">
-            <input type="number" id="balanceInTank" class="form-control" 
-                   placeholder="0" step="0.1">
-            <span class="input-group-text">liters</span>
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label class="form-label">b. Issued by office from stock</label>
-          <div class="input-group">
-            <input type="number" id="issuedByOffice" class="form-control" 
-                   placeholder="0" step="0.1">
-            <span class="input-group-text">liters</span>
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label class="form-label">c. Add-Purchased during trip</label>
-          <div class="input-group">
-            <input type="number" id="purchasedDuringTrip" class="form-control" 
-                   placeholder="0" step="0.1">
-            <span class="input-group-text">liters</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="mb-4">
-        <label class="form-label fw-bold">TOTAL</label>
-        <div class="input-group">
-          <input type="number" id="totalGasoline" class="form-control bg-light" 
-                 readonly placeholder="0">
-          <span class="input-group-text">liters</span>
-        </div>
-      </div>
-
-      <!-- Other Fluids -->
-      <div class="row mb-3">
-        <div class="col-md-4 mb-3">
-          <label class="form-label">Gear oil issued</label>
-          <div class="input-group">
-            <input type="number" id="gearOil" class="form-control" 
-                   placeholder="0" step="0.1">
-            <span class="input-group-text">liters</span>
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label class="form-label">Lub. Oil issued</label>
-          <div class="input-group">
-            <input type="number" id="lubOil" class="form-control" 
-                   placeholder="0" step="0.1">
-            <span class="input-group-text">liters</span>
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label class="form-label">Grease issued</label>
-          <div class="input-group">
-            <input type="number" id="grease" class="form-control" 
-                   placeholder="0" step="0.1">
-            <span class="input-group-text">liters</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Speedometer Readings -->
-      <h6 class="text-secondary mb-3 mt-4">Speedometer readings, if any:</h6>
-      
-      <div class="row mb-3">
-        <div class="col-md-4 mb-3">
-          <label class="form-label">At beginning of trip</label>
-          <div class="input-group">
-            <input type="number" id="speedometerStart" class="form-control" 
-                   placeholder="0">
-            <span class="input-group-text">miles/kms.</span>
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label class="form-label">At end of trip</label>
-          <div class="input-group">
-            <input type="number" id="speedometerEnd" class="form-control" 
-                   placeholder="0">
-            <span class="input-group-text">miles/kms.</span>
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label class="form-label">Distance travelled</label>
-          <div class="input-group">
-            <input type="number" id="distanceTravelled" class="form-control bg-light" 
-                   readonly placeholder="0">
-            <span class="input-group-text">miles/kms.</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Remarks -->
-      <div class="mb-3">
-        <label class="form-label">Remarks</label>
-        <textarea id="remarks" rows="2" class="form-control auto-caps" 
-                  placeholder="ADDITIONAL NOTES OR COMMENTS"></textarea>
       </div>
     </div>
 
@@ -421,48 +290,126 @@
       });
     });
 
-    // Load vehicles
+    // Vehicle cache
+    let vehiclesCache = null;
+    let vehiclesCacheTime = null;
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+    // Load vehicles into cache
     async function loadVehicles() {
       try {
-        const vehiclesSnapshot = await db.collection('vehicles').get();
-        const select = document.getElementById('vehicle');
-        
-        select.innerHTML = '<option value="">Select vehicle...</option>';
-        
-        vehiclesSnapshot.forEach(doc => {
-          const vehicle = doc.data();
-          const option = document.createElement('option');
-          option.value = vehicle.plateNo;
-          option.textContent = `${vehicle.brand} ${vehicle.model} (${vehicle.plateNo})`;
-          option.dataset.plateNo = vehicle.plateNo;
-          option.dataset.fuelBalance = vehicle.currentFuelBalance || 0;
-          select.appendChild(option);
-        });
-        
-        if (vehiclesSnapshot.empty) {
-          select.innerHTML = '<option value="">No vehicles found</option>';
+        // Check cache first
+        const now = Date.now();
+        if (vehiclesCache && vehiclesCacheTime && (now - vehiclesCacheTime < CACHE_DURATION)) {
+          console.log('Using cached vehicles');
+          return;
         }
+
+        // Load all vehicles for search
+        const vehiclesSnapshot = await db.collection('vehicles').get();
+
+        // Cache the results
+        vehiclesCache = [];
+        vehiclesSnapshot.forEach(doc => {
+          vehiclesCache.push(doc.data());
+        });
+        vehiclesCacheTime = Date.now();
+        console.log('Loaded', vehiclesCache.length, 'vehicles');
       } catch (error) {
         console.error('Error loading vehicles:', error);
       }
     }
 
-    // Vehicle selection changed
-    document.getElementById('vehicle').addEventListener('change', function() {
-      const selectedOption = this.options[this.selectedIndex];
-      const plateNo = selectedOption.dataset.plateNo;
-      const fuelBalance = parseFloat(selectedOption.dataset.fuelBalance) || 0;
-      
-      if (plateNo) {
-        document.getElementById('plateNo').value = plateNo;
-        currentFuelBalance = fuelBalance;
-        document.getElementById('current-fuel').textContent = fuelBalance.toFixed(1) + ' L';
-        document.getElementById('fuel-info').classList.remove('d-none');
-      } else {
-        document.getElementById('plateNo').value = '';
-        document.getElementById('fuel-info').classList.add('d-none');
+    // Show vehicle search modal
+    async function showVehicleSearchModal() {
+      // Ensure vehicles are loaded
+      await loadVehicles();
+
+      const searchInput = document.getElementById('vehicle-search').value.trim().toUpperCase();
+
+      // Filter vehicles based on search
+      let filteredVehicles = vehiclesCache;
+      if (searchInput) {
+        filteredVehicles = vehiclesCache.filter(v =>
+          v.brand.includes(searchInput) ||
+          v.model.includes(searchInput) ||
+          v.plateNo.includes(searchInput) ||
+          (v.dpwhNo && v.dpwhNo.includes(searchInput))
+        );
       }
-    });
+
+      if (filteredVehicles.length === 0) {
+        modalManager.alert({
+          title: 'No Vehicles Found',
+          message: `No vehicles match "${searchInput}". Try a different search.`,
+          type: 'warning'
+        });
+        return;
+      }
+
+      // Build vehicle list HTML
+      let vehicleListHtml = '<div class="list-group" style="max-height: 400px; overflow-y: auto;">';
+      filteredVehicles.forEach(vehicle => {
+        vehicleListHtml += `
+          <a href="#" class="list-group-item list-group-item-action" onclick="selectVehicle('${vehicle.plateNo}', '${vehicle.brand}', '${vehicle.model}', ${vehicle.currentFuelBalance || 0}, '${vehicle.dpwhNo || 'N/A'}'); return false;">
+            <div class="d-flex w-100 justify-content-between">
+              <h6 class="mb-1">${vehicle.brand} ${vehicle.model}</h6>
+              <small>${vehicle.plateNo}</small>
+            </div>
+            <small class="text-muted">DPWH No: ${vehicle.dpwhNo || 'N/A'} | Fuel: ${(vehicle.currentFuelBalance || 0).toFixed(1)}L</small>
+          </a>
+        `;
+      });
+      vehicleListHtml += '</div>';
+
+      modalManager.show({
+        title: `Select Vehicle (${filteredVehicles.length} found)`,
+        content: vehicleListHtml,
+        size: 'medium',
+        buttons: [
+          { label: 'Cancel', type: 'secondary' }
+        ]
+      });
+    }
+
+    // Select vehicle from modal
+    function selectVehicle(plateNo, brand, model, fuelBalance, dpwhNo) {
+      document.getElementById('vehicle').value = plateNo;
+      document.getElementById('plateNo').value = plateNo;
+      document.getElementById('vehicle-search').value = `${brand} ${model} (${plateNo})`;
+      document.getElementById('selected-vehicle').innerHTML = `<small><i class="bi bi-check-circle-fill text-success"></i> ${brand} ${model} - ${plateNo} (DPWH: ${dpwhNo})</small>`;
+
+      currentFuelBalance = fuelBalance;
+      document.getElementById('current-fuel').textContent = fuelBalance.toFixed(1) + ' L';
+      document.getElementById('fuel-info').classList.remove('d-none');
+
+      // Close modal
+      modalManager.closeAll();
+    }
+
+    // Date validation
+    function validatePeriodDates() {
+      const periodFrom = document.getElementById('periodFrom').value;
+      const periodTo = document.getElementById('periodTo').value;
+      const errorDiv = document.getElementById('date-error');
+
+      if (!periodFrom || !periodTo) {
+        errorDiv.classList.add('d-none');
+        return true;
+      }
+
+      const fromDate = new Date(periodFrom);
+      const toDate = new Date(periodTo);
+
+      if (fromDate > toDate) {
+        errorDiv.textContent = 'Period Covered - From cannot be later than Period Covered - To';
+        errorDiv.classList.remove('d-none');
+        return false;
+      }
+
+      errorDiv.classList.add('d-none');
+      return true;
+    }
 
     // Add passenger
     function addPassenger() {
@@ -525,33 +472,6 @@
       const balanceAfter = currentFuelBalance + fuelNeeded;
       document.getElementById('balance-after').textContent = balanceAfter.toFixed(1) + ' L';
     });
-
-    // Auto-calculate total gasoline
-    ['balanceInTank', 'issuedByOffice', 'purchasedDuringTrip'].forEach(id => {
-      document.getElementById(id).addEventListener('input', calculateTotalGasoline);
-    });
-
-    function calculateTotalGasoline() {
-      const balance = parseFloat(document.getElementById('balanceInTank').value) || 0;
-      const issued = parseFloat(document.getElementById('issuedByOffice').value) || 0;
-      const purchased = parseFloat(document.getElementById('purchasedDuringTrip').value) || 0;
-      
-      const total = balance + issued + purchased;
-      document.getElementById('totalGasoline').value = total.toFixed(1);
-    }
-
-    // Auto-calculate distance travelled
-    ['speedometerStart', 'speedometerEnd'].forEach(id => {
-      document.getElementById(id).addEventListener('input', calculateDistance);
-    });
-
-    function calculateDistance() {
-      const start = parseFloat(document.getElementById('speedometerStart').value) || 0;
-      const end = parseFloat(document.getElementById('speedometerEnd').value) || 0;
-      
-      const distance = end - start;
-      document.getElementById('distanceTravelled').value = distance >= 0 ? distance : 0;
-    }
 
     // Generate DTT PDF
     function generateDttPdf(dttData) {
@@ -775,6 +695,10 @@
         });
         return;
       }
+      // Validate date range
+      if (!validatePeriodDates()) {
+        return;
+      }
       if (!purpose || purpose.length < 10) {
         modalManager.alert({
           title: 'Invalid Input',
@@ -817,31 +741,23 @@
           purpose: purpose,
           passengers: passengers,
 
-          // Trip Details
-          timeDepartOffice: document.getElementById('timeDepartOffice').value,
-          timeArrivalDest: document.getElementById('timeArrivalDest').value,
-          timeDepartDest: document.getElementById('timeDepartDest').value,
-          timeArrivalOffice: document.getElementById('timeArrivalOffice').value,
-          approximateDistance: parseFloat(document.getElementById('approximateDistance').value) || 0,
-
-          // Gasoline
-          balanceInTank: parseFloat(document.getElementById('balanceInTank').value) || 0,
-          issuedByOffice: parseFloat(document.getElementById('issuedByOffice').value) || 0,
-          purchasedDuringTrip: parseFloat(document.getElementById('purchasedDuringTrip').value) || 0,
-          totalGasoline: parseFloat(document.getElementById('totalGasoline').value) || 0,
-
-          // Other fluids
-          gearOil: parseFloat(document.getElementById('gearOil').value) || 0,
-          lubOil: parseFloat(document.getElementById('lubOil').value) || 0,
-          grease: parseFloat(document.getElementById('grease').value) || 0,
-
-          // Speedometer
-          speedometerStart: parseFloat(document.getElementById('speedometerStart').value) || 0,
-          speedometerEnd: parseFloat(document.getElementById('speedometerEnd').value) || 0,
-          distanceTravelled: parseFloat(document.getElementById('distanceTravelled').value) || 0,
-
-          // Remarks
-          remarks: document.getElementById('remarks').value.trim(),
+          // Trip Details - will be filled when closing trip
+          timeDepartOffice: null,
+          timeArrivalDest: null,
+          timeDepartDest: null,
+          timeArrivalOffice: null,
+          approximateDistance: 0,
+          balanceInTank: 0,
+          issuedByOffice: 0,
+          purchasedDuringTrip: 0,
+          totalGasoline: 0,
+          gearOil: 0,
+          lubOil: 0,
+          grease: 0,
+          speedometerStart: 0,
+          speedometerEnd: 0,
+          distanceTravelled: 0,
+          remarks: '',
 
           // Fuel Request
           fuelBalanceStart: currentFuelBalance,
@@ -859,11 +775,11 @@
         // Create DTT document
         await db.collection('dtts').doc(dttId).set(dttData);
 
-        // Generate PDF
-        const pdf = generateDttPdf(dttData);
-
-        // Hide loading
+        // Update loading message
         modalManager.close(loadingId);
+
+        // Generate PDF for download/view
+        const pdf = generateDttPdf(dttData);
 
         // Show success with PDF options
         const successModal = modalManager.show({
@@ -884,14 +800,9 @@
             </div>
 
             <div class="alert alert-info mt-3">
-              <i class="bi bi-file-pdf me-2"></i>
-              <strong>PDF Ready:</strong> Your trip ticket PDF has been generated and is ready to download.
-            </div>
-
-            <p class="text-muted mt-3 small">
-              <i class="bi bi-info-circle me-1"></i>
+              <i class="bi bi-info-circle me-2"></i>
               Download and print this DTT for signatures before your trip.
-            </p>
+            </div>
           `,
           size: 'medium',
           closable: false,

@@ -131,6 +131,7 @@
           <option value="">-- Select Type --</option>
           <option value="vehicle">For Vehicle</option>
           <option value="non-vehicle">For Non-Vehicle (Generator, etc.)</option>
+          <option value="dredge">For Dredge Operations</option>
         </select>
       </div>
 
@@ -180,6 +181,26 @@
           <small class="text-muted">Specify what the fuel will be used for</small>
         </div>
       </div>
+
+      <!-- Dredge Section (shows if type = dredge) -->
+      <div id="dredge-section" class="d-none">
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>
+          <strong>Dredge Operations:</strong> No trip ticket required for dredge fuel requests.
+        </div>
+        <div class="mb-3">
+          <label class="form-label">DPWH No. <span class="text-danger">*</span></label>
+          <input type="text" id="dredge-dpwh-no" class="form-control text-uppercase"
+                 placeholder="E.G., DPWH-2024-001">
+          <small class="text-muted">Enter the DPWH inventory number</small>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Equipment Type <span class="text-danger">*</span></label>
+          <input type="text" id="dredge-type" class="form-control text-uppercase"
+                 placeholder="E.G., DREDGE PUMP, CUTTER SUCTION DREDGE">
+          <small class="text-muted">Specify the type of dredge equipment</small>
+        </div>
+      </div>
     </div>
 
     <!-- PART 2: Fuel Details -->
@@ -210,6 +231,13 @@
         <textarea id="purpose" rows="3" class="form-control text-uppercase"
                   placeholder="E.G., ADDITIONAL FUEL FOR ONGOING TRIP, FUEL FOR GENERATOR OPERATION"></textarea>
         <small class="text-muted">Explain why this fuel is needed</small>
+      </div>
+
+      <!-- Valid for Issuance Until (will be set by EMD) -->
+      <div class="mb-3">
+        <label class="form-label">Valid for Issuance Until</label>
+        <input type="date" id="valid-until" class="form-control" disabled>
+        <small class="text-muted"><i class="bi bi-lock-fill me-1"></i>This will be set by EMD staff during validation</small>
       </div>
 
     </div>
@@ -302,18 +330,27 @@
       const type = document.getElementById('request-type').value;
       const vehicleSection = document.getElementById('vehicle-section');
       const nonVehicleSection = document.getElementById('non-vehicle-section');
+      const dredgeSection = document.getElementById('dredge-section');
       const balanceSection = document.getElementById('balance-after-section');
 
       if (type === 'vehicle') {
         vehicleSection.classList.remove('d-none');
         nonVehicleSection.classList.add('d-none');
+        dredgeSection.classList.add('d-none');
       } else if (type === 'non-vehicle') {
         vehicleSection.classList.add('d-none');
         nonVehicleSection.classList.remove('d-none');
+        dredgeSection.classList.add('d-none');
+        balanceSection.classList.add('d-none');
+      } else if (type === 'dredge') {
+        vehicleSection.classList.add('d-none');
+        nonVehicleSection.classList.add('d-none');
+        dredgeSection.classList.remove('d-none');
         balanceSection.classList.add('d-none');
       } else {
         vehicleSection.classList.add('d-none');
         nonVehicleSection.classList.add('d-none');
+        dredgeSection.classList.add('d-none');
         balanceSection.classList.add('d-none');
       }
     }
@@ -478,12 +515,23 @@
           });
           return;
         }
-      } else {
+      } else if (requestType === 'non-vehicle') {
         const equipmentName = document.getElementById('equipment-name').value.trim();
         if (!equipmentName) {
           modalManager.alert({
             title: 'Missing Information',
             message: 'Please specify equipment/purpose.',
+            type: 'warning'
+          });
+          return;
+        }
+      } else if (requestType === 'dredge') {
+        const dredgeDpwhNo = document.getElementById('dredge-dpwh-no').value.trim();
+        const dredgeType = document.getElementById('dredge-type').value.trim();
+        if (!dredgeDpwhNo || !dredgeType) {
+          modalManager.alert({
+            title: 'Missing Information',
+            message: 'Please specify DPWH No. and equipment type.',
             type: 'warning'
           });
           return;
@@ -539,7 +587,7 @@
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        // Add vehicle-specific data
+        // Add type-specific data
         if (requestType === 'vehicle') {
           const linkedDttId = document.getElementById('link-dtt').value;
           risData.plateNo = selectedVehicle.plateNo;
@@ -547,10 +595,15 @@
           risData.vehicle = selectedVehicle.brand + ' ' + selectedVehicle.model;
           risData.fuelBalanceBefore = currentFuelBalance;
           risData.linkedDttId = linkedDttId || null;
-        } else {
+        } else if (requestType === 'non-vehicle') {
           risData.equipmentName = document.getElementById('equipment-name').value.trim();
           risData.plateNo = null;
           risData.dpwhNo = null;
+        } else if (requestType === 'dredge') {
+          risData.dpwhNo = document.getElementById('dredge-dpwh-no').value.trim();
+          risData.dredgeType = document.getElementById('dredge-type').value.trim();
+          risData.plateNo = null;
+          risData.linkedDttId = null; // Dredge operations don't need trip tickets
         }
 
         // Save to Firestore
@@ -569,13 +622,20 @@
         modalManager.close(loadingId);
 
         // Show success
+        let successDetails = '';
+        if (requestType === 'vehicle') {
+          successDetails = `<p><strong>Vehicle:</strong> ${selectedVehicle.plateNo}</p>`;
+        } else if (requestType === 'dredge') {
+          successDetails = `<p><strong>Dredge DPWH No.:</strong> ${document.getElementById('dredge-dpwh-no').value}</p>`;
+        }
+
         await modalManager.alert({
           title: 'Fuel Request Submitted!',
           message: `
             <div class="mb-3">
               <p><strong>RIS ID:</strong> ${risId}</p>
               <p><strong>Quantity:</strong> ${fuelQty} liters</p>
-              ${requestType === 'vehicle' ? `<p><strong>Vehicle:</strong> ${selectedVehicle.plateNo}</p>` : ''}
+              ${successDetails}
             </div>
             <p class="text-muted mb-0">Your fuel request has been sent to EMD for validation.</p>
           `,

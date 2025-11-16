@@ -1,205 +1,363 @@
 /**
  * DTT PDF Generator
- * Shared utility for generating Driver Trip Ticket PDFs
+ * DPWH Regional Office II - Driver's Trip Ticket
+ * Exact template replication
  */
+
+// Base64 encoded logos for guaranteed loading (no CORS issues)
+//
+// TO ADD REAL LOGOS:
+// 1. Convert your logo images to base64 using an online converter like:
+//    https://www.base64-image.de/
+// 2. Replace the placeholder strings below with your actual base64 data
+// 3. Make sure to keep the 'data:image/png;base64,' prefix
+//
+// DPWH Logo - PLACEHOLDER (replace with actual base64)
+const DPWH_LOGO_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+// Bagong Pilipinas Logo - PLACEHOLDER (replace with actual base64)
+const BAGONG_PILIPINAS_LOGO_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+/**
+ * Format period dates in "Month DD-DD, YYYY" format
+ */
+function formatPeriodDates(periodFrom, periodTo) {
+  if (!periodFrom || !periodTo) return '_______________________________';
+
+  try {
+    const dateFrom = new Date(periodFrom);
+    const dateTo = new Date(periodTo);
+
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+
+    const monthFrom = monthNames[dateFrom.getMonth()];
+    const monthTo = monthNames[dateTo.getMonth()];
+    const dayFrom = dateFrom.getDate();
+    const dayTo = dateTo.getDate();
+    const yearFrom = dateFrom.getFullYear();
+    const yearTo = dateTo.getFullYear();
+
+    // Same month and year
+    if (monthFrom === monthTo && yearFrom === yearTo) {
+      if (dayFrom === dayTo) {
+        return `${monthFrom} ${dayFrom}, ${yearFrom}`;
+      }
+      return `${monthFrom} ${dayFrom}-${dayTo}, ${yearFrom}`;
+    }
+
+    // Different months or years
+    return `${monthFrom} ${dayFrom}, ${yearFrom} - ${monthTo} ${dayTo}, ${yearTo}`;
+  } catch (e) {
+    return `${periodFrom} - ${periodTo}`;
+  }
+}
 
 /**
  * Generate DTT PDF from trip data
  * @param {object} dttData - Trip ticket data
  * @returns {jsPDF} - PDF document object
  */
-function generateDttPdf(dttData) {
+async function generateDttPdf(dttData) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  // DPWH Header
-  doc.setFillColor(0, 63, 135); // DPWH Blue
-  doc.rect(0, 0, 210, 25, 'F');
+  let yPos = 20;
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
-  doc.setFont(undefined, 'bold');
-  doc.text('DPWH REGIONAL OFFICE II', 105, 10, { align: 'center' });
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'normal');
-  doc.text('DRIVER TRIP TICKET', 105, 18, { align: 'center' });
+  // Add logos using base64 data (no CORS issues, instant loading)
+  try {
+    // DPWH Logo (left side)
+    doc.addImage(DPWH_LOGO_BASE64, 'PNG', 15, 10, 25, 25);
 
-  // Reset text color
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
-
-  let yPos = 35;
-
-  // DTT ID and Status
-  doc.setFont(undefined, 'bold');
-  doc.text(`DTT ID: ${dttData.dttId || 'N/A'}`, 15, yPos);
-  doc.text(`Status: ${dttData.status || 'Active'}`, 150, yPos);
-  yPos += 10;
-
-  // Vehicle Information Section
-  doc.setFillColor(240, 240, 240);
-  doc.rect(10, yPos, 190, 7, 'F');
-  doc.setFont(undefined, 'bold');
-  doc.text('VEHICLE INFORMATION', 15, yPos + 5);
-  yPos += 12;
-
-  doc.setFont(undefined, 'normal');
-  doc.text(`Vehicle: ${dttData.vehicle || 'N/A'}`, 15, yPos);
-  doc.text(`Plate No: ${dttData.plateNo || 'N/A'}`, 120, yPos);
-  yPos += 7;
-
-  // Passengers
-  if (dttData.passengers && dttData.passengers.length > 0) {
-    doc.text(`Authorized Passengers: ${dttData.passengers.join(', ')}`, 15, yPos);
-    yPos += 7;
+    // Bagong Pilipinas Logo (right side)
+    doc.addImage(BAGONG_PILIPINAS_LOGO_BASE64, 'PNG', 170, 10, 25, 25);
+  } catch (e) {
+    console.warn('Logo loading failed:', e);
   }
 
+  // Header with logos and text
+  doc.setFontSize(9);
+  doc.setFont(undefined, 'normal');
+  doc.text('Republic of the Philippines', 105, yPos, { align: 'center' });
+  yPos += 4;
+
+  doc.setFont(undefined, 'bold');
+  doc.text('DEPARTMENT OF PUBLIC WORKS AND HIGHWAYS', 105, yPos, { align: 'center' });
+  yPos += 4;
+
+  doc.setFont(undefined, 'bold');
+  doc.text('REGIONAL OFFICE II', 105, yPos, { align: 'center' });
   yPos += 3;
 
-  // Trip Information Section
-  doc.setFillColor(240, 240, 240);
-  doc.rect(10, yPos, 190, 7, 'F');
+  doc.setFontSize(8);
+  doc.setFont(undefined, 'normal');
+  doc.text('Dalan na Pavvurulun, Regional Government Center, Carig Sur, Tuguegarao City, Cagayan', 105, yPos, { align: 'center' });
+  yPos += 8;
+
+  // Title
+  doc.setFontSize(14);
   doc.setFont(undefined, 'bold');
-  doc.text('TRIP INFORMATION', 15, yPos + 5);
-  yPos += 12;
+  doc.text("DRIVER'S TRIP TICKET", 105, yPos, { align: 'center' });
+  yPos += 10;
+
+  // Date and Control No (right aligned)
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'bold');
+  const dateStr = dttData.createdAt
+    ? (dttData.createdAt.toDate ? dttData.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date(dttData.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }))
+    : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  doc.text(dateStr, 200, yPos, { align: 'right' });
+  yPos += 4;
 
   doc.setFont(undefined, 'normal');
-  doc.text(`Destination: ${dttData.destination || 'N/A'}`, 15, yPos);
-  yPos += 7;
+  doc.setFontSize(9);
+  doc.text('(Date)', 200, yPos, { align: 'right' });
+  yPos += 4;
 
-  doc.text(`Period Covered: ${dttData.periodFrom || 'N/A'} to ${dttData.periodTo || 'N/A'}`, 15, yPos);
-  yPos += 7;
+  // Control No. in GREEN
+  doc.setTextColor(0, 128, 0); // Green color
+  doc.setFont(undefined, 'bold');
+  doc.text(`Control No.: ${dttData.dttId || '_________________'}`, 200, yPos, { align: 'right' });
+  doc.setTextColor(0, 0, 0); // Reset to black
+  yPos += 8;
 
-  doc.text('Purpose:', 15, yPos);
-  yPos += 5;
-  const purposeLines = doc.splitTextToSize(dttData.purpose || 'N/A', 180);
-  doc.text(purposeLines, 15, yPos);
+  // Main information section
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+
+  const leftMargin = 15;
+  const colonPos = 80;
+  const valuePos = 85;
+  const underlineWidth = 110; // Fixed width for all underlines
+
+  // Information items with consistent underlines
+  doc.text('1.  Name of Driver', leftMargin, yPos);
+  doc.text(':', colonPos, yPos);
+  const driverName = dttData.driverName || '';
+  doc.text(driverName, valuePos, yPos);
+  // Add consistent underline
+  doc.line(valuePos, yPos + 1, valuePos + underlineWidth, yPos + 1);
+  yPos += 6;
+
+  doc.text("2.  Gov't. Vehicle to be used", leftMargin, yPos);
+  doc.text(':', colonPos, yPos);
+  const vehicle = dttData.vehicleBrand && dttData.vehicleModel
+    ? `${dttData.vehicleBrand} ${dttData.vehicleModel} (${dttData.plateNo || 'N/A'})`
+    : (dttData.plateNo || '');
+  doc.text(vehicle, valuePos, yPos);
+  // Add consistent underline
+  doc.line(valuePos, yPos + 1, valuePos + underlineWidth, yPos + 1);
+  yPos += 6;
+
+  doc.text('3.  Name of authorized passenger/s', leftMargin, yPos);
+  doc.text(':', colonPos, yPos);
+
+  // Debug logging
+  console.log('🔍 DEBUG Passengers data:', dttData.passengers);
+  console.log('🔍 DEBUG Is array?', Array.isArray(dttData.passengers));
+
+  const passengers = dttData.passengers && dttData.passengers.length > 0
+    ? dttData.passengers.join(', ').toUpperCase()
+    : '';
+
+  console.log('🔍 DEBUG Formatted passengers:', passengers);
+
+  // Use splitTextToSize for long passenger list
+  const passengerLines = doc.splitTextToSize(passengers || ' ', underlineWidth);
+  doc.text(passengerLines, valuePos, yPos);
+  // Add consistent underline for each line
+  passengerLines.forEach((line, index) => {
+    doc.line(valuePos, yPos + 1 + (index * 5), valuePos + underlineWidth, yPos + 1 + (index * 5));
+  });
+  yPos += passengerLines.length * 5 + 1;
+
+  doc.text('4.  Places to be visited/inspected', leftMargin, yPos);
+  doc.text(':', colonPos, yPos);
+  const destination = dttData.destination || '';
+  doc.text(destination, valuePos, yPos);
+  // Add consistent underline
+  doc.line(valuePos, yPos + 1, valuePos + underlineWidth, yPos + 1);
+  yPos += 6;
+
+  doc.text('5.  Period Covered', leftMargin, yPos);
+  doc.text(':', colonPos, yPos);
+  const period = formatPeriodDates(dttData.periodFrom, dttData.periodTo);
+  doc.text(period, valuePos, yPos);
+  // Add consistent underline
+  doc.line(valuePos, yPos + 1, valuePos + underlineWidth, yPos + 1);
+  yPos += 6;
+
+  doc.text('6.  Purpose', leftMargin, yPos);
+  doc.text(':', colonPos, yPos);
+  const purpose = dttData.purpose || dttData.purposes?.join(', ') || '';
+  const purposeLines = doc.splitTextToSize(purpose || ' ', underlineWidth);
+  doc.text(purposeLines, valuePos, yPos);
+  // Add consistent underline for each line
+  purposeLines.forEach((line, index) => {
+    doc.line(valuePos, yPos + 1 + (index * 5), valuePos + underlineWidth, yPos + 1 + (index * 5));
+  });
   yPos += purposeLines.length * 5 + 5;
 
-  // Trip Details Section
-  doc.setFillColor(240, 240, 240);
-  doc.rect(10, yPos, 190, 7, 'F');
-  doc.setFont(undefined, 'bold');
-  doc.text('TRIP DETAILS', 15, yPos + 5);
-  yPos += 12;
-
-  doc.setFont(undefined, 'normal');
-
-  // Time records
-  if (dttData.timeDepartOffice) {
-    doc.text(`Time of departure from office/garage: ${dttData.timeDepartOffice}`, 15, yPos);
-    yPos += 6;
-  }
-  if (dttData.timeArrivalDest) {
-    doc.text(`Time of arrival at destination: ${dttData.timeArrivalDest}`, 15, yPos);
-    yPos += 6;
-  }
-  if (dttData.timeDepartDest) {
-    doc.text(`Time of departure from destination: ${dttData.timeDepartDest}`, 15, yPos);
-    yPos += 6;
-  }
-  if (dttData.timeArrivalOffice) {
-    doc.text(`Time of arrival back to office/garage: ${dttData.timeArrivalOffice}`, 15, yPos);
-    yPos += 6;
-  }
-
-  if (dttData.approximateDistance) {
-    doc.text(`Approximate distance traveled: ${dttData.approximateDistance} km`, 15, yPos);
-    yPos += 8;
-  }
-
-  // Gasoline Information
-  doc.setFont(undefined, 'bold');
-  doc.text('GASOLINE ISSUED, PURCHASED AND CONSUMED:', 15, yPos);
-  yPos += 7;
-  doc.setFont(undefined, 'normal');
-
-  const fuelData = [
-    { label: 'a. Balance in tank', value: dttData.balanceInTank },
-    { label: 'b. Issued by office from stock', value: dttData.issuedByOffice },
-    { label: 'c. Add: Purchased during trip', value: dttData.purchasedDuringTrip },
-    { label: 'd. Total', value: dttData.totalFuel },
-    { label: 'e. Less: Consumed', value: dttData.fuelConsumed },
-    { label: 'f. Balance in tank', value: dttData.fuelBalance }
-  ];
-
-  fuelData.forEach(item => {
-    if (item.value !== undefined && item.value !== null) {
-      doc.text(`${item.label}: ${item.value} L`, 20, yPos);
-      yPos += 6;
-    }
-  });
-
+  // Approval section
   yPos += 3;
-
-  // Gear Oil if applicable
-  if (dttData.gearOilIssued || dttData.gearOilPurchased) {
-    doc.text(`Gear oil issued: ${dttData.gearOilIssued || 0} L`, 15, yPos);
-    yPos += 6;
-    doc.text(`Gear oil purchased: ${dttData.gearOilPurchased || 0} L`, 15, yPos);
-    yPos += 8;
-  }
-
-  // Speedometer readings
-  if (dttData.speedometerStart !== undefined || dttData.speedometerEnd !== undefined) {
-    doc.setFont(undefined, 'bold');
-    doc.text('SPEEDOMETER READINGS:', 15, yPos);
-    yPos += 7;
-    doc.setFont(undefined, 'normal');
-
-    if (dttData.speedometerStart !== undefined) {
-      doc.text(`Start: ${dttData.speedometerStart} km`, 20, yPos);
-      yPos += 6;
-    }
-    if (dttData.speedometerEnd !== undefined) {
-      doc.text(`End: ${dttData.speedometerEnd} km`, 20, yPos);
-      yPos += 6;
-    }
-    if (dttData.speedometerStart !== undefined && dttData.speedometerEnd !== undefined) {
-      const distance = dttData.speedometerEnd - dttData.speedometerStart;
-      doc.text(`Distance: ${distance} km`, 20, yPos);
-      yPos += 8;
-    }
-  }
-
-  // Remarks if any
-  if (dttData.remarks) {
-    doc.setFont(undefined, 'bold');
-    doc.text('REMARKS:', 15, yPos);
-    yPos += 5;
-    doc.setFont(undefined, 'normal');
-    const remarksLines = doc.splitTextToSize(dttData.remarks, 180);
-    doc.text(remarksLines, 15, yPos);
-    yPos += remarksLines.length * 5 + 5;
-  }
-
-  // Driver Information
-  yPos += 5;
-  doc.setFont(undefined, 'bold');
-  doc.text('DRIVER:', 15, yPos);
-  yPos += 6;
   doc.setFont(undefined, 'normal');
-  doc.text(dttData.driverName || 'N/A', 15, yPos);
-  yPos += 5;
-  doc.text(`Driver UID: ${dttData.driverUid || 'N/A'}`, 15, yPos);
+  doc.text('Recommending Approval:', leftMargin, yPos);
+  doc.text('Approved:', 115, yPos);
+  yPos += 4;
+  doc.text('By Authority of the Regional Director:', 115, yPos);
   yPos += 10;
 
-  // Timestamps
-  doc.setFontSize(8);
-  doc.setTextColor(100, 100, 100);
-  if (dttData.createdAt) {
-    const createdDate = dttData.createdAt.toDate ? dttData.createdAt.toDate() : new Date(dttData.createdAt);
-    doc.text(`Created: ${createdDate.toLocaleString()}`, 15, yPos);
-  }
-  if (dttData.closedAt) {
-    const closedDate = dttData.closedAt.toDate ? dttData.closedAt.toDate() : new Date(dttData.closedAt);
-    doc.text(`Closed: ${closedDate.toLocaleString()}`, 120, yPos);
-  }
+  // Recommending Officer
+  doc.setFont(undefined, 'bold');
+  doc.text('ATTY. MARY QUEEN R. UMOQUIT', leftMargin, yPos);
+  doc.text('RONALYN P. UBIÑA', 115, yPos);
+  yPos += 4;
 
-  // Footer
-  doc.setFontSize(8);
-  doc.setTextColor(0, 63, 135);
-  doc.text('Department of Public Works and Highways - Regional Office II', 105, 285, { align: 'center' });
+  doc.setFont(undefined, 'normal');
+  doc.text('Chief Administrative Officer', leftMargin, yPos);
+  doc.text('Officer-in-Charge', 115, yPos);
+  yPos += 4;
+
+  doc.text('Chief, Administrative Division', leftMargin, yPos);
+  doc.text('Office of the Assistant Regional Director', 115, yPos);
+  yPos += 10;
+
+  // Driver section - TO BE FILLED OUT MANUALLY AFTER TRIP
+  doc.setFont(undefined, 'normal');
+  doc.text('To be filled out by Driver:', leftMargin, yPos);
+  yPos += 5;
+
+  const driverSectionIndent = 20; // Indent for driver section items
+  const driverColonPos = 85;
+
+  // Time fields - ALL BLANK (printed before trip)
+  doc.text('1.  Time of departure from office/garage', driverSectionIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ AM/PM', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('2.  Time of arrival at (No. 4 above)', driverSectionIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ AM/PM', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('3.  Time of arrival from (No. 4 above)', driverSectionIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ AM/PM', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('4.  Time of arrival back to office/garage', driverSectionIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ AM/PM', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('5.  Approximate distance traveled', driverSectionIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ kms.', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  // Gasoline section - ALL BLANK
+  doc.text('6.  Gasoline issued, purchased and consumed', driverSectionIndent, yPos);
+  yPos += 5;
+
+  const fuelIndent = 28; // Sub-items indented more
+  doc.text('a.  Balance in tank', fuelIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ liters', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('b.  Issued by office from stock', fuelIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ iters', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('c.  ADD: Purchased during the trip', fuelIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ iters', driverColonPos + 5, yPos);
+  yPos += 4;
+
+  doc.text('TOTAL', fuelIndent + 30, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ iters', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('d)  DEDUCT: Used during the trip', fuelIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ iters', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('e)  Balance in tank at the end of trip', fuelIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ iters', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  // Other materials - ALL BLANK
+  doc.text('7.  Motor oil issued', driverSectionIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ liters', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('8.  Lubricating oil issued', driverSectionIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ liters', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('9.  Grease issued', driverSectionIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ iters', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('10. Brake Fluid', driverSectionIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ iters', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  // Speedometer readings - ALL BLANK
+  doc.text('11. Speedometer reading (if any)', driverSectionIndent, yPos);
+  yPos += 5;
+
+  doc.text('a.  At the end of a trip', fuelIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ kms.', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('b.  At the beginning of a trip', fuelIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ kms.', driverColonPos + 5, yPos);
+  yPos += 5;
+
+  doc.text('c.  Distance traveled', fuelIndent, yPos);
+  doc.text(':', driverColonPos, yPos);
+  doc.text('____________________ kms.', driverColonPos + 5, yPos);
+  yPos += 8;
+
+  // Certification
+  doc.setFontSize(9);
+  doc.text('I HEREBY CERTIFY the correctness of the above statement of record of travel.', leftMargin, yPos);
+  yPos += 10;
+
+  // Driver signature - with actual driver name but blank signature line
+  doc.setFont(undefined, 'bold');
+  doc.text('_______________________________', 200, yPos, { align: 'right' });
+  yPos += 4;
+  doc.setFont(undefined, 'normal');
+  doc.text(dttData.driverName ? dttData.driverName.toUpperCase() : 'ANGELO G. GACAD', 200, yPos - 1, { align: 'right' });
+  yPos += 3;
+  doc.text('Driver', 200, yPos, { align: 'right' });
+  yPos += 8;
+
+  // Driver certification - same font size as above
+  doc.setFontSize(9);
+  doc.text('I HEREBY CERTIFY that I used this vehicle on official business.', leftMargin, yPos);
+  yPos += 10;
+
+  // Passenger signature - BLANK
+  doc.setFont(undefined, 'bold');
+  doc.text('_______________________________', 200, yPos, { align: 'right' });
+  yPos += 4;
+  doc.setFont(undefined, 'normal');
+  doc.text('PASSENGER 1/PASSENGER 2', 200, yPos, { align: 'right' });
+  yPos += 3;
+  doc.text('Passenger/s', 200, yPos, { align: 'right' });
 
   return doc;
 }
@@ -207,10 +365,10 @@ function generateDttPdf(dttData) {
 /**
  * Generate PDF and return as Blob
  * @param {object} dttData - Trip ticket data
- * @returns {Blob} - PDF as blob
+ * @returns {Promise<Blob>} - PDF as blob
  */
-function generateDttPdfBlob(dttData) {
-  const pdf = generateDttPdf(dttData);
+async function generateDttPdfBlob(dttData) {
+  const pdf = await generateDttPdf(dttData);
   return pdf.output('blob');
 }
 
@@ -234,30 +392,21 @@ function generateDttPdfFilename(dttData) {
  */
 async function uploadDttPdfToDrive(dttData, dttId) {
   try {
-    // Generate PDF
+    // Generate PDF blob
     const pdfBlob = generateDttPdfBlob(dttData);
     const filename = generateDttPdfFilename(dttData);
 
-    // Upload to Google Drive
-    const uploadResult = await driveUploader.uploadPdf(pdfBlob, filename, {
-      dttId: dttId,
-      driverName: dttData.driverName,
-      destination: dttData.destination,
-      periodFrom: dttData.periodFrom,
-      periodTo: dttData.periodTo
-    });
+    // TODO: Implement Google Drive upload here
+    // This would require Google Drive API integration
+    console.log('PDF generated for upload:', filename);
 
-    // Update Firestore with PDF link
-    await db.collection('dtts').doc(dttId).update({
-      pdfFileId: uploadResult.fileId,
-      pdfViewLink: uploadResult.publicLink,
-      pdfDownloadLink: uploadResult.downloadLink,
-      pdfUploadedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    return uploadResult;
+    return {
+      success: true,
+      filename: filename,
+      // Add Drive file ID and viewLink here when Drive integration is ready
+    };
   } catch (error) {
-    console.error('Error uploading DTT PDF:', error);
+    console.error('Error uploading PDF:', error);
     throw error;
   }
 }

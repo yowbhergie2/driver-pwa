@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#003f87">
-  <title>DPWH Vehicle Management</title>
-  
+  <meta name="theme-color" content="#4c6ef5">
+  <title>DPWH Fuel & Fleet Management System</title>
+
   <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
-  
+
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  
+
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
@@ -22,299 +22,1365 @@
   <!-- Fix for getComputedStyle errors -->
   <script src="fix-getcomputedstyle.js"></script>
 
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  
+
+  <!-- DTT PDF Generator -->
+  <script src="dtt-pdf-generator.js"></script>
+
   <style>
-    :root {
-      --dpwh-blue: #003f87;
-      --dpwh-gold: #ffc107;
-      --dpwh-light-blue: #0056b3;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    
+
     body {
-      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      overflow-x: hidden;
+    }
+
+    /* Loading Screen */
+    .loading-screen {
       min-height: 100vh;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    
-    .login-card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      overflow: hidden;
-    }
-    
-    .login-header {
-      background: linear-gradient(135deg, var(--dpwh-blue) 0%, var(--dpwh-light-blue) 100%);
-      padding: 2rem;
-      text-align: center;
-      color: white;
-    }
-    
-    .dpwh-logo {
-      width: 80px;
-      height: 80px;
-      background: white;
-      border-radius: 50%;
-      margin: 0 auto 1rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #f5f7fa;
+    }
+
+    .loading-card {
+      text-align: center;
+    }
+
+    .loading-card .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      color: #4c6ef5;
+    }
+
+    /* Login Screen */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-screen::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      top: -250px;
+      right: -250px;
+    }
+
+    .login-screen::after {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 50%;
+      bottom: -150px;
+      left: -150px;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+      max-width: 480px;
+      width: 90%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-logo {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 8px 16px rgba(30, 60, 114, 0.3);
+    }
+
+    .login-logo i {
       font-size: 2.5rem;
-      color: var(--dpwh-blue);
-    }
-    
-    .home-header {
-      background: linear-gradient(135deg, var(--dpwh-blue) 0%, var(--dpwh-light-blue) 100%);
       color: white;
-      padding: 1.5rem 0;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    
+
+    .login-card h3 {
+      color: #1a202c;
+      font-weight: 700;
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+      color: #718096;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+
+    .login-department {
+      color: #a0aec0;
+      font-size: 0.875rem;
+      margin-bottom: 0;
+    }
+
+    /* Main Layout */
+    .driver-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: white;
+      border-right: 1px solid #e8ecef;
+      padding: 2rem 0 0 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-brand {
+      padding: 0 1.5rem 2rem 1.5rem;
+      border-bottom: 1px solid #e8ecef;
+    }
+
+    .sidebar-brand h4 {
+      color: #1a1a2e;
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .sidebar-brand p {
+      color: #6c757d;
+      font-size: 0.875rem;
+      margin: 0;
+    }
+
+    .sidebar-menu {
+      padding: 1.5rem 1rem;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 0.875rem 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 12px;
+      color: #6c757d;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .menu-item i {
+      font-size: 1.25rem;
+      margin-right: 1rem;
+      width: 24px;
+    }
+
+    .menu-item:hover {
+      background: #f5f7fa;
+      color: #4c6ef5;
+    }
+
+    .menu-item.active {
+      background: #4c6ef5;
+      color: white;
+    }
+
+    .menu-item.active:hover {
+      background: #4263eb;
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: 280px;
+      flex: 1;
+      padding: 2rem;
+      transition: margin-left 0.3s ease;
+    }
+
+    .main-content.sidebar-hidden {
+      margin-left: 0;
+    }
+
+    /* Sidebar Toggle Button */
+    .sidebar-toggle {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: 1px solid #e8ecef;
+      border-radius: 10px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 101;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle:hover {
+      background: #4c6ef5;
+      color: white;
+      border-color: #4c6ef5;
+    }
+
+    .sidebar.hidden ~ .sidebar-toggle {
+      display: flex;
+    }
+
+    /* Header */
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .content-header h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .sidebar-collapse-btn {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: 1px solid #e8ecef;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-collapse-btn:hover {
+      background: #f5f7fa;
+      border-color: #4c6ef5;
+      color: #4c6ef5;
+    }
+
+    /* Buttons */
+    .btn-primary-custom {
+      background: #4c6ef5;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary-custom:hover {
+      background: #4263eb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 110, 245, 0.4);
+    }
+
+    .btn-logout {
+      background: white;
+      color: #6c757d;
+      border: 1px solid #e8ecef;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-logout:hover {
+      border-color: #fa5252;
+      color: #fa5252;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
     .stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid #e8ecef;
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      color: #6c757d;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* Data Table */
+    .data-table-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e8ecef;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .table-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e8ecef;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .table-header h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0;
+    }
+
+    .table-custom {
+      width: 100%;
+      margin: 0;
+    }
+
+    .table-custom thead {
+      background: #f8f9fa;
+      border-bottom: 2px solid #e8ecef;
+    }
+
+    .table-custom th {
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: none;
+    }
+
+    .table-custom td {
+      padding: 1.25rem 1.5rem;
+      color: #1a1a2e;
+      border-bottom: 1px solid #e8ecef;
+      vertical-align: middle;
+    }
+
+    .table-custom tbody tr {
+      transition: all 0.2s ease;
+    }
+
+    .table-custom tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .table-custom tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-action {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #e8ecef;
+      background: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
+      font-weight: 500;
+      gap: 0.5rem;
+    }
+
+    .btn-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action.view:hover {
+      border-color: #1971c2;
+      color: #1971c2;
+      background: #e7f5ff;
+    }
+
+    .btn-action.close:hover {
+      border-color: #2f9e44;
+      color: #2f9e44;
+      background: #d3f9d8;
+    }
+
+    /* Badge */
+    .badge-custom {
+      padding: 0.375rem 0.875rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-pending {
+      background: #fff3bf;
+      color: #e67700;
+    }
+
+    .badge-approved {
+      background: #d3f9d8;
+      color: #2f9e44;
+    }
+
+    .badge-in-progress {
+      background: #d0ebff;
+      color: #1864ab;
+    }
+
+    .badge-completed {
+      background: #e7f5ff;
+      color: #1971c2;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      color: #dee2e6;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h4 {
+      color: #6c757d;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      color: #adb5bd;
+    }
+
+    /* Loading */
+    .loading-state {
+      text-align: center;
+      padding: 3rem;
+    }
+
+    .spinner-border {
+      color: #4c6ef5;
+    }
+
+    /* Welcome Card */
+    .welcome-card {
+      background: linear-gradient(135deg, #4c6ef5 0%, #667eea 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .welcome-card h3 {
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .welcome-card p {
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .quick-action-card {
+      background: white;
+      border: 1px solid #e8ecef;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .quick-action-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-color: #4c6ef5;
+    }
+
+    .quick-action-card i {
+      font-size: 2.5rem;
+      color: #4c6ef5;
+      margin-bottom: 1rem;
+    }
+
+    .quick-action-card h6 {
+      font-weight: 600;
+      margin: 0;
+      color: #1a1a2e;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Sub-tabs */
+    .sub-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #e8ecef;
+      padding-bottom: 0;
+    }
+
+    .sub-tab-btn {
+      background: transparent;
+      border: none;
+      padding: 1rem 1.5rem;
+      color: #6c757d;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sub-tab-btn:hover {
+      color: #4c6ef5;
+      background: rgba(76, 110, 245, 0.05);
+    }
+
+    .sub-tab-btn.active {
+      color: #4c6ef5;
+      border-bottom-color: #4c6ef5;
+    }
+
+    .sub-tab-content {
+      display: none;
+    }
+
+    .sub-tab-content.active {
+      display: block;
+    }
+
+    /* DTT Form Styles */
+    .dtt-form-section {
       background: white;
       border-radius: 15px;
       padding: 1.5rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      transition: transform 0.3s, box-shadow 0.3s;
-      border-left: 4px solid var(--dpwh-blue);
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     }
-    
-    .stat-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+
+    .section-title {
+      color: #003f87;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #003f87;
     }
-    
-    .stat-icon {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, var(--dpwh-blue) 0%, var(--dpwh-light-blue) 100%);
-      border-radius: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      color: white;
+
+    .info-card {
+      background: #f8f9fa;
+      border-left: 4px solid #ffc107;
+      padding: 1rem;
+      border-radius: 8px;
       margin-bottom: 1rem;
     }
-    
-    .action-btn {
-      border-radius: 15px;
+
+    .passenger-item {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #e8ecef;
+      transition: all 0.2s ease;
+    }
+
+    .passenger-item:hover {
+      transform: translateX(4px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .passenger-item span {
+      font-weight: 500;
+      color: #1a1a2e;
+    }
+
+    .passenger-item .btn-outline-danger {
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+    }
+
+    .btn-submit {
+      background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+      border: none;
       padding: 1rem;
       font-weight: 600;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      transition: all 0.3s;
-      border: none;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      color: #000;
     }
-    
-    .action-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
     }
-    
-    .btn-primary-dpwh {
-      background: linear-gradient(135deg, var(--dpwh-blue) 0%, var(--dpwh-light-blue) 100%);
-      color: white;
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
     }
-    
-    .bottom-nav {
-      background: white;
-      box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
-      padding: 0.75rem 0;
+
+    .dtt-form-section {
+      animation: fadeInUp 0.4s ease-out;
     }
-    
-    .bottom-nav-item {
-      text-align: center;
-      color: #6c757d;
-      text-decoration: none;
-      transition: all 0.3s;
-    }
-    
-    .bottom-nav-item:hover,
-    .bottom-nav-item.active {
-      color: var(--dpwh-blue);
-    }
-    
-    .bottom-nav-icon {
-      font-size: 1.5rem;
-      display: block;
-      margin-bottom: 0.25rem;
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Loading Splash -->
-  <div id="auth-loading" class="container d-flex align-items-center justify-content-center min-vh-100">
-    <div class="text-center">
-      <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-card">
+      <div class="spinner-border mb-3"></div>
       <p class="text-muted">Loading...</p>
     </div>
   </div>
 
   <!-- Login Screen -->
-  <div id="login-screen" class="container d-flex align-items-center justify-content-center min-vh-100 d-none">
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="login-card">
-        <div class="login-header">
-          <div class="dpwh-logo">
-            <i class="bi bi-truck"></i>
-          </div>
-          <h4 class="mb-1">DPWH Regional Office II</h4>
-          <p class="mb-0 small">Vehicle Management System</p>
+  <div id="login-screen" class="login-screen d-none">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">
+          <i class="bi bi-fuel-pump-fill"></i>
         </div>
-        
-        <div class="p-4">
-          <div class="mb-3">
-            <label class="form-label">Email Address</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-              <input type="email" id="email" class="form-control" placeholder="driver@dpwh.gov.ph" autocomplete="email">
-            </div>
-          </div>
-          
-          <div class="mb-3">
-            <label class="form-label">Password</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-lock"></i></span>
-              <input type="password" id="password" class="form-control" placeholder="••••••••" autocomplete="current-password" onkeypress="if(event.key==='Enter') login()">
-              <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
-                <i class="bi bi-eye" id="password-toggle-icon"></i>
-              </button>
-            </div>
-          </div>
+        <h3>Fuel & Fleet Management</h3>
+        <p class="login-subtitle">DEPARTMENT OF PUBLIC WORKS AND HIGHWAYS</p>
+        <p class="login-department">Regional Office II</p>
+      </div>
 
-          <button onclick="login()" class="btn btn-primary-dpwh w-100 action-btn">
-            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Email Address</label>
+        <input type="email" id="email" class="form-control" placeholder="user@dpwh.gov.ph" autocomplete="email">
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-semibold">Password</label>
+        <div class="input-group">
+          <input type="password" id="password" class="form-control" placeholder="••••••••" autocomplete="current-password" onkeypress="if(event.key==='Enter') login()">
+          <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+            <i class="bi bi-eye" id="password-toggle-icon"></i>
           </button>
-          
-          <p class="text-center text-muted mt-4 mb-0 small">
-            Department of Public Works and Highways<br>
-            Regional Office II
-          </p>
         </div>
+      </div>
+
+      <button onclick="login()" class="btn-primary-custom w-100" id="login-btn">
+        <span id="login-btn-text">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </span>
+        <span id="login-btn-spinner" class="d-none">
+          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          Signing in...
+        </span>
+      </button>
+
+      <div class="text-center mt-4">
+        <small class="text-muted">
+          <i class="bi bi-shield-lock me-1"></i>Secure authentication powered by Firebase
+        </small>
       </div>
     </div>
   </div>
 
-  <!-- Home Screen -->
-  <div id="home-screen" class="d-none">
-    
-    <!-- Header -->
-    <div class="home-header">
-      <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="mb-1"><i class="bi bi-truck me-2"></i>DPWH Vehicle System</h5>
-            <p class="mb-0 small" id="user-name">Loading...</p>
-          </div>
-          <button onclick="logout()" class="btn btn-outline-light btn-sm">
-            <i class="bi bi-box-arrow-right me-1"></i>Logout
-          </button>
+  <!-- Main Driver Layout -->
+  <div id="driver-panel" class="driver-layout d-none">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <h4><i class="bi bi-fuel-pump me-2"></i>DPWH Fuel & Fleet</h4>
+        <p id="user-name">Loading...</p>
+      </div>
+
+      <div class="sidebar-menu">
+        <div class="menu-item active" onclick="showSection('dashboard')">
+          <i class="bi bi-house-door-fill"></i>
+          <span>Dashboard</span>
+        </div>
+        <div class="menu-item" onclick="showSection('trip-tickets')">
+          <i class="bi bi-clipboard-check"></i>
+          <span>Trip Tickets</span>
+        </div>
+        <div class="menu-item" onclick="showSection('request-fuel')">
+          <i class="bi bi-fuel-pump-fill"></i>
+          <span>Request Fuel</span>
+        </div>
+        <div class="menu-item" onclick="showSection('trip-history')">
+          <i class="bi bi-clock-history"></i>
+          <span>Trip History</span>
+        </div>
+        <div class="menu-item" onclick="showSection('profile')">
+          <i class="bi bi-person-circle"></i>
+          <span>Profile</span>
         </div>
       </div>
+
+      <div style="padding: 1.5rem; margin-top: auto; border-top: 1px solid #e8ecef;">
+        <button onclick="logout()" class="btn-logout w-100">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>Log Out</span>
+        </button>
+      </div>
     </div>
+
+    <!-- Sidebar Toggle Button (appears when sidebar is hidden) -->
+    <button onclick="toggleSidebar()" class="sidebar-toggle">
+      <i class="bi bi-list"></i>
+    </button>
 
     <!-- Main Content -->
-    <!-- [GEMINI] FIX: Pinalitan ang 'mb-5' (3rem) ng inline style 'margin-bottom: 7rem;' para magbigay ng sapat na espasyo para sa fixed bottom nav -->
-    <div class="container py-4" style="margin-bottom: 7rem;">
-      
-      <!-- Stats Cards -->
-      <div class="row g-3 mb-4">
-        <div class="col-6">
+    <div class="main-content">
+
+      <!-- Dashboard Section -->
+      <div id="section-dashboard" class="content-section">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Dashboard
+          </h2>
+          <div class="header-actions">
+            <button onclick="logout()" class="btn-logout">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </button>
+          </div>
+        </div>
+
+        <!-- Welcome Card -->
+        <div class="welcome-card">
+          <h3>Welcome back, <span id="welcome-name">Driver</span>!</h3>
+          <p>Manage your trips and fuel requests efficiently</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon">
+            <div class="stat-icon" style="background: #e7f5ff; color: #1971c2;">
               <i class="bi bi-clipboard-check"></i>
             </div>
-            <h3 class="mb-0" id="trips-count">0</h3>
-            <p class="text-muted mb-0 small">My Trips</p>
+            <div class="stat-value" id="stat-total-trips">0</div>
+            <div class="stat-label">Total Trips</div>
           </div>
-        </div>
-        
-        <div class="col-6">
           <div class="stat-card">
-            <div class="stat-icon">
-              <i class="bi bi-fuel-pump"></i>
+            <div class="stat-icon" style="background: #fff3bf; color: #e67700;">
+              <i class="bi bi-clock-history"></i>
             </div>
-            <h3 classm"mb-0" id="fuel-count">0</h3>
-            <p class="text-muted mb-0 small">Fuel Requests</p>
+            <div class="stat-value" id="stat-pending-trips">0</div>
+            <div class="stat-label">Pending Trips</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #d3f9d8; color: #2f9e44;">
+              <i class="bi bi-fuel-pump-fill"></i>
+            </div>
+            <div class="stat-value" id="stat-fuel-requests">0</div>
+            <div class="stat-label">Fuel Requests</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #f3d9fa; color: #862e9c;">
+              <i class="bi bi-car-front-fill"></i>
+            </div>
+            <div class="stat-value" id="stat-assigned-vehicle">N/A</div>
+            <div class="stat-label">Assigned Vehicle</div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <h5 class="mb-3 fw-bold">Quick Actions</h5>
+        <div class="quick-actions">
+          <div class="quick-action-card" onclick="openCreateTripTicketModal()">
+            <i class="bi bi-plus-circle-fill"></i>
+            <h6>New Trip Ticket</h6>
+          </div>
+          <div class="quick-action-card" onclick="showSection('trip-tickets')">
+            <i class="bi bi-list-ul"></i>
+            <h6>View Trip Tickets</h6>
+          </div>
+          <div class="quick-action-card" onclick="showSection('request-fuel')">
+            <i class="bi bi-fuel-pump"></i>
+            <h6>Request Fuel</h6>
+          </div>
+          <div class="quick-action-card" onclick="showSection('trip-history')">
+            <i class="bi bi-clock-history"></i>
+            <h6>Trip History</h6>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3>Recent Activity</h3>
+          </div>
+          <div id="recent-activity-container"></div>
+        </div>
+      </div>
+
+      <!-- Trip Tickets Section (with tabs) -->
+      <div id="section-trip-tickets" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Trip Tickets
+          </h2>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div class="sub-tabs">
+          <button class="sub-tab-btn" onclick="switchTripTicketTab('create')">
+            <i class="bi bi-plus-circle"></i> Create New
+          </button>
+          <button class="sub-tab-btn active" onclick="switchTripTicketTab('list')">
+            <i class="bi bi-list-ul"></i> My Trip Tickets
+          </button>
+        </div>
+
+        <!-- Create Trip Ticket Tab -->
+        <div id="trip-ticket-tab-create" class="sub-tab-content">
+          <!-- PART 1: Basic Information -->
+          <div class="form-section dtt-form-section">
+            <h6 class="section-title">
+              <i class="bi bi-1-circle me-2"></i>TRIP INFORMATION
+            </h6>
+
+            <!-- Driver Name -->
+            <div class="mb-3">
+              <label class="form-label">Driver Name</label>
+              <input type="text" id="dtt-driverName" class="form-control" readonly>
+            </div>
+
+            <!-- Division/Office -->
+            <div class="mb-3">
+              <label class="form-label">Division/Office <span class="text-danger">*</span></label>
+              <select id="dtt-division" class="form-select">
+                <option value="">-- Select Division/Office --</option>
+              </select>
+              <div class="invalid-feedback" id="dtt-division-error">
+                Please select a division/office.
+              </div>
+            </div>
+
+            <!-- Vehicle & Plate No. -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Vehicle <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="text" id="dtt-vehicle-search" class="form-control" placeholder="Search vehicle...">
+                  <button type="button" class="btn btn-primary" onclick="showDttVehicleSearchModal()">
+                    <i class="bi bi-search"></i> Search
+                  </button>
+                </div>
+                <input type="hidden" id="dtt-vehicle" value="">
+                <div id="dtt-selected-vehicle" class="mt-2 text-muted"></div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Plate No. <span class="text-danger">*</span></label>
+                <input type="text" id="dtt-plateNo" class="form-control auto-caps" readonly>
+              </div>
+            </div>
+
+            <!-- Fuel Balance Info -->
+            <div id="dtt-fuel-info" class="info-card d-none">
+              <div class="d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-fuel-pump me-2"></i>Current Fuel Balance:</span>
+                <strong id="dtt-current-fuel" class="fs-5 text-warning">0 L</strong>
+              </div>
+            </div>
+
+            <!-- Authorized Passengers -->
+            <div class="mb-3">
+              <label class="form-label">
+                Name of Authorized Passenger/s
+              </label>
+
+              <div class="input-group mb-2">
+                <input type="text" id="dtt-passenger-input" class="form-control auto-caps"
+                       placeholder="ENTER PASSENGER NAME">
+                <button onclick="addDttPassenger()" class="btn btn-primary" type="button">
+                  <i class="bi bi-plus-lg"></i> Add
+                </button>
+              </div>
+
+              <div id="dtt-passengers-list"></div>
+            </div>
+
+            <!-- Destination -->
+            <div class="mb-3">
+              <label class="form-label">Destination <span class="text-danger">*</span></label>
+              <input type="text" id="dtt-destination" class="form-control auto-caps"
+                     placeholder="E.G., TUGUEGARAO CITY"
+                     autocomplete="off"
+                     list="dtt-destination-suggestions">
+              <datalist id="dtt-destination-suggestions">
+                <option value="TUGUEGARAO CITY">
+                <option value="MANILA">
+                <option value="ISABELA">
+                <option value="CAGAYAN">
+                <option value="SANTIAGO CITY">
+                <option value="ILAGAN CITY">
+                <option value="CAUAYAN CITY">
+              </datalist>
+              <div class="invalid-feedback" id="dtt-destination-error">
+                Please enter a destination.
+              </div>
+            </div>
+
+            <!-- Period Covered -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Period Covered - From <span class="text-danger">*</span></label>
+                <input type="date" id="dtt-periodFrom" class="form-control"
+                       onchange="validateDttPeriodDates()"
+                       min="">
+                <div class="invalid-feedback" id="dtt-periodFrom-error">
+                  Please select a valid start date.
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Period Covered - To <span class="text-danger">*</span></label>
+                <input type="date" id="dtt-periodTo" class="form-control"
+                       onchange="validateDttPeriodDates()"
+                       min="">
+                <div class="invalid-feedback" id="dtt-periodTo-error">
+                  Please select a valid end date.
+                </div>
+              </div>
+            </div>
+            <div id="dtt-date-error" class="alert alert-danger d-none mb-3"></div>
+
+            <!-- Purpose/s (Multiple) -->
+            <div class="mb-3">
+              <label class="form-label">Purpose/s <span class="text-danger">*</span></label>
+              <textarea id="dtt-purposes" rows="4" class="form-control auto-caps"
+                        placeholder="ENTER ONE OR MORE PURPOSES (ONE PER LINE)"
+                        autocomplete="off"
+                        list="dtt-purposes-suggestions"></textarea>
+              <datalist id="dtt-purposes-suggestions"></datalist>
+              <small class="text-muted">You can enter multiple purposes, one per line</small>
+              <div class="invalid-feedback" id="dtt-purpose-error">
+                Please enter at least one purpose (minimum 10 characters).
+              </div>
+            </div>
+
+            <!-- Approving Authority -->
+            <div class="mb-3">
+              <label class="form-label">Approving Authority <span class="text-danger">*</span></label>
+              <select id="dtt-approving-authority" class="form-select" onchange="updateDttAuthorityPrefix()">
+                <option value="">-- Select Approving Authority --</option>
+              </select>
+              <div class="invalid-feedback" id="dtt-authority-error">
+                Please select an approving authority.
+              </div>
+            </div>
+
+            <!-- Authority Prefix -->
+            <div class="mb-3">
+              <label class="form-label">Authority Prefix</label>
+              <select id="dtt-authority-prefix" class="form-select">
+                <option value="">None</option>
+                <option value="By Authority of the Regional Director:">By Authority of the Regional Director:</option>
+                <option value="By Authority of the OIC-Regional Director:">By Authority of the OIC-Regional Director:</option>
+              </select>
+              <small class="text-muted">Pre-filled based on selected authority, but can be changed if needed</small>
+            </div>
+          </div>
+
+          <!-- Request Fuel Section -->
+          <div class="form-section dtt-form-section">
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="dtt-requestFuel" onchange="toggleDttFuelRequest()">
+              <label class="form-check-label fw-bold" for="dtt-requestFuel">
+                <i class="bi bi-fuel-pump-fill text-warning me-2"></i>
+                Request fuel for this trip
+              </label>
+            </div>
+
+            <div id="dtt-fuel-section" class="d-none">
+              <div class="info-card">
+                <label class="form-label">Liters Needed <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="number" id="dtt-fuel-qty" class="form-control"
+                         placeholder="50" step="0.1" min="0">
+                  <span class="input-group-text">liters</span>
+                </div>
+                <small class="text-muted">
+                  Balance after refuel: <strong id="dtt-balance-after">0 L</strong>
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-grid gap-3" style="margin-bottom: 2rem;">
+            <button onclick="submitDttForm()" class="btn btn-submit text-dark" id="dtt-submit-btn">
+              <span id="dtt-submit-btn-text">
+                <i class="bi bi-check-circle me-2"></i>Submit Trip Ticket
+              </span>
+              <span id="dtt-submit-btn-loading" class="d-none">
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Submitting...
+              </span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- My Trip Tickets List Tab -->
+        <div id="trip-ticket-tab-list" class="sub-tab-content active">
+          <div class="data-table-card">
+            <div class="table-header">
+              <h3>All Trip Tickets</h3>
+            </div>
+            <div id="my-trips-table-container"></div>
           </div>
         </div>
       </div>
 
-      <!-- Vehicle Info -->
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-          <h6 class="card-title text-primary mb-3">
-            <i class="bi bi-car-front me-2"></i>My Vehicle
-          </h6>
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h5 class="mb-1">H1 5750</h5>
-              <p class="text-muted mb-0 small">Toyota Vios</p>
+      <!-- Request Fuel Section -->
+      <div id="section-request-fuel" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Request Fuel
+          </h2>
+        </div>
+
+        <div class="alert alert-info mb-4">
+          <i class="bi bi-info-circle me-2"></i>
+          <strong>Note:</strong> Use this for standalone fuel requests (additional fuel mid-trip, generator fuel, or dredge operations).
+        </div>
+
+        <!-- Fuel Request Form -->
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3>New Fuel Request</h3>
+          </div>
+          <div style="padding: 2rem;">
+            <div class="mb-3">
+              <label class="form-label">Request Type <span class="text-danger">*</span></label>
+              <select id="fuel-request-type" class="form-select" onchange="toggleFuelRequestType()">
+                <option value="">-- Select Type --</option>
+                <option value="vehicle">For Vehicle</option>
+                <option value="non-vehicle">For Non-Vehicle (Generator, etc.)</option>
+                <option value="dredge">For Dredge Operations</option>
+              </select>
             </div>
-            <div class="text-end">
-              <h4 class="mb-0 text-success">43.5L</h4>
-              <p class="text-muted mb-0 small">Fuel Balance</p>
+
+            <!-- Vehicle Section -->
+            <div id="fuel-vehicle-section" class="d-none">
+              <div class="mb-3">
+                <label class="form-label">Vehicle <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="text" id="fuel-vehicle-search" class="form-control" placeholder="Search vehicle...">
+                  <button type="button" class="btn btn-primary" onclick="showFuelVehicleSearchModal()">
+                    <i class="bi bi-search"></i> Search
+                  </button>
+                </div>
+                <input type="hidden" id="fuel-vehicle" value="">
+                <div id="fuel-selected-vehicle" class="mt-2 text-muted"></div>
+              </div>
+            </div>
+
+            <!-- Non-Vehicle Section -->
+            <div id="fuel-non-vehicle-section" class="d-none">
+              <div class="mb-3">
+                <label class="form-label">Equipment/Purpose <span class="text-danger">*</span></label>
+                <input type="text" id="fuel-equipment-name" class="form-control text-uppercase" placeholder="E.G., GENERATOR SET">
+                <small class="text-muted">Specify what the fuel will be used for</small>
+              </div>
+            </div>
+
+            <!-- Dredge Section -->
+            <div id="fuel-dredge-section" class="d-none">
+              <div class="mb-3">
+                <label class="form-label">DPWH No. <span class="text-danger">*</span></label>
+                <input type="text" id="fuel-dredge-dpwh-no" class="form-control text-uppercase" placeholder="E.G., DPWH-2024-001">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Equipment Type <span class="text-danger">*</span></label>
+                <input type="text" id="fuel-dredge-type" class="form-control text-uppercase" placeholder="E.G., DREDGE PUMP">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Liters Needed <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="number" id="fuel-qty" class="form-control" placeholder="50" step="0.1" min="0">
+                <span class="input-group-text">liters</span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Purpose <span class="text-danger">*</span></label>
+              <textarea id="fuel-purpose" rows="3" class="form-control text-uppercase" placeholder="EXPLAIN WHY THIS FUEL IS NEEDED"></textarea>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button onclick="submitFuelRequest()" class="btn-primary-custom">
+                <i class="bi bi-fuel-pump-fill"></i>Submit Fuel Request
+              </button>
             </div>
           </div>
         </div>
+
+        <!-- My Fuel Requests -->
+        <div class="data-table-card mt-4">
+          <div class="table-header">
+            <h3>My Fuel Requests</h3>
+          </div>
+          <div id="my-fuel-requests-container"></div>
+        </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="d-grid gap-3">
-        <button onclick="showCreateDtt()" class="btn btn-primary-dpwh action-btn">
-          <i class="bi bi-plus-circle me-2"></i>New Trip Ticket
-        </button>
-        
-        <button onclick="showMyTrips()" class="btn btn-primary action-btn" style="background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%); color: white; border: none;">
-          <i class="bi bi-list-check me-2"></i>View My Trips
-        </button>
-        
-        <!-- [GEMINI] FIX: Pinalitan ang 'text-white' ng 'text-dark' para mas madaling mabasa ang text sa yellow button -->
-        <button onclick="showRequestFuel()" class="btn btn-warning action-btn text-dark">
-          <i class="bi bi-fuel-pump-fill me-2"></i>Request Fuel
-        </button>
-      </div>
-    </div>
+      <!-- Trip History Section -->
+      <div id="section-trip-history" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Trip History
+          </h2>
+        </div>
 
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav fixed-bottom">
-      <div class="container">
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3>Completed Trips</h3>
+          </div>
+          <div id="trip-history-table-container"></div>
+        </div>
+      </div>
+
+      <!-- Profile Section -->
+      <div id="section-profile" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Profile
+          </h2>
+        </div>
+
         <div class="row">
-          <div class="col-3">
-            <a href="#" onclick="showHome(); return false;" class="bottom-nav-item active d-block">
-              <i class="bi bi-house-fill bottom-nav-icon"></i>
-              <small>Home</small>
-            </a>
+          <div class="col-md-6">
+            <div class="data-table-card">
+              <div class="table-header">
+                <h3>Driver Information</h3>
+              </div>
+              <div style="padding: 2rem;">
+                <div class="mb-3">
+                  <label class="form-label text-muted">Name</label>
+                  <p class="fw-bold" id="profile-name">Loading...</p>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label text-muted">Email</label>
+                  <p class="fw-bold" id="profile-email">Loading...</p>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label text-muted">Role</label>
+                  <p><span class="badge-custom badge-primary">Driver</span></p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="col-3">
-            <a href="#" onclick="showMyTrips(); return false;" class="bottom-nav-item d-block">
-              <i class="bi bi-clipboard-check bottom-nav-icon"></i>
-              <small>Trips</small>
-            </a>
+          <div class="col-md-6">
+            <div class="data-table-card">
+              <div class="table-header">
+                <h3>Assigned Vehicle</h3>
+              </div>
+              <div style="padding: 2rem;">
+                <div id="profile-vehicle-info">
+                  <p class="text-muted">No vehicle assigned</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="col-3">
-            <a href="#" onclick="showRequestFuel(); return false;" class="bottom-nav-item d-block">
-              <i class="bi bi-fuel-pump bottom-nav-icon"></i>
-              <small>Fuel</small>
-            </a>
+        </div>
+
+        <div class="data-table-card mt-4">
+          <div class="table-header">
+            <h3>Change Password</h3>
           </div>
-          <div class="col-3">
-            <a href="#" onclick="showProfile(); return false;" class="bottom-nav-item d-block">
-              <i class="bi bi-person-fill bottom-nav-icon"></i>
-              <small>Profile</small>
-            </a>
+          <div style="padding: 2rem;">
+            <form onsubmit="changePassword(event)">
+              <div class="mb-3">
+                <label class="form-label">Current Password</label>
+                <div class="input-group">
+                  <input type="password" id="current-password" class="form-control" required>
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('current-password', 'current-password-icon')">
+                    <i class="bi bi-eye" id="current-password-icon"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">New Password</label>
+                <div class="input-group">
+                  <input type="password" id="new-password" class="form-control" minlength="6" required>
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('new-password', 'new-password-icon')">
+                    <i class="bi bi-eye" id="new-password-icon"></i>
+                  </button>
+                </div>
+                <small class="text-muted">Password must be at least 6 characters</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Confirm New Password</label>
+                <div class="input-group">
+                  <input type="password" id="confirm-password" class="form-control" minlength="6" required>
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('confirm-password', 'confirm-password-icon')">
+                    <i class="bi bi-eye" id="confirm-password-icon"></i>
+                  </button>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary-custom" id="change-password-btn">
+                <i class="bi bi-shield-lock me-2"></i>Change Password
+              </button>
+            </form>
           </div>
         </div>
       </div>
+
     </div>
-    
   </div>
 
   <!-- Bootstrap JS -->
@@ -333,12 +1399,90 @@
       messagingSenderId: "821758027736",
       appId: "1:821758027736:web:3b1924046e73cb0c9434ad"
     };
-    
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    
-    // Toggle password visibility
+
+    let currentUser = null;
+    let vehiclesCache = null;
+    let selectedFuelVehicle = null;
+
+    // ==================== SECTION NAVIGATION ====================
+
+    function showSection(section) {
+      // Hide all sections
+      document.querySelectorAll('.content-section').forEach(el => el.classList.add('d-none'));
+
+      // Remove active from all menu items
+      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+
+      // Show selected section
+      document.getElementById('section-' + section).classList.remove('d-none');
+
+      // Add active to selected menu item
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      } else {
+        // Find and activate the menu item
+        document.querySelectorAll('.menu-item').forEach(el => {
+          if (el.textContent.toLowerCase().includes(section.replace('-', ' '))) {
+            el.classList.add('active');
+          }
+        });
+      }
+
+      // Load data for section
+      if (section === 'trip-tickets') loadTrips();
+      else if (section === 'request-fuel') {
+        loadVehicles();
+        loadMyFuelRequests();
+      }
+      else if (section === 'trip-history') loadTripHistory();
+      else if (section === 'profile') loadProfile();
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      const mainContent = document.querySelector('.main-content');
+
+      sidebar.classList.toggle('hidden');
+      mainContent.classList.toggle('sidebar-hidden');
+    }
+
+    // Switch between Trip Ticket tabs
+    function switchTripTicketTab(tab) {
+      // Hide all sub-tab contents
+      document.querySelectorAll('#section-trip-tickets .sub-tab-content').forEach(el => el.classList.remove('active'));
+
+      // Remove active from all sub-tab buttons
+      document.querySelectorAll('#section-trip-tickets .sub-tab-btn').forEach(el => el.classList.remove('active'));
+
+      // Show selected sub-tab content
+      document.getElementById('trip-ticket-tab-' + tab).classList.add('active');
+
+      // Add active to selected sub-tab button
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      } else {
+        // Programmatic call - find and activate the right button
+        document.querySelectorAll('#section-trip-tickets .sub-tab-btn').forEach(btn => {
+          if (btn.getAttribute('onclick').includes(`'${tab}'`)) {
+            btn.classList.add('active');
+          }
+        });
+      }
+
+      // Handle tab-specific actions
+      if (tab === 'list') {
+        loadTrips();
+      } else if (tab === 'create') {
+        initDttForm();
+      }
+    }
+
+    // ==================== AUTH ====================
+
     function togglePassword() {
       const passwordInput = document.getElementById('password');
       const toggleIcon = document.getElementById('password-toggle-icon');
@@ -354,7 +1498,6 @@
       }
     }
 
-    // Login
     async function login() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -368,18 +1511,45 @@
         return;
       }
 
+      // Show spinner and disable button
+      const loginBtn = document.getElementById('login-btn');
+      const loginBtnText = document.getElementById('login-btn-text');
+      const loginBtnSpinner = document.getElementById('login-btn-spinner');
+
+      loginBtn.disabled = true;
+      loginBtnText.classList.add('d-none');
+      loginBtnSpinner.classList.remove('d-none');
+
       try {
         await auth.signInWithEmailAndPassword(email, password);
       } catch (error) {
+        // Hide spinner and enable button on error
+        loginBtn.disabled = false;
+        loginBtnText.classList.remove('d-none');
+        loginBtnSpinner.classList.add('d-none');
+
+        let errorMessage = 'Wrong username or password.';
+
+        if (error.code === 'auth/network-request-failed') {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMessage = 'Too many failed login attempts. Please try again later.';
+        }
+
         modalManager.alert({
           title: 'Login Failed',
-          message: error.message,
+          message: errorMessage,
           type: 'error'
         });
       }
     }
-    
-    // Logout
+
+    // Open Create Trip Ticket - switch to trip tickets section with create tab
+    function openCreateTripTicketModal() {
+      showSection('trip-tickets');
+      switchTripTicketTab('create');
+    }
+
     async function logout() {
       const confirmed = await modalManager.confirm({
         title: 'Confirm Logout',
@@ -393,89 +1563,2186 @@
         auth.signOut();
       }
     }
-    
-    // Auto-login check
+
+    // Listen for messages from iframe to close modal or switch tabs
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'CLOSE_MODAL') {
+        // Close modal if it's open
+        modalManager.closeAll();
+
+        // Switch to list tab in trip tickets section
+        showSection('trip-tickets');
+        switchTripTicketTab('list');
+      }
+    });
+
     auth.onAuthStateChanged(async (user) => {
-      // Hide loading splash
-      document.getElementById('auth-loading').classList.add('d-none');
+      document.getElementById('loading-screen').classList.add('d-none');
 
       if (user) {
-        // User is logged in - show home screen
-        document.getElementById('login-screen').classList.add('d-none');
-        document.getElementById('home-screen').classList.remove('d-none');
-        document.getElementById('user-name').textContent = user.email;
-        await loadDashboard();
+        try {
+          const userDoc = await db.collection('users').doc(user.uid).get();
+
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            const userRole = userData.role;
+
+            // Redirect based on role
+            if (userRole === 'emd' || userRole === 'spms' || userRole === 'admin') {
+              window.location.href = 'staff-dashboard.html';
+              return;
+            }
+
+            // Driver role - show driver panel
+            currentUser = user;
+            document.getElementById('login-screen').classList.add('d-none');
+            document.getElementById('driver-panel').classList.remove('d-none');
+
+            // Use displayName from Firestore userData, fallback to auth user or email
+            const displayName = userData.displayName || user.displayName || user.email.split('@')[0];
+            document.getElementById('user-name').textContent = displayName;
+            document.getElementById('welcome-name').textContent = displayName;
+
+            await loadDashboard();
+          } else {
+            // Driver role - show driver panel even if no Firestore doc
+            currentUser = user;
+            document.getElementById('login-screen').classList.add('d-none');
+            document.getElementById('driver-panel').classList.remove('d-none');
+
+            const displayName = user.displayName || user.email.split('@')[0];
+            document.getElementById('user-name').textContent = displayName;
+            document.getElementById('welcome-name').textContent = displayName;
+
+            await loadDashboard();
+          }
+        } catch (error) {
+          console.error('Error loading user role:', error);
+          document.getElementById('login-screen').classList.add('d-none');
+          document.getElementById('driver-panel').classList.remove('d-none');
+          document.getElementById('user-name').textContent = user.email;
+          await loadDashboard();
+        }
       } else {
-        // User is not logged in - show login screen
-        document.getElementById('home-screen').classList.add('d-none');
+        document.getElementById('driver-panel').classList.add('d-none');
         document.getElementById('login-screen').classList.remove('d-none');
       }
     });
-    
-    // Load Dashboard Data
+
+    // ==================== DASHBOARD ====================
+
     async function loadDashboard() {
-      const user = auth.currentUser;
-
-      // Show loading state
-      document.getElementById('trips-count').innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
-      document.getElementById('fuel-count').innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
-
       try {
-        // Get trips count (fast query - single where clause)
-        const tripsSnapshot = await db.collection('dtts')
-          .where('driverUid', '==', user.uid)
-          .get();
-        document.getElementById('trips-count').textContent = tripsSnapshot.size;
+        // Load stats
+        const [tripsSnapshot, fuelSnapshot] = await Promise.all([
+          db.collection('dtts').where('driverUid', '==', currentUser.uid).get(),
+          db.collection('risRequests').where('requestedByUid', '==', currentUser.uid).get()
+        ]);
 
-        // Get fuel requests count (may need index)
-        // Using single where clause to avoid index requirement
-        const fuelSnapshot = await db.collection('risRequests')
-          .where('requestedByUid', '==', user.uid)
-          .get();
+        document.getElementById('stat-total-trips').textContent = tripsSnapshot.size;
 
-        // Filter for Pending status in client-side (faster than waiting for index)
-        const pendingCount = fuelSnapshot.docs.filter(doc => doc.data().status === 'Pending').length;
-        document.getElementById('fuel-count').textContent = pendingCount;
+        const pendingTrips = tripsSnapshot.docs.filter(doc =>
+          doc.data().status === 'Pending' || doc.data().status === 'Approved'
+        ).length;
+        document.getElementById('stat-pending-trips').textContent = pendingTrips;
+
+        document.getElementById('stat-fuel-requests').textContent = fuelSnapshot.size;
+
+        // Load assigned vehicle (placeholder)
+        document.getElementById('stat-assigned-vehicle').textContent = 'N/A';
+
+        // Load recent activity
+        await loadRecentActivity();
       } catch (error) {
         console.error('Error loading dashboard:', error);
-        // Show 0 on error instead of leaving spinner
-        document.getElementById('trips-count').textContent = '0';
-        document.getElementById('fuel-count').textContent = '0';
+      }
+    }
 
-        // Show error notification
-        if (error.message.includes('index')) {
-          console.warn('Firestore index required. Check console for link to create index.');
+    async function loadRecentActivity() {
+      const container = document.getElementById('recent-activity-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('dtts')
+          .where('driverUid', '==', currentUser.uid)
+          .orderBy('createdAt', 'desc')
+          .limit(5)
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-clipboard"></i>
+              <h4>No recent activity</h4>
+              <p>Your recent trips will appear here</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>DTT No</th><th>Destination</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const trip = doc.data();
+          const date = trip.createdAt ? trip.createdAt.toDate().toLocaleDateString() : 'N/A';
+          const statusBadge = getStatusBadge(trip.status);
+
+          html += `
+            <tr>
+              <td><strong>${trip.dttId || 'N/A'}</strong></td>
+              <td>${trip.destination || 'N/A'}</td>
+              <td><span class="badge-custom badge-${statusBadge}">${trip.status || 'Unknown'}</span></td>
+              <td><small>${date}</small></td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading recent activity:', error);
+
+        let errorMessage = 'Unable to load recent activity. Please try again.';
+        let errorDetails = '';
+
+        if (error.code === 'permission-denied') {
+          errorMessage = 'Access Denied';
+          errorDetails = 'You do not have permission to view recent activity.';
+        } else if (error.code === 'unavailable') {
+          errorMessage = 'Connection Error';
+          errorDetails = 'Unable to connect to the server. Please check your internet connection.';
+        } else if (error.message) {
+          errorDetails = error.message;
+        }
+
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+            <h4>${errorMessage}</h4>
+            <p class="text-muted">${errorDetails}</p>
+            <button onclick="loadRecentActivity()" class="btn-primary-custom mt-3">
+              <i class="bi bi-arrow-clockwise me-2"></i>Retry
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    function getStatusBadge(status) {
+      if (!status) return 'pending';
+
+      const statusLower = status.toLowerCase().replace(/[_\s-]+/g, '-');
+
+      const statusMap = {
+        'pending': 'pending',
+        'pending-approval': 'pending',
+        'approved': 'approved',
+        'in-progress': 'in-progress',
+        'completed': 'completed',
+        'rejected': 'pending',
+        'cancellation-requested': 'pending',
+        'cancelled': 'pending'
+      };
+
+      return statusMap[statusLower] || 'pending';
+    }
+
+    // ==================== MY TRIPS ====================
+
+    async function loadTrips() {
+      loadMyTrips();
+    }
+
+    async function loadMyTrips() {
+      const container = document.getElementById('my-trips-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('dtts')
+          .where('driverUid', '==', currentUser.uid)
+          .orderBy('createdAt', 'desc')
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-clipboard-check"></i>
+              <h4>No trips yet</h4>
+              <p>Click "New Trip Ticket" to create your first trip</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>DTT No</th><th>Vehicle</th><th>Destination</th><th>Period</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const trip = doc.data();
+          const statusBadge = getStatusBadge(trip.status);
+
+          // Format period - check both periodFrom/periodTo (strings) and dateFrom/dateTo (timestamps)
+          let period = 'N/A';
+          if (trip.periodFrom && trip.periodTo) {
+            try {
+              const dateFromStr = new Date(trip.periodFrom).toLocaleDateString();
+              const dateToStr = new Date(trip.periodTo).toLocaleDateString();
+              // Show single date if same, otherwise show range
+              period = dateFromStr === dateToStr ? dateFromStr : `${dateFromStr} - ${dateToStr}`;
+            } catch (e) {
+              period = 'N/A';
+            }
+          } else if (trip.dateFrom && trip.dateTo) {
+            try {
+              const dateFromStr = trip.dateFrom.toDate ? trip.dateFrom.toDate().toLocaleDateString() : new Date(trip.dateFrom).toLocaleDateString();
+              const dateToStr = trip.dateTo.toDate ? trip.dateTo.toDate().toLocaleDateString() : new Date(trip.dateTo).toLocaleDateString();
+              // Show single date if same, otherwise show range
+              period = dateFromStr === dateToStr ? dateFromStr : `${dateFromStr} - ${dateToStr}`;
+            } catch (e) {
+              period = 'N/A';
+            }
+          }
+
+          // Show DPWH No. instead of plate number
+          const vehicleDisplay = trip.vehicleDpwhNo || trip.plateNo || 'N/A';
+
+          html += `
+            <tr>
+              <td><strong>${trip.dttId || 'N/A'}</strong></td>
+              <td>${vehicleDisplay}</td>
+              <td>${trip.destination || 'N/A'}</td>
+              <td><small>${period}</small></td>
+              <td><span class="badge-custom badge-${statusBadge}">${trip.status || 'Unknown'}</span></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action view" onclick="viewTripDetails('${doc.id}')">
+                    <i class="bi bi-eye"></i> View
+                  </button>
+                  ${trip.pdfGenerated ? `
+                  <button class="btn-action" style="background: #dc3545;" onclick="viewTripPdf('${doc.id}')">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                  </button>
+                  ` : ''}
+                  ${(trip.status && trip.status.toLowerCase() === 'approved') ? `
+                  <button class="btn-action close" onclick="closeTrip('${doc.id}')">
+                    <i class="bi bi-check-circle"></i> Close
+                  </button>
+                  <button class="btn-action" style="background: #ffc107; color: #000;" onclick="requestCancellation('${doc.id}')">
+                    <i class="bi bi-x-circle"></i> Request Cancel
+                  </button>
+                  ` : ''}
+                  ${(trip.status && trip.status.toLowerCase() === 'cancellation-requested') ? `
+                  <button class="btn-action" style="background: #6c757d;" disabled>
+                    <i class="bi bi-clock-history"></i> Cancellation Pending
+                  </button>
+                  ` : ''}
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading trips:', error);
+
+        let errorMessage = 'Unable to load trips. Please try again.';
+        let errorDetails = '';
+
+        if (error.code === 'permission-denied') {
+          errorMessage = 'Access Denied';
+          errorDetails = 'You do not have permission to view trips.';
+        } else if (error.code === 'unavailable') {
+          errorMessage = 'Connection Error';
+          errorDetails = 'Unable to connect to the server. Please check your internet connection.';
+        } else if (error.message) {
+          errorDetails = error.message;
+        }
+
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+            <h4>${errorMessage}</h4>
+            <p class="text-muted">${errorDetails}</p>
+            <button onclick="loadMyTrips()" class="btn-primary-custom mt-3">
+              <i class="bi bi-arrow-clockwise me-2"></i>Retry
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    async function viewTripDetails(tripId) {
+      try {
+        const doc = await db.collection('dtts').doc(tripId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Trip not found', type: 'error' });
+          return;
+        }
+
+        const trip = doc.data();
+        // Handle both old and new field names
+        const dateFrom = trip.periodFrom || trip.dateFrom;
+        const dateTo = trip.periodTo || trip.dateTo;
+        const plateNo = trip.plateNo || trip.vehiclePlateNo;
+
+        // Format vehicle display as "Brand Model (DPWH No.)"
+        const vehicleDisplay = trip.vehicleBrand && trip.vehicleModel
+          ? `${trip.vehicleBrand} ${trip.vehicleModel} (${trip.vehicleDpwhNo || plateNo})`
+          : plateNo || 'N/A';
+
+        const dateFromStr = dateFrom ? (dateFrom.toDate ? dateFrom.toDate().toLocaleDateString() : dateFrom) : 'N/A';
+        const dateToStr = dateTo ? (dateTo.toDate ? dateTo.toDate().toLocaleDateString() : dateTo) : 'N/A';
+
+        modalManager.show({
+          title: 'Trip Details',
+          size: 'large',
+          content: `
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <strong>DTT No:</strong><br>${trip.dttId || 'N/A'}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Status:</strong><br><span class="badge-custom badge-${getStatusBadge(trip.status)}">${trip.status || 'Unknown'}</span>
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Vehicle:</strong><br>${vehicleDisplay}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Driver:</strong><br>${trip.driverName || trip.driverEmail || 'N/A'}
+              </div>
+              <div class="col-md-12 mb-3">
+                <strong>Destination:</strong><br>${trip.destination || 'N/A'}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Date From:</strong><br>${dateFromStr}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Date To:</strong><br>${dateToStr}
+              </div>
+              <div class="col-md-12 mb-3">
+                <strong>Purpose:</strong><br>${trip.purpose || 'N/A'}
+              </div>
+              ${trip.passengers && trip.passengers.length > 0 ? `
+              <div class="col-md-12 mb-3">
+                <strong>Passengers:</strong><br>${trip.passengers.join(', ')}
+              </div>
+              ` : ''}
+            </div>
+          `,
+          buttons: [
+            { label: 'Close', type: 'secondary' }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function closeTrip(tripId) {
+      try {
+        // Get current trip data
+        const tripDoc = await db.collection('dtts').doc(tripId).get();
+        if (!tripDoc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Trip not found', type: 'error' });
+          return;
+        }
+
+        const trip = tripDoc.data();
+
+        modalManager.show({
+          title: 'Close Trip',
+          size: 'large',
+          content: `
+            <div style="max-height: 65vh; overflow-y: auto; padding-right: 10px;">
+              <div class="alert alert-info mb-4">
+                <strong>DTT No:</strong> ${trip.dttId}<br>
+                <strong>Destination:</strong> ${trip.destination}
+              </div>
+
+              <!-- SECTION 1: TIME -->
+            <div style="background: #f8f9fa; border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden;">
+              <h6 style="color: #003f87; font-weight: 600; margin: 0; padding: 1rem; cursor: pointer; user-select: none;" onclick="toggleCloseSection('section1')">
+                <i class="bi bi-clock me-2"></i>1. Time of Departure/Arrival
+                <i class="bi bi-chevron-down float-end" id="section1-icon"></i>
+              </h6>
+              <div id="section1-content" style="padding: 0 1rem 1rem 1rem;">
+                <div class="row g-2">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold" style="font-size: 0.9rem;">Departure from office</label>
+                  <input type="time" id="close-time-depart-office" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold" style="font-size: 0.9rem;">Arrival at destination</label>
+                  <input type="time" id="close-time-arrival-dest" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold" style="font-size: 0.9rem;">Departure from destination</label>
+                  <input type="time" id="close-time-depart-dest" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold" style="font-size: 0.9rem;">Arrival back to office</label>
+                  <input type="time" id="close-time-arrival-office" class="form-control" required>
+                </div>
+              </div>
+              </div>
+            </div>
+
+            <!-- SECTION 2: SPEEDOMETER READING -->
+            <div style="background: #f8f9fa; border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden;">
+              <h6 style="color: #003f87; font-weight: 600; margin: 0; padding: 1rem; cursor: pointer; user-select: none;" onclick="toggleCloseSection('section2')">
+                <i class="bi bi-speedometer2 me-2"></i>2. Speedometer reading
+                <i class="bi bi-chevron-down float-end" id="section2-icon"></i>
+              </h6>
+              <div id="section2-content" style="padding: 0 1rem 1rem 1rem;">
+                <div class="row g-2">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold" style="font-size: 0.9rem;">Speedometer (End)</label>
+                  <div class="input-group">
+                    <input type="number" id="close-speedometer-end" class="form-control" step="0.1" min="0" required>
+                    <span class="input-group-text">km</span>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold" style="font-size: 0.9rem;">Speedometer (Start)</label>
+                  <div class="input-group">
+                    <input type="number" id="close-speedometer-start" class="form-control" step="0.1" min="0" required>
+                    <span class="input-group-text">km</span>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold" style="font-size: 0.9rem;">Approx. distance <span class="text-muted">(Auto)</span></label>
+                  <div class="input-group">
+                    <input type="number" id="close-approx-distance" class="form-control" step="0.1" min="0" required readonly style="background: #e9ecef;">
+                    <span class="input-group-text">km</span>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </div>
+
+            <!-- SECTION 3: FUEL -->
+            <div style="background: #fff9e6; border-radius: 8px; border-left: 4px solid #ffc107; margin-bottom: 1.5rem; overflow: hidden;">
+              <h6 style="color: #003f87; font-weight: 600; margin: 0; padding: 1rem; cursor: pointer; user-select: none;" onclick="toggleCloseSection('section3')">
+                <i class="bi bi-fuel-pump-fill me-2"></i>3. Gasoline/Diesel
+                <i class="bi bi-chevron-down float-end" id="section3-icon"></i>
+              </h6>
+              <div id="section3-content" style="padding: 0 1rem 1rem 1rem;">
+                <div class="row g-2 mb-2">
+                <div class="col-md-6">
+                  <label class="form-label" style="font-size: 0.85rem;">a. Balance in tank (start)</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="close-balance-in-tank" class="form-control" value="${trip.fuelBalanceStart || 0}" step="0.01" min="0" required>
+                    <span class="input-group-text">L</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" style="font-size: 0.85rem;">b. Issued by office</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="close-issued-by-office" class="form-control" value="${trip.requisitionQty || 0}" step="0.01" min="0" required>
+                    <span class="input-group-text">L</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" style="font-size: 0.85rem;">c. Purchased during trip</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="close-purchased-during-trip" class="form-control" value="0" step="0.01" min="0" required>
+                    <span class="input-group-text">L</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold" style="font-size: 0.85rem; color: #0066cc;">Total (a + b + c) <span class="text-muted">(Auto)</span></label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="close-total-fuel" class="form-control fw-bold" step="0.01" min="0" readonly style="background: #e3f2fd; border-color: #0066cc;">
+                    <span class="input-group-text" style="background: #e3f2fd; border-color: #0066cc;">L</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" style="font-size: 0.85rem;">d. Used during trip</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="close-used-during-trip" class="form-control" step="0.01" min="0" required>
+                    <span class="input-group-text">L</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold" style="font-size: 0.85rem;">e. Balance in tank (end) <span class="text-muted">(Auto)</span></label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="close-balance-end" class="form-control" step="0.01" min="0" required readonly style="background: #e9ecef;">
+                    <span class="input-group-text">L</span>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </div>
+
+            <!-- SECTION 4: OTHER MATERIALS -->
+            <div style="background: #f8f9fa; border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden;">
+              <h6 style="color: #003f87; font-weight: 600; margin: 0; padding: 1rem; cursor: pointer; user-select: none;" onclick="toggleCloseSection('section4')">
+                <i class="bi bi-droplet me-2"></i>4. Other Materials
+                <i class="bi bi-chevron-down float-end" id="section4-icon"></i>
+              </h6>
+              <div id="section4-content" style="padding: 0 1rem 1rem 1rem;">
+                <div class="row g-2">
+                <div class="col-md-12 mb-2">
+                  <label class="form-label" style="font-size: 0.85rem;">Motor oil issued</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="close-motor-oil-issued" class="form-control" value="0" step="0.01" min="0">
+                    <span class="input-group-text">ltrs.</span>
+                  </div>
+                </div>
+                <div class="col-md-12 mb-2">
+                  <label class="form-label" style="font-size: 0.85rem;">Lubricating oil issued</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="close-lub-oil-issued" class="form-control" value="0" step="0.01" min="0">
+                    <span class="input-group-text">ltrs.</span>
+                  </div>
+                </div>
+                <div class="col-md-12 mb-2">
+                  <label class="form-label" style="font-size: 0.85rem;">Grease issued</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="close-grease-issued" class="form-control" value="0" step="0.01" min="0">
+                    <span class="input-group-text">ltrs.</span>
+                  </div>
+                </div>
+                <div class="col-md-12 mb-2">
+                  <label class="form-label" style="font-size: 0.85rem;">Brake fluid</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" id="close-brake-fluid-issued" class="form-control" value="0" step="0.01" min="0">
+                    <span class="input-group-text">ltrs.</span>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </div>
+
+              <!-- SECTION 5: REMARKS -->
+              <div style="background: #f8f9fa; border-radius: 8px; overflow: hidden;">
+                <h6 style="color: #003f87; font-weight: 600; margin: 0; padding: 1rem; cursor: pointer; user-select: none;" onclick="toggleCloseSection('section5')">
+                  <i class="bi bi-chat-left-text me-2"></i>5. Remarks (Optional)
+                  <i class="bi bi-chevron-down float-end" id="section5-icon"></i>
+                </h6>
+                <div id="section5-content" style="padding: 0 1rem 1rem 1rem;">
+                  <textarea id="close-remarks" class="form-control" rows="2" placeholder="Any additional notes..."></textarea>
+                </div>
+              </div>
+            </div>
+          `,
+          buttons: [
+            {
+              label: 'Cancel',
+              type: 'secondary'
+            },
+            {
+              label: 'Submit & Close Trip',
+              type: 'primary',
+              onClick: async () => {
+                // Get all values
+                const timeDepartOffice = document.getElementById('close-time-depart-office').value;
+                const timeArrivalDest = document.getElementById('close-time-arrival-dest').value;
+                const timeDepartDest = document.getElementById('close-time-depart-dest').value;
+                const timeArrivalOffice = document.getElementById('close-time-arrival-office').value;
+                const approximateDistance = parseFloat(document.getElementById('close-approx-distance').value) || 0;
+                const speedometerStart = parseFloat(document.getElementById('close-speedometer-start').value) || 0;
+                const speedometerEnd = parseFloat(document.getElementById('close-speedometer-end').value) || 0;
+                const balanceInTank = parseFloat(document.getElementById('close-balance-in-tank').value) || 0;
+                const issuedByOffice = parseFloat(document.getElementById('close-issued-by-office').value) || 0;
+                const purchasedDuringTrip = parseFloat(document.getElementById('close-purchased-during-trip').value) || 0;
+                const usedDuringTrip = parseFloat(document.getElementById('close-used-during-trip').value) || 0;
+                const balanceEnd = parseFloat(document.getElementById('close-balance-end').value) || 0;
+                const totalFuel = parseFloat(document.getElementById('close-total-fuel').value) || 0;
+                const motorOilIssued = parseFloat(document.getElementById('close-motor-oil-issued').value) || 0;
+                const lubOilIssued = parseFloat(document.getElementById('close-lub-oil-issued').value) || 0;
+                const greaseIssued = parseFloat(document.getElementById('close-grease-issued').value) || 0;
+                const brakeFluidIssued = parseFloat(document.getElementById('close-brake-fluid-issued').value) || 0;
+                const remarks = document.getElementById('close-remarks').value.trim();
+
+                // Validation
+                if (!timeDepartOffice || !timeArrivalDest || !timeDepartDest || !timeArrivalOffice) {
+                  await modalManager.alert({ title: 'Missing Information', message: 'Please fill in all time fields', type: 'warning' });
+                  return;
+                }
+
+                if (!approximateDistance || !speedometerStart || !speedometerEnd) {
+                  await modalManager.alert({ title: 'Missing Information', message: 'Please fill in all distance/odometer fields', type: 'warning' });
+                  return;
+                }
+
+                // Calculate distance traveled
+                const distanceTravelled = speedometerEnd - speedometerStart;
+
+                const loadingId = modalManager.loading({ title: 'Closing trip...', message: 'Please wait...' });
+
+                try {
+                  // Update trip with all details
+                  await db.collection('dtts').doc(tripId).update({
+                    status: 'completed',
+                    completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    timeDepartOffice: timeDepartOffice,
+                    timeArrivalDest: timeArrivalDest,
+                    timeDepartDest: timeDepartDest,
+                    timeArrivalOffice: timeArrivalOffice,
+                    approximateDistance: approximateDistance,
+                    speedometerStart: speedometerStart,
+                    speedometerEnd: speedometerEnd,
+                    distanceTravelled: distanceTravelled,
+                    balanceInTank: balanceInTank,
+                    issuedByOffice: issuedByOffice,
+                    purchasedDuringTrip: purchasedDuringTrip,
+                    usedDuringTrip: usedDuringTrip,
+                    balanceEnd: balanceEnd,
+                    totalFuel: totalFuel,
+                    motorOilIssued: motorOilIssued,
+                    lubOilIssued: lubOilIssued,
+                    greaseIssued: greaseIssued,
+                    brakeFluidIssued: brakeFluidIssued,
+                    remarks: remarks
+                  });
+
+                  // Update vehicle fuel balance
+                  if (trip.plateNo) {
+                    const vehicleSnapshot = await db.collection('vehicles')
+                      .where('plateNo', '==', trip.plateNo)
+                      .get();
+
+                    if (!vehicleSnapshot.empty) {
+                      const vehicleDoc = vehicleSnapshot.docs[0];
+                      await db.collection('vehicles').doc(vehicleDoc.id).update({
+                        currentFuelBalance: balanceEnd,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                      });
+                    }
+                  }
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Success', message: 'Trip closed successfully!', type: 'success' });
+
+                  loadMyTrips();
+                  loadDashboard();
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+
+        // Setup auto-calculations
+        setTimeout(() => {
+          // Distance calculation
+          const speedometerStartInput = document.getElementById('close-speedometer-start');
+          const speedometerEndInput = document.getElementById('close-speedometer-end');
+          const approxDistanceInput = document.getElementById('close-approx-distance');
+
+          const calculateDistance = () => {
+            const start = parseFloat(speedometerStartInput.value) || 0;
+            const end = parseFloat(speedometerEndInput.value) || 0;
+            const distance = end - start;
+            approxDistanceInput.value = distance > 0 ? distance.toFixed(1) : '0';
+          };
+
+          speedometerStartInput.addEventListener('input', calculateDistance);
+          speedometerEndInput.addEventListener('input', calculateDistance);
+
+          // Fuel calculations
+          const balanceInTankInput = document.getElementById('close-balance-in-tank');
+          const issuedByOfficeInput = document.getElementById('close-issued-by-office');
+          const purchasedDuringTripInput = document.getElementById('close-purchased-during-trip');
+          const totalFuelInput = document.getElementById('close-total-fuel');
+          const usedDuringTripInput = document.getElementById('close-used-during-trip');
+          const balanceEndInput = document.getElementById('close-balance-end');
+
+          const calculateFuel = () => {
+            const balanceStart = parseFloat(balanceInTankInput.value) || 0;
+            const issued = parseFloat(issuedByOfficeInput.value) || 0;
+            const purchased = parseFloat(purchasedDuringTripInput.value) || 0;
+            const used = parseFloat(usedDuringTripInput.value) || 0;
+
+            // Calculate total fuel
+            const totalFuel = balanceStart + issued + purchased;
+            totalFuelInput.value = totalFuel.toFixed(2);
+
+            // Calculate balance end
+            const balanceEnd = totalFuel - used;
+            balanceEndInput.value = balanceEnd.toFixed(2);
+          };
+
+          // Add event listeners
+          balanceInTankInput.addEventListener('input', calculateFuel);
+          issuedByOfficeInput.addEventListener('input', calculateFuel);
+          purchasedDuringTripInput.addEventListener('input', calculateFuel);
+          usedDuringTripInput.addEventListener('input', calculateFuel);
+
+          // Calculate initial values
+          calculateDistance();
+          calculateFuel();
+        }, 100);
+
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // Toggle collapse/expand for Close Trip sections
+    function toggleCloseSection(sectionId) {
+      const content = document.getElementById(`${sectionId}-content`);
+      const icon = document.getElementById(`${sectionId}-icon`);
+
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.classList.remove('bi-chevron-right');
+        icon.classList.add('bi-chevron-down');
+      } else {
+        content.style.display = 'none';
+        icon.classList.remove('bi-chevron-down');
+        icon.classList.add('bi-chevron-right');
+      }
+    }
+
+    // View/Download Trip PDF
+    async function viewTripPdf(tripId) {
+      let loadingId;
+      try {
+        console.log('📄 Generating PDF for trip:', tripId);
+        loadingId = modalManager.loading({ title: 'Generating PDF...', message: 'Please wait...' });
+
+        const tripDoc = await db.collection('dtts').doc(tripId).get();
+        if (!tripDoc.exists) {
+          modalManager.close(loadingId);
+          await modalManager.alert({ title: 'Error', message: 'Trip not found', type: 'error' });
+          return;
+        }
+
+        const tripData = tripDoc.data();
+        console.log('📄 Trip data loaded:', tripData);
+
+        // Check if jsPDF is available
+        if (typeof window.jspdf === 'undefined') {
+          modalManager.close(loadingId);
+          await modalManager.alert({
+            title: 'Error',
+            message: 'PDF library not loaded. Please refresh the page.',
+            type: 'error'
+          });
+          return;
+        }
+
+        // Check if generateDttPdf function exists
+        if (typeof generateDttPdf !== 'function') {
+          modalManager.close(loadingId);
+          await modalManager.alert({
+            title: 'Error',
+            message: 'PDF generator not available. Please refresh the page.',
+            type: 'error'
+          });
+          return;
+        }
+
+        // Prepare data for PDF generator - ensure all required fields exist
+        const pdfData = {
+          ...tripData,
+          vehicle: tripData.vehicle || `${tripData.vehicleBrand || ''} ${tripData.vehicleModel || ''}`.trim() || 'N/A'
+        };
+
+        console.log('📄 Generating PDF with data:', pdfData);
+        console.log('📄 Passengers in PDF data:', pdfData.passengers);
+
+        // Generate PDF and view in new tab
+        try {
+          const pdf = await generateDttPdf(pdfData);
+          console.log('✅ PDF document created');
+
+          // Generate filename for the window title
+          const filename = typeof generateDttPdfFilename === 'function'
+            ? generateDttPdfFilename(pdfData)
+            : `DTT_${pdfData.dttId || 'document'}.pdf`;
+
+          console.log('👁️ Opening PDF in new tab:', filename);
+
+          // Open PDF in new tab for viewing
+          const pdfBlob = pdf.output('blob');
+          const pdfUrl = URL.createObjectURL(pdfBlob);
+
+          // Open in new tab
+          const newWindow = window.open(pdfUrl, '_blank');
+
+          if (!newWindow) {
+            // If popup was blocked, try downloading instead
+            console.warn('⚠️ Popup blocked, downloading PDF instead');
+            pdf.save(filename);
+          } else {
+            console.log('✅ PDF opened in new tab');
+            // Clean up the URL after a delay to allow the browser to load it
+            setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
+          }
+
+          modalManager.close(loadingId);
+        } catch (pdfError) {
+          console.error('❌ PDF generation error:', pdfError);
+          console.error('❌ Error stack:', pdfError.stack);
+          modalManager.close(loadingId);
+          await modalManager.alert({
+            title: 'PDF Generation Error',
+            message: `Failed to generate PDF: ${pdfError.message}`,
+            type: 'error'
+          });
+        }
+
+      } catch (error) {
+        console.error('❌ Error in viewTripPdf:', error);
+        if (loadingId) modalManager.close(loadingId);
+        await modalManager.alert({
+          title: 'Error',
+          message: `Failed to view PDF: ${error.message}`,
+          type: 'error'
+        });
+      }
+    }
+
+    // Request cancellation of trip
+    async function requestCancellation(tripId) {
+      try {
+        const tripDoc = await db.collection('dtts').doc(tripId).get();
+        if (!tripDoc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Trip not found', type: 'error' });
+          return;
+        }
+
+        const trip = tripDoc.data();
+
+        // Show reason input modal
+        modalManager.show({
+          title: 'Request Trip Cancellation',
+          content: `
+            <div class="alert alert-warning">
+              <strong>DTT No:</strong> ${trip.dttId}<br>
+              <strong>Destination:</strong> ${trip.destination}<br>
+              <strong>Period:</strong> ${trip.periodFrom} ${trip.periodFrom !== trip.periodTo ? '- ' + trip.periodTo : ''}
+            </div>
+            <p>Please provide a reason for cancellation:</p>
+            <textarea id="cancellation-reason" class="form-control auto-caps" rows="3" placeholder="Enter reason for cancellation..." required></textarea>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Submit Request',
+              type: 'primary',
+              onClick: async () => {
+                const reason = document.getElementById('cancellation-reason').value.trim();
+
+                if (!reason) {
+                  await modalManager.alert({ title: 'Missing Information', message: 'Please provide a reason for cancellation', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading({ title: 'Submitting request...', message: 'Please wait...' });
+
+                try {
+                  await db.collection('dtts').doc(tripId).update({
+                    status: 'cancellation-requested',
+                    cancellationReason: reason,
+                    cancellationRequestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    cancellationRequestedBy: auth.currentUser.uid
+                  });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({
+                    title: 'Request Submitted',
+                    message: 'Your cancellation request has been submitted to SPMS for approval.',
+                    type: 'success'
+                  });
+
+                  loadMyTrips();
+                  loadDashboard();
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+
+        // Auto-uppercase for reason
+        setTimeout(() => {
+          const reasonInput = document.getElementById('cancellation-reason');
+          if (reasonInput) {
+            reasonInput.addEventListener('input', function() {
+              this.value = this.value.toUpperCase();
+            });
+          }
+        }, 100);
+
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== FUEL REQUEST ====================
+
+    function toggleFuelRequestType() {
+      const type = document.getElementById('fuel-request-type').value;
+      const vehicleSection = document.getElementById('fuel-vehicle-section');
+      const nonVehicleSection = document.getElementById('fuel-non-vehicle-section');
+      const dredgeSection = document.getElementById('fuel-dredge-section');
+
+      vehicleSection.classList.add('d-none');
+      nonVehicleSection.classList.add('d-none');
+      dredgeSection.classList.add('d-none');
+
+      if (type === 'vehicle') {
+        vehicleSection.classList.remove('d-none');
+      } else if (type === 'non-vehicle') {
+        nonVehicleSection.classList.remove('d-none');
+      } else if (type === 'dredge') {
+        dredgeSection.classList.remove('d-none');
+      }
+    }
+
+    async function loadVehicles() {
+      try {
+        if (vehiclesCache) return;
+
+        const snapshot = await db.collection('vehicles').get();
+        vehiclesCache = [];
+        snapshot.forEach(doc => {
+          vehiclesCache.push(doc.data());
+        });
+      } catch (error) {
+        console.error('Error loading vehicles:', error);
+      }
+    }
+
+    async function showFuelVehicleSearchModal() {
+      await loadVehicles();
+
+      const searchInput = document.getElementById('fuel-vehicle-search').value.trim().toUpperCase();
+
+      let filteredVehicles = vehiclesCache;
+      if (searchInput) {
+        filteredVehicles = vehiclesCache.filter(v =>
+          v.brand.includes(searchInput) ||
+          v.model.includes(searchInput) ||
+          v.plateNo.includes(searchInput) ||
+          (v.dpwhNo && v.dpwhNo.includes(searchInput))
+        );
+      }
+
+      if (filteredVehicles.length === 0) {
+        modalManager.alert({
+          title: 'No Vehicles Found',
+          message: `No vehicles match "${searchInput}". Try a different search.`,
+          type: 'warning'
+        });
+        return;
+      }
+
+      let vehicleListHtml = '<div class="list-group" style="max-height: 400px; overflow-y: auto;">';
+      filteredVehicles.forEach(vehicle => {
+        vehicleListHtml += `
+          <a href="#" class="list-group-item list-group-item-action" onclick="selectFuelVehicle('${vehicle.plateNo}', '${vehicle.brand}', '${vehicle.model}', '${vehicle.dpwhNo || 'N/A'}'); return false;">
+            <div class="d-flex w-100 justify-content-between">
+              <h6 class="mb-1">${vehicle.brand} ${vehicle.model}</h6>
+              <small>${vehicle.plateNo}</small>
+            </div>
+            <small class="text-muted">DPWH No: ${vehicle.dpwhNo || 'N/A'}</small>
+          </a>
+        `;
+      });
+      vehicleListHtml += '</div>';
+
+      modalManager.show({
+        title: `Select Vehicle (${filteredVehicles.length} found)`,
+        content: vehicleListHtml,
+        size: 'medium',
+        buttons: [
+          { label: 'Cancel', type: 'secondary' }
+        ]
+      });
+    }
+
+    function selectFuelVehicle(plateNo, brand, model, dpwhNo) {
+      selectedFuelVehicle = { plateNo, brand, model, dpwhNo };
+      document.getElementById('fuel-vehicle').value = plateNo;
+      document.getElementById('fuel-vehicle-search').value = `${brand} ${model} (${plateNo})`;
+      document.getElementById('fuel-selected-vehicle').innerHTML = `<small><i class="bi bi-check-circle-fill text-success"></i> ${brand} ${model} - ${plateNo}</small>`;
+      modalManager.closeAll();
+    }
+
+    async function submitFuelRequest() {
+      const requestType = document.getElementById('fuel-request-type').value;
+      const fuelQty = parseFloat(document.getElementById('fuel-qty').value);
+      const purpose = document.getElementById('fuel-purpose').value.trim();
+
+      if (!requestType) {
+        modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please select request type.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      if (requestType === 'vehicle' && !document.getElementById('fuel-vehicle').value) {
+        modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please select a vehicle.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      if (requestType === 'non-vehicle' && !document.getElementById('fuel-equipment-name').value.trim()) {
+        modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please specify equipment/purpose.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      if (requestType === 'dredge') {
+        const dpwhNo = document.getElementById('fuel-dredge-dpwh-no').value.trim();
+        const dredgeType = document.getElementById('fuel-dredge-type').value.trim();
+        if (!dpwhNo || !dredgeType) {
+          modalManager.alert({
+            title: 'Missing Information',
+            message: 'Please specify DPWH No. and equipment type.',
+            type: 'warning'
+          });
+          return;
+        }
+      }
+
+      if (!fuelQty || fuelQty <= 0) {
+        modalManager.alert({
+          title: 'Invalid Input',
+          message: 'Please enter a valid fuel quantity.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      if (!purpose || purpose.length < 10) {
+        modalManager.alert({
+          title: 'Invalid Input',
+          message: 'Please enter purpose (at least 10 characters).',
+          type: 'warning'
+        });
+        return;
+      }
+
+      const loadingId = modalManager.loading('Submitting request...');
+
+      try {
+        const risId = 'RIS_' + Date.now();
+        const risData = {
+          risId: risId,
+          requestType: requestType,
+          requestedBy: currentUser.displayName || currentUser.email,
+          requestedByUid: currentUser.uid,
+          requestedByEmail: currentUser.email,
+          requisitionQty: fuelQty,
+          issuanceQty: fuelQty,
+          purpose: purpose,
+          status: 'Pending',
+          requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (requestType === 'vehicle') {
+          risData.plateNo = selectedFuelVehicle.plateNo;
+          risData.dpwhNo = selectedFuelVehicle.dpwhNo;
+          risData.vehicle = selectedFuelVehicle.brand + ' ' + selectedFuelVehicle.model;
+        } else if (requestType === 'non-vehicle') {
+          risData.equipmentName = document.getElementById('fuel-equipment-name').value.trim();
+          risData.plateNo = null;
+          risData.dpwhNo = null;
+        } else if (requestType === 'dredge') {
+          risData.dpwhNo = document.getElementById('fuel-dredge-dpwh-no').value.trim();
+          risData.dredgeType = document.getElementById('fuel-dredge-type').value.trim();
+          risData.plateNo = null;
+        }
+
+        await db.collection('risRequests').doc(risId).set(risData);
+
+        modalManager.close(loadingId);
+        await modalManager.alert({
+          title: 'Fuel Request Submitted!',
+          message: `RIS ID: ${risId}<br>Quantity: ${fuelQty} liters<br><br>Your fuel request has been sent for validation.`,
+          type: 'success'
+        });
+
+        // Reset form
+        document.getElementById('fuel-request-type').value = '';
+        document.getElementById('fuel-qty').value = '';
+        document.getElementById('fuel-purpose').value = '';
+        toggleFuelRequestType();
+
+        loadMyFuelRequests();
+        loadDashboard();
+      } catch (error) {
+        modalManager.close(loadingId);
+        modalManager.alert({
+          title: 'Error',
+          message: 'Failed to submit fuel request: ' + error.message,
+          type: 'error'
+        });
+      }
+    }
+
+    async function loadMyFuelRequests() {
+      const container = document.getElementById('my-fuel-requests-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('risRequests')
+          .where('requestedByUid', '==', currentUser.uid)
+          .orderBy('createdAt', 'desc')
+          .limit(10)
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-fuel-pump"></i>
+              <h4>No fuel requests yet</h4>
+              <p>Your fuel requests will appear here</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>RIS ID</th><th>Type</th><th>Quantity</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const req = doc.data();
+          const date = req.createdAt ? req.createdAt.toDate().toLocaleDateString() : 'N/A';
+
+          html += `
+            <tr>
+              <td><strong>${req.risId}</strong></td>
+              <td>${req.requestType}</td>
+              <td>${req.requisitionQty} L</td>
+              <td><span class="badge-custom badge-pending">${req.status}</span></td>
+              <td><small>${date}</small></td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading fuel requests:', error);
+
+        let errorMessage = 'Unable to load fuel requests. Please try again.';
+        let errorDetails = '';
+
+        if (error.code === 'permission-denied') {
+          errorMessage = 'Access Denied';
+          errorDetails = 'You do not have permission to view fuel requests.';
+        } else if (error.code === 'unavailable') {
+          errorMessage = 'Connection Error';
+          errorDetails = 'Unable to connect to the server. Please check your internet connection.';
+        } else if (error.message) {
+          errorDetails = error.message;
+        }
+
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+            <h4>${errorMessage}</h4>
+            <p class="text-muted">${errorDetails}</p>
+            <button onclick="loadMyFuelRequests()" class="btn-primary-custom mt-3">
+              <i class="bi bi-arrow-clockwise me-2"></i>Retry
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // ==================== TRIP HISTORY ====================
+
+    async function loadTripHistory() {
+      const container = document.getElementById('trip-history-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('dtts')
+          .where('driverUid', '==', currentUser.uid)
+          .where('status', '==', 'Completed')
+          .orderBy('completedAt', 'desc')
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-clock-history"></i>
+              <h4>No completed trips</h4>
+              <p>Your completed trips will appear here</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>DTT No</th><th>Vehicle</th><th>Destination</th><th>Period</th><th>Completed</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const trip = doc.data();
+          const period = trip.dateFrom && trip.dateTo ?
+            `${trip.dateFrom.toDate().toLocaleDateString()} - ${trip.dateTo.toDate().toLocaleDateString()}` : 'N/A';
+          const completedDate = trip.completedAt ? trip.completedAt.toDate().toLocaleDateString() : 'N/A';
+
+          html += `
+            <tr>
+              <td><strong>${trip.dttId || 'N/A'}</strong></td>
+              <td>${trip.vehiclePlateNo || 'N/A'}</td>
+              <td>${trip.destination || 'N/A'}</td>
+              <td><small>${period}</small></td>
+              <td><small>${completedDate}</small></td>
+              <td>
+                <button class="btn-action view" onclick="viewTripDetails('${doc.id}')">
+                  <i class="bi bi-eye"></i> View
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading trip history:', error);
+
+        let errorMessage = 'Unable to load history. Please try again.';
+        let errorDetails = '';
+
+        if (error.code === 'permission-denied') {
+          errorMessage = 'Access Denied';
+          errorDetails = 'You do not have permission to view trip history.';
+        } else if (error.code === 'unavailable') {
+          errorMessage = 'Connection Error';
+          errorDetails = 'Unable to connect to the server. Please check your internet connection.';
+        } else if (error.message) {
+          errorDetails = error.message;
+        }
+
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+            <h4>${errorMessage}</h4>
+            <p class="text-muted">${errorDetails}</p>
+            <button onclick="loadTripHistory()" class="btn-primary-custom mt-3">
+              <i class="bi bi-arrow-clockwise me-2"></i>Retry
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // ==================== PROFILE ====================
+
+    async function loadProfile() {
+      try {
+        // Fetch user data from Firestore to get displayName
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          document.getElementById('profile-name').textContent = userData.displayName || currentUser.displayName || 'N/A';
+        } else {
+          document.getElementById('profile-name').textContent = currentUser.displayName || 'N/A';
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        document.getElementById('profile-name').textContent = currentUser.displayName || 'N/A';
+      }
+
+      document.getElementById('profile-email').textContent = currentUser.email;
+
+      // Load assigned vehicle (placeholder)
+      document.getElementById('profile-vehicle-info').innerHTML = '<p class="text-muted">No vehicle assigned</p>';
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+      }
+    }
+
+    async function changePassword(event) {
+      event.preventDefault();
+
+      const currentPassword = document.getElementById('current-password').value;
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const changeBtn = document.getElementById('change-password-btn');
+
+      // Validate new password match
+      if (newPassword !== confirmPassword) {
+        await modalManager.alert({
+          title: 'Password Mismatch',
+          message: 'New password and confirmation do not match.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      // Validate password length
+      if (newPassword.length < 6) {
+        await modalManager.alert({
+          title: 'Invalid Password',
+          message: 'Password must be at least 6 characters long.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      // Disable button and show loading state
+      changeBtn.disabled = true;
+      const originalContent = changeBtn.innerHTML;
+      changeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Changing Password...';
+
+      try {
+        const user = auth.currentUser;
+        const credential = firebase.auth.EmailAuthProvider.credential(
+          user.email,
+          currentPassword
+        );
+
+        // Re-authenticate user
+        await user.reauthenticateWithCredential(credential);
+
+        // Update password
+        await user.updatePassword(newPassword);
+
+        // Clear form
+        document.getElementById('current-password').value = '';
+        document.getElementById('new-password').value = '';
+        document.getElementById('confirm-password').value = '';
+
+        await modalManager.alert({
+          title: 'Success',
+          message: 'Your password has been changed successfully!',
+          type: 'success'
+        });
+      } catch (error) {
+        console.error('Error changing password:', error);
+
+        let errorMessage = 'Failed to change password. Please try again.';
+
+        if (error.code === 'auth/wrong-password') {
+          errorMessage = 'Current password is incorrect.';
+        } else if (error.code === 'auth/weak-password') {
+          errorMessage = 'New password is too weak. Please use a stronger password.';
+        } else if (error.code === 'auth/requires-recent-login') {
+          errorMessage = 'For security reasons, please log out and log in again before changing your password.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        await modalManager.alert({
+          title: 'Error',
+          message: errorMessage,
+          type: 'error'
+        });
+      } finally {
+        // Re-enable button
+        changeBtn.disabled = false;
+        changeBtn.innerHTML = originalContent;
+      }
+    }
+
+    // ==================== DTT FORM FUNCTIONS ====================
+
+    let dttCurrentFuelBalance = 0;
+    let dttPassengers = [];
+    let dttDivisionsCache = null;
+    let dttAuthoritiesCache = null;
+    let dttVehiclesCache = null;
+    let dttVehiclesCacheTime = null;
+    let dttSelectedVehicleData = null;
+    const DTT_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+    // Initialize DTT form when tab is shown
+    async function initDttForm() {
+      // Set driver name from Firestore
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const userDoc = await db.collection('users').doc(user.uid).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            const userName = userData.displayName || user.displayName || user.email;
+            document.getElementById('dtt-driverName').value = userName;
+          } else {
+            document.getElementById('dtt-driverName').value = user.displayName || user.email;
+          }
+        } catch (error) {
+          console.error('Error loading user data:', error);
+          document.getElementById('dtt-driverName').value = user.displayName || user.email;
+        }
+      }
+
+      // Load data
+      loadDttDivisions();
+      loadDttApprovingAuthorities();
+      loadDttVehicles();
+      loadDttAutocomplete();
+
+      // Set minimum date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('dtt-periodFrom').setAttribute('min', today);
+      document.getElementById('dtt-periodTo').setAttribute('min', today);
+
+      // Setup auto-caps for all inputs
+      const autoCapsInputs = document.querySelectorAll('#trip-ticket-tab-create .auto-caps');
+      autoCapsInputs.forEach(input => {
+        input.addEventListener('input', function() {
+          this.value = this.value.toUpperCase();
+        });
+      });
+
+      // Render passengers list
+      renderDttPassengers();
+    }
+
+    // Load divisions
+    async function loadDttDivisions() {
+      try {
+        console.log('🔄 Starting to load DTT divisions...');
+        const divisionSelect = document.getElementById('dtt-division');
+
+        if (!divisionSelect) {
+          console.error('❌ Division select element not found!');
+          return;
+        }
+
+        // If already loaded in dropdown, return
+        if (divisionSelect.options.length > 1) {
+          console.log('✅ DTT divisions already loaded in dropdown');
+          return;
+        }
+
+        console.log('📡 Querying Firestore for divisions...');
+        // Query with index requirement
+        const divisionsSnapshot = await db.collection('divisions')
+          .where('status', '==', 'active')
+          .orderBy('name')
+          .get();
+
+        console.log('📦 Received', divisionsSnapshot.size, 'divisions from Firestore');
+
+        dttDivisionsCache = [];
+
+        divisionsSnapshot.forEach(doc => {
+          const division = doc.data();
+          dttDivisionsCache.push(division);
+
+          const option = document.createElement('option');
+          option.value = division.name;
+          option.textContent = division.name;
+          divisionSelect.appendChild(option);
+        });
+
+        console.log('✅ Successfully loaded', dttDivisionsCache.length, 'DTT divisions');
+      } catch (error) {
+        console.error('❌ Error loading DTT divisions:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+
+        // Check if it's an index error
+        if (error.code === 'failed-precondition' || error.message.includes('index')) {
+          // Extract index URL from error message if available
+          const indexUrlMatch = error.message.match(/(https:\/\/console\.firebase\.google\.com[^\s]+)/);
+          const indexUrl = indexUrlMatch ? indexUrlMatch[1] : null;
+
+          modalManager.alert({
+            title: 'Database Index Required',
+            message: `
+              <p><strong>Firestore Index Missing for Divisions</strong></p>
+              <p>The divisions query requires a database index.</p>
+              ${indexUrl ? `
+                <div class="alert alert-info mt-3" style="text-align: left;">
+                  <strong>Click the link below to create the index:</strong><br>
+                  <a href="${indexUrl}" target="_blank" style="word-break: break-all; color: #0066cc;">${indexUrl}</a>
+                </div>
+                <p class="mt-2"><small>After creating the index, wait 1-2 minutes then refresh this page.</small></p>
+              ` : `
+                <div class="alert alert-info mt-3" style="text-align: left;">
+                  <strong>To create the index:</strong><br>
+                  1. Go to <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a><br>
+                  2. Navigate to <strong>Firestore Database → Indexes</strong><br>
+                  3. Create a composite index for:<br>
+                  &nbsp;&nbsp;- Collection: <code>divisions</code><br>
+                  &nbsp;&nbsp;- Fields: <code>status (==)</code>, <code>name (Ascending)</code>
+                </div>
+              `}
+            `,
+            type: 'warning'
+          });
+        } else {
+          // Generic error
+          modalManager.alert({
+            title: 'Error Loading Divisions',
+            message: `Could not load divisions: ${error.message}`,
+            type: 'error'
+          });
         }
       }
     }
-    
-    // Navigation functions
-    function showCreateDtt() {
-      window.location.href = 'create-dtt.html';
+
+    // Load approving authorities
+    async function loadDttApprovingAuthorities() {
+      try {
+        console.log('🔄 Starting to load DTT approving authorities...');
+        const authoritySelect = document.getElementById('dtt-approving-authority');
+
+        if (!authoritySelect) {
+          console.error('❌ Approving authority select element not found!');
+          return;
+        }
+
+        // If already loaded in dropdown, return
+        if (authoritySelect.options.length > 1) {
+          console.log('✅ DTT approving authorities already loaded in dropdown');
+          return;
+        }
+
+        console.log('📡 Querying Firestore for approving authorities...');
+        // Query with index requirement
+        const authoritiesSnapshot = await db.collection('approvingAuthorities')
+          .where('status', '==', 'active')
+          .orderBy('name')
+          .get();
+
+        console.log('📦 Received', authoritiesSnapshot.size, 'approving authorities from Firestore');
+
+        dttAuthoritiesCache = [];
+
+        authoritiesSnapshot.forEach(doc => {
+          const authority = doc.data();
+          dttAuthoritiesCache.push({
+            id: doc.id,
+            name: authority.name,
+            position: authority.position,
+            defaultPrefix: authority.defaultPrefix || ''
+          });
+
+          const option = document.createElement('option');
+          option.value = doc.id;
+          option.textContent = authority.name;
+          option.dataset.prefix = authority.defaultPrefix || '';
+          option.dataset.position = authority.position || '';
+          authoritySelect.appendChild(option);
+        });
+
+        console.log('✅ Successfully loaded', dttAuthoritiesCache.length, 'DTT approving authorities');
+      } catch (error) {
+        console.error('❌ Error loading DTT approving authorities:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+
+        // Check if it's an index error
+        if (error.code === 'failed-precondition' || error.message.includes('index')) {
+          // Extract index URL from error message if available
+          const indexUrlMatch = error.message.match(/(https:\/\/console\.firebase\.google\.com[^\s]+)/);
+          const indexUrl = indexUrlMatch ? indexUrlMatch[1] : null;
+
+          modalManager.alert({
+            title: 'Database Index Required',
+            message: `
+              <p><strong>Firestore Index Missing for Approving Authorities</strong></p>
+              <p>The approving authorities query requires a database index.</p>
+              ${indexUrl ? `
+                <div class="alert alert-info mt-3" style="text-align: left;">
+                  <strong>Click the link below to create the index:</strong><br>
+                  <a href="${indexUrl}" target="_blank" style="word-break: break-all; color: #0066cc;">${indexUrl}</a>
+                </div>
+                <p class="mt-2"><small>After creating the index, wait 1-2 minutes then refresh this page.</small></p>
+              ` : `
+                <div class="alert alert-info mt-3" style="text-align: left;">
+                  <strong>To create the index:</strong><br>
+                  1. Go to <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a><br>
+                  2. Navigate to <strong>Firestore Database → Indexes</strong><br>
+                  3. Create a composite index for:<br>
+                  &nbsp;&nbsp;- Collection: <code>approvingAuthorities</code><br>
+                  &nbsp;&nbsp;- Fields: <code>status (==)</code>, <code>name (Ascending)</code>
+                </div>
+              `}
+            `,
+            type: 'warning'
+          });
+        } else {
+          // Generic error
+          modalManager.alert({
+            title: 'Error Loading Authorities',
+            message: `Could not load approving authorities: ${error.message}`,
+            type: 'error'
+          });
+        }
+      }
     }
-    
-    function showMyTrips() {
-      window.location.href = 'my-trips.html';
+
+    // Update authority prefix
+    function updateDttAuthorityPrefix() {
+      const authoritySelect = document.getElementById('dtt-approving-authority');
+      const prefixSelect = document.getElementById('dtt-authority-prefix');
+      const selectedOption = authoritySelect.options[authoritySelect.selectedIndex];
+
+      if (selectedOption && selectedOption.dataset.prefix) {
+        prefixSelect.value = selectedOption.dataset.prefix;
+      }
     }
-    
-    function showRequestFuel() {
-      window.location.href = 'request-fuel.html';
+
+    // Load vehicles
+    async function loadDttVehicles() {
+      try {
+        const now = Date.now();
+        if (dttVehiclesCache && dttVehiclesCacheTime && (now - dttVehiclesCacheTime < DTT_CACHE_DURATION)) {
+          console.log('Using cached DTT vehicles');
+          return;
+        }
+
+        const vehiclesSnapshot = await db.collection('vehicles').get();
+
+        dttVehiclesCache = [];
+        vehiclesSnapshot.forEach(doc => {
+          dttVehiclesCache.push(doc.data());
+        });
+        dttVehiclesCacheTime = Date.now();
+        console.log('Loaded', dttVehiclesCache.length, 'DTT vehicles');
+      } catch (error) {
+        console.error('Error loading DTT vehicles:', error);
+      }
     }
-    
-    function showHome() {
-      location.reload();
+
+    // Load autocomplete suggestions from user's previous DTTs
+    async function loadDttAutocomplete() {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        // Get user's last 20 DTTs
+        const dttsSnapshot = await db.collection('dtts')
+          .where('driverUid', '==', user.uid)
+          .orderBy('createdAt', 'desc')
+          .limit(20)
+          .get();
+
+        const destinations = new Set();
+        const purposes = new Set();
+
+        dttsSnapshot.forEach(doc => {
+          const dtt = doc.data();
+
+          // Add destination
+          if (dtt.destination) {
+            destinations.add(dtt.destination.toUpperCase());
+          }
+
+          // Add purposes
+          if (dtt.purposes && Array.isArray(dtt.purposes)) {
+            dtt.purposes.forEach(purpose => {
+              if (purpose.trim()) {
+                purposes.add(purpose.toUpperCase().trim());
+              }
+            });
+          } else if (dtt.purpose) {
+            // Handle old format (single purpose string)
+            const purposeLines = dtt.purpose.split('\n');
+            purposeLines.forEach(line => {
+              if (line.trim()) {
+                purposes.add(line.toUpperCase().trim());
+              }
+            });
+          }
+        });
+
+        // Populate destination datalist
+        const destinationDatalist = document.getElementById('dtt-destination-suggestions');
+        destinations.forEach(dest => {
+          const option = document.createElement('option');
+          option.value = dest;
+          destinationDatalist.appendChild(option);
+        });
+
+        console.log('✅ Loaded autocomplete:', destinations.size, 'destinations,', purposes.size, 'purposes');
+      } catch (error) {
+        console.error('Error loading autocomplete:', error);
+      }
     }
-    
-    function showProfile() {
-      window.location.href = 'profile.html';
+
+    // Show vehicle search modal
+    async function showDttVehicleSearchModal() {
+      await loadDttVehicles();
+
+      const searchInput = document.getElementById('dtt-vehicle-search').value.trim().toUpperCase();
+
+      let filteredVehicles = dttVehiclesCache;
+      if (searchInput) {
+        filteredVehicles = dttVehiclesCache.filter(v =>
+          v.brand.includes(searchInput) ||
+          v.model.includes(searchInput) ||
+          v.plateNo.includes(searchInput) ||
+          (v.dpwhNo && v.dpwhNo.includes(searchInput))
+        );
+      }
+
+      if (filteredVehicles.length === 0) {
+        modalManager.alert({
+          title: 'No Vehicles Found',
+          message: `No vehicles match "${searchInput}". Try a different search.`,
+          type: 'warning'
+        });
+        return;
+      }
+
+      let vehicleListHtml = '<div class="list-group" style="max-height: 400px; overflow-y: auto;">';
+      filteredVehicles.forEach(vehicle => {
+        const dpwhNo = vehicle.dpwhNo || 'N/A';
+        const vehicleDetails = `${vehicle.brand} ${vehicle.model} (${vehicle.plateNo})`;
+        vehicleListHtml += `
+          <a href="#" class="list-group-item list-group-item-action" onclick="selectDttVehicle('${vehicle.plateNo}', '${vehicle.brand}', '${vehicle.model}', ${vehicle.currentFuelBalance || 0}, '${dpwhNo}'); return false;">
+            <div class="d-flex w-100 justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-1"><strong>${dpwhNo}</strong></h6>
+                <small class="text-muted">${vehicleDetails}</small>
+              </div>
+              <small class="badge bg-info">${(vehicle.currentFuelBalance || 0).toFixed(1)}L</small>
+            </div>
+          </a>
+        `;
+      });
+      vehicleListHtml += '</div>';
+
+      modalManager.show({
+        title: `Select Vehicle (${filteredVehicles.length} found)`,
+        content: vehicleListHtml,
+        size: 'medium',
+        buttons: [
+          { label: 'Cancel', type: 'secondary' }
+        ]
+      });
     }
-    
-    // Register service worker
+
+    // Select vehicle
+    function selectDttVehicle(plateNo, brand, model, fuelBalance, dpwhNo) {
+      dttSelectedVehicleData = {
+        plateNo: plateNo,
+        brand: brand,
+        model: model,
+        dpwhNo: dpwhNo,
+        fuelBalance: fuelBalance
+      };
+
+      document.getElementById('dtt-vehicle').value = plateNo;
+      document.getElementById('dtt-plateNo').value = plateNo;
+
+      document.getElementById('dtt-vehicle-search').value = dpwhNo;
+      document.getElementById('dtt-selected-vehicle').innerHTML = `<small><i class="bi bi-check-circle-fill text-success"></i> ${dpwhNo} - ${brand} ${model} (${plateNo})</small>`;
+
+      dttCurrentFuelBalance = fuelBalance;
+      document.getElementById('dtt-current-fuel').textContent = fuelBalance.toFixed(1) + ' L';
+      document.getElementById('dtt-fuel-info').classList.remove('d-none');
+
+      modalManager.closeAll();
+    }
+
+    // Add passenger
+    function addDttPassenger() {
+      const input = document.getElementById('dtt-passenger-input');
+      const name = input.value.trim().toUpperCase();
+
+      if (!name) {
+        modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please enter passenger name.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      dttPassengers.push(name);
+      input.value = '';
+      renderDttPassengers();
+    }
+
+    // Remove passenger
+    function removeDttPassenger(index) {
+      dttPassengers.splice(index, 1);
+      renderDttPassengers();
+    }
+
+    // Render passengers list
+    function renderDttPassengers() {
+      const list = document.getElementById('dtt-passengers-list');
+      if (dttPassengers.length === 0) {
+        list.innerHTML = '<small class="text-muted">No passengers added yet</small>';
+        return;
+      }
+
+      list.innerHTML = dttPassengers.map((name, index) => `
+        <div class="passenger-item">
+          <span>${index + 1}. ${name}</span>
+          <button onclick="removeDttPassenger(${index})" class="btn btn-sm btn-outline-danger ms-auto">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // Toggle fuel request
+    function toggleDttFuelRequest() {
+      const checked = document.getElementById('dtt-requestFuel').checked;
+      const section = document.getElementById('dtt-fuel-section');
+
+      if (checked) {
+        section.classList.remove('d-none');
+      } else {
+        section.classList.add('d-none');
+      }
+    }
+
+    // Calculate fuel balance after refuel
+    document.addEventListener('DOMContentLoaded', function() {
+      const fuelQtyInput = document.getElementById('dtt-fuel-qty');
+      if (fuelQtyInput) {
+        fuelQtyInput.addEventListener('input', function() {
+          const fuelNeeded = parseFloat(this.value) || 0;
+          const balanceAfter = dttCurrentFuelBalance + fuelNeeded;
+          document.getElementById('dtt-balance-after').textContent = balanceAfter.toFixed(1) + ' L';
+        });
+      }
+    });
+
+    // Validate period dates
+    function validateDttPeriodDates() {
+      const periodFrom = document.getElementById('dtt-periodFrom').value;
+      const periodTo = document.getElementById('dtt-periodTo').value;
+      const errorDiv = document.getElementById('dtt-date-error');
+
+      if (!periodFrom || !periodTo) {
+        errorDiv.classList.add('d-none');
+        return true;
+      }
+
+      const fromDate = new Date(periodFrom);
+      const toDate = new Date(periodTo);
+
+      if (fromDate > toDate) {
+        errorDiv.textContent = 'Period Covered - From cannot be later than Period Covered - To';
+        errorDiv.classList.remove('d-none');
+        return false;
+      }
+
+      errorDiv.classList.add('d-none');
+      return true;
+    }
+
+    // Generate DTT Number
+    async function generateDttNumber() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+
+      const startOfYear = new Date(year, 0, 1);
+      const snapshot = await db.collection('dtts')
+        .where('createdAt', '>=', firebase.firestore.Timestamp.fromDate(startOfYear))
+        .get();
+
+      const nextNumber = snapshot.size + 1;
+      const numberPart = String(nextNumber).padStart(4, '0');
+
+      return `DTT-${year}-${month}-${numberPart}`;
+    }
+
+    // Submit DTT Form
+    async function submitDttForm() {
+      const submitBtn = document.getElementById('dtt-submit-btn');
+      const submitBtnText = document.getElementById('dtt-submit-btn-text');
+      const submitBtnLoading = document.getElementById('dtt-submit-btn-loading');
+
+      submitBtn.disabled = true;
+      submitBtnText.classList.add('d-none');
+      submitBtnLoading.classList.remove('d-none');
+
+      // Get form values
+      const division = document.getElementById('dtt-division').value.trim();
+      const vehicle = document.getElementById('dtt-vehicle').value;
+      const plateNo = document.getElementById('dtt-plateNo').value;
+      const destination = document.getElementById('dtt-destination').value.trim();
+      const periodFrom = document.getElementById('dtt-periodFrom').value;
+      const periodTo = document.getElementById('dtt-periodTo').value;
+      const purposesText = document.getElementById('dtt-purposes').value.trim();
+      const approvingAuthorityId = document.getElementById('dtt-approving-authority').value;
+      const authorityPrefix = document.getElementById('dtt-authority-prefix').value;
+      const requestFuel = document.getElementById('dtt-requestFuel').checked;
+      const fuelQty = requestFuel ? parseFloat(document.getElementById('dtt-fuel-qty').value) : 0;
+
+      const purposesArray = purposesText.split('\n').filter(p => p.trim().length > 0);
+      const purpose = purposesArray.join('\n');
+
+      // Validation
+      let hasError = false;
+
+      if (!division) {
+        document.getElementById('dtt-division').classList.add('is-invalid');
+        await modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please select a division/office.',
+          type: 'warning'
+        });
+        hasError = true;
+      } else if (!vehicle) {
+        await modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please select a vehicle.',
+          type: 'warning'
+        });
+        hasError = true;
+      } else if (!destination) {
+        document.getElementById('dtt-destination').classList.add('is-invalid');
+        await modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please enter destination.',
+          type: 'warning'
+        });
+        hasError = true;
+      } else if (!periodFrom || !periodTo) {
+        if (!periodFrom) document.getElementById('dtt-periodFrom').classList.add('is-invalid');
+        if (!periodTo) document.getElementById('dtt-periodTo').classList.add('is-invalid');
+        await modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please select period covered.',
+          type: 'warning'
+        });
+        hasError = true;
+      } else if (!validateDttPeriodDates()) {
+        hasError = true;
+      } else if (purposesArray.length === 0 || purposesArray[0].length < 10) {
+        document.getElementById('dtt-purposes').classList.add('is-invalid');
+        await modalManager.alert({
+          title: 'Invalid Input',
+          message: 'Please enter at least one purpose (minimum 10 characters).',
+          type: 'warning'
+        });
+        hasError = true;
+      } else if (!approvingAuthorityId) {
+        document.getElementById('dtt-approving-authority').classList.add('is-invalid');
+        await modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please select an approving authority.',
+          type: 'warning'
+        });
+        hasError = true;
+      } else if (requestFuel && (!fuelQty || fuelQty <= 0)) {
+        await modalManager.alert({
+          title: 'Missing Information',
+          message: 'Please enter fuel quantity needed.',
+          type: 'warning'
+        });
+        hasError = true;
+      }
+
+      if (hasError) {
+        submitBtn.disabled = false;
+        submitBtnText.classList.remove('d-none');
+        submitBtnLoading.classList.add('d-none');
+        return;
+      }
+
+      const loadingId = modalManager.loading({
+        title: 'Submitting Trip Ticket',
+        message: 'Please wait...'
+      });
+
+      try {
+        const user = auth.currentUser;
+        const dttId = await generateDttNumber();
+        const driverName = document.getElementById('dtt-driverName').value;
+
+        const authoritySelect = document.getElementById('dtt-approving-authority');
+        const selectedAuthority = authoritySelect.options[authoritySelect.selectedIndex];
+        const authorityName = selectedAuthority.textContent;
+        const authorityPosition = selectedAuthority.dataset.position || '';
+
+        const dttData = {
+          dttId: dttId,
+          driverUid: user.uid,
+          driverEmail: user.email,
+          driverName: driverName,
+          division: division,
+          plateNo: plateNo,
+
+          vehicleBrand: dttSelectedVehicleData ? dttSelectedVehicleData.brand : '',
+          vehicleModel: dttSelectedVehicleData ? dttSelectedVehicleData.model : '',
+          vehicleDpwhNo: dttSelectedVehicleData ? dttSelectedVehicleData.dpwhNo : '',
+
+          approvingAuthorityId: approvingAuthorityId,
+          approvingAuthorityName: authorityName,
+          approvingAuthorityPosition: authorityPosition,
+          authorityPrefix: authorityPrefix,
+
+          destination: destination,
+          periodFrom: periodFrom,
+          periodTo: periodTo,
+          purpose: purpose,
+          purposes: purposesArray,
+          passengers: dttPassengers,
+
+          timeDepartOffice: null,
+          timeArrivalDest: null,
+          timeDepartDest: null,
+          timeArrivalOffice: null,
+          approximateDistance: 0,
+          balanceInTank: 0,
+          issuedByOffice: 0,
+          purchasedDuringTrip: 0,
+          totalGasoline: 0,
+          gearOil: 0,
+          lubOil: 0,
+          grease: 0,
+          speedometerStart: 0,
+          speedometerEnd: 0,
+          distanceTravelled: 0,
+          remarks: '',
+
+          fuelBalanceStart: dttCurrentFuelBalance,
+          requestFuel: requestFuel,
+          requisitionQty: fuelQty,
+
+          status: 'pending_approval',
+          pdfGenerated: true,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        await db.collection('dtts').doc(dttId).set(dttData);
+
+        modalManager.close(loadingId);
+
+        const pdf = generateDttPdf(dttData);
+
+        const successModal = modalManager.show({
+          title: 'Trip Ticket Created Successfully!',
+          content: `
+            <div class="text-center mb-3">
+              <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">DTT ID</div>
+              <div class="modal-important-info">${dttId}</div>
+            </div>
+
+            <div class="modal-info-row">
+              <div class="modal-info-label">Destination</div>
+              <div class="modal-important-info">${destination}</div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+              <i class="bi bi-info-circle me-2"></i>
+              Download and print this DTT for signatures before your trip.
+            </div>
+          `,
+          size: 'medium',
+          closable: false,
+          buttons: [
+            {
+              label: 'Download PDF',
+              type: 'primary',
+              icon: 'download',
+              onClick: () => {
+                pdf.save(`DTT_${dttId}.pdf`);
+              },
+              closeOnClick: false
+            },
+            {
+              label: 'View PDF',
+              type: 'secondary',
+              icon: 'eye',
+              onClick: () => {
+                window.open(pdf.output('bloburl'), '_blank');
+              },
+              closeOnClick: false
+            },
+            {
+              label: 'Done',
+              type: 'success',
+              onClick: () => {
+                // Reset form and switch to list tab
+                resetDttForm();
+                switchTripTicketTab('list');
+                loadMyTrips();
+              }
+            }
+          ]
+        });
+
+      } catch (error) {
+        console.error('Error creating DTT:', error);
+        modalManager.close(loadingId);
+        await modalManager.alert({
+          title: 'Error',
+          message: 'Failed to create trip ticket: ' + error.message,
+          type: 'error'
+        });
+
+        submitBtn.disabled = false;
+        submitBtnText.classList.remove('d-none');
+        submitBtnLoading.classList.add('d-none');
+      }
+    }
+
+    // Reset DTT form
+    function resetDttForm() {
+      document.getElementById('dtt-division').value = '';
+      document.getElementById('dtt-vehicle').value = '';
+      document.getElementById('dtt-plateNo').value = '';
+      document.getElementById('dtt-vehicle-search').value = '';
+      document.getElementById('dtt-selected-vehicle').innerHTML = '';
+      document.getElementById('dtt-destination').value = '';
+      document.getElementById('dtt-periodFrom').value = '';
+      document.getElementById('dtt-periodTo').value = '';
+      document.getElementById('dtt-purposes').value = '';
+      document.getElementById('dtt-approving-authority').value = '';
+      document.getElementById('dtt-authority-prefix').value = '';
+      document.getElementById('dtt-requestFuel').checked = false;
+      document.getElementById('dtt-fuel-qty').value = '';
+      document.getElementById('dtt-fuel-section').classList.add('d-none');
+      document.getElementById('dtt-fuel-info').classList.add('d-none');
+
+      dttPassengers = [];
+      renderDttPassengers();
+      dttSelectedVehicleData = null;
+      dttCurrentFuelBalance = 0;
+
+      // Remove validation classes
+      document.querySelectorAll('#trip-ticket-tab-create .is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+      });
+    }
+
+    // ==================== SERVICE WORKER ====================
+    // DISABLED FOR DEVELOPMENT - uncomment for production
+    /*
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js')
         .then(() => console.log('Service Worker registered'))
         .catch(err => console.log('Service Worker registration failed', err));
     }
+    */
   </script>
 
 </body>

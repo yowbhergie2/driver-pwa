@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(python -m http.server:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(node:*)",
+      "Bash(netstat:*)",
+      "Bash(cat:*)",
+      "Bash(python:*)",
+      "Bash(start cmd /k \"python -m http.server 8080\")"
     ],
     "deny": [],
     "ask": []

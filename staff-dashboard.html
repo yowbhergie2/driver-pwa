@@ -1,0 +1,3793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Dashboard - DPWH Fuel & Fleet Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="modal-styles.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      overflow-x: hidden;
+    }
+
+    /* Loading Screen */
+    .loading-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f7fa;
+    }
+
+    .loading-card {
+      text-align: center;
+    }
+
+    .loading-card .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      color: #4c6ef5;
+    }
+
+    /* Main Layout */
+    .staff-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: white;
+      border-right: 1px solid #e8ecef;
+      padding: 2rem 0 0 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-brand {
+      padding: 0 1.5rem 2rem 1.5rem;
+      border-bottom: 1px solid #e8ecef;
+    }
+
+    .sidebar-brand h4 {
+      color: #1a1a2e;
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .sidebar-brand p {
+      color: #6c757d;
+      font-size: 0.875rem;
+      margin: 0;
+    }
+
+    .sidebar-menu {
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      height: calc(100% - 80px); /* Account for sidebar header */
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 0.875rem 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 12px;
+      color: #6c757d;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .menu-item i {
+      font-size: 1.25rem;
+      margin-right: 1rem;
+      width: 24px;
+    }
+
+    .menu-item:hover {
+      background: #f5f7fa;
+      color: #4c6ef5;
+    }
+
+    .menu-item.active {
+      background: #4c6ef5;
+      color: white;
+    }
+
+    .menu-item.active:hover {
+      background: #4263eb;
+    }
+
+
+    /* Main Content */
+    .main-content {
+      margin-left: 280px;
+      flex: 1;
+      padding: 2rem;
+      transition: margin-left 0.3s ease;
+    }
+
+    .main-content.sidebar-hidden {
+      margin-left: 0;
+    }
+
+    /* Sidebar Toggle Button */
+    .sidebar-toggle {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: 1px solid #e8ecef;
+      border-radius: 10px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 101;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle:hover {
+      background: #4c6ef5;
+      color: white;
+      border-color: #4c6ef5;
+    }
+
+    .sidebar.hidden ~ .sidebar-toggle {
+      display: flex;
+    }
+
+    /* Header */
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .content-header h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .sidebar-collapse-btn {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      background: white;
+      border: 1px solid #e8ecef;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      margin-right: 0.5rem;
+      color: #6c757d;
+    }
+
+    .sidebar-collapse-btn:hover {
+      background: #f5f7fa;
+      border-color: #4c6ef5;
+      color: #4c6ef5;
+    }
+
+    .sidebar-collapse-btn i {
+      font-size: 1.25rem;
+      display: block;
+      line-height: 1;
+    }
+
+    /* Buttons */
+    .btn-primary-custom {
+      background: #4c6ef5;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary-custom:hover {
+      background: #4263eb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 110, 245, 0.4);
+    }
+
+    .btn-logout {
+      background: white;
+      color: #6c757d;
+      border: 1px solid #e8ecef;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-logout:hover {
+      border-color: #4c6ef5;
+      color: #4c6ef5;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid #e8ecef;
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      color: #6c757d;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* Data Table */
+    .data-table-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e8ecef;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .table-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e8ecef;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .table-header h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0;
+    }
+
+    .search-box {
+      position: relative;
+      width: 300px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.625rem 1rem 0.625rem 2.5rem;
+      border: 1px solid #e8ecef;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: #4c6ef5;
+      box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.1);
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+
+    .table-custom {
+      width: 100%;
+      margin: 0;
+    }
+
+    .table-custom thead {
+      background: #f8f9fa;
+      border-bottom: 2px solid #e8ecef;
+    }
+
+    .table-custom th {
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: none;
+    }
+
+    .table-custom td {
+      padding: 1.25rem 1.5rem;
+      color: #1a1a2e;
+      border-bottom: 1px solid #e8ecef;
+      vertical-align: middle;
+    }
+
+    .table-custom tbody tr {
+      transition: all 0.2s ease;
+    }
+
+    .table-custom tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .table-custom tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-action {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #e8ecef;
+      background: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
+      font-weight: 500;
+      gap: 0.5rem;
+    }
+
+    .btn-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action.edit:hover {
+      border-color: #4c6ef5;
+      color: #4c6ef5;
+      background: #f0f3ff;
+    }
+
+    .btn-action.delete:hover {
+      border-color: #fa5252;
+      color: #fa5252;
+      background: #fff5f5;
+    }
+
+    .btn-action.validate:hover {
+      border-color: #2f9e44;
+      color: #2f9e44;
+      background: #d3f9d8;
+    }
+
+    .btn-action.approve:hover {
+      border-color: #2f9e44;
+      color: #2f9e44;
+      background: #d3f9d8;
+    }
+
+    .btn-action.reject:hover {
+      border-color: #fa5252;
+      color: #fa5252;
+      background: #fff5f5;
+    }
+
+    .btn-action.view:hover {
+      border-color: #1971c2;
+      color: #1971c2;
+      background: #e7f5ff;
+    }
+
+    .btn-action.print:hover {
+      border-color: #862e9c;
+      color: #862e9c;
+      background: #f3d9fa;
+    }
+
+    /* Badge */
+    .badge-custom {
+      padding: 0.375rem 0.875rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-primary {
+      background: #e7f5ff;
+      color: #1971c2;
+    }
+
+    .badge-success {
+      background: #d3f9d8;
+      color: #2f9e44;
+    }
+
+    .badge-warning {
+      background: #fff3bf;
+      color: #e67700;
+    }
+
+    .badge-danger {
+      background: #ffe3e3;
+      color: #c92a2a;
+    }
+
+    .badge-info {
+      background: #d0ebff;
+      color: #1864ab;
+    }
+
+    .badge-pending {
+      background: #fff3bf;
+      color: #e67700;
+    }
+
+    .badge-validated {
+      background: #d0ebff;
+      color: #1864ab;
+    }
+
+    .badge-approved {
+      background: #d3f9d8;
+      color: #2f9e44;
+    }
+
+    .badge-rejected {
+      background: #ffe3e3;
+      color: #c92a2a;
+    }
+
+    .badge-secondary {
+      background: #e9ecef;
+      color: #495057;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      color: #dee2e6;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h4 {
+      color: #6c757d;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      color: #adb5bd;
+    }
+
+    /* Loading */
+    .loading-state {
+      text-align: center;
+      padding: 3rem;
+    }
+
+    .spinner-border {
+      color: #4c6ef5;
+    }
+
+    /* Sub-tabs */
+    .sub-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #e8ecef;
+      padding-bottom: 0.5rem;
+    }
+
+    .sub-tab {
+      padding: 0.625rem 1.25rem;
+      border-radius: 8px 8px 0 0;
+      background: transparent;
+      border: none;
+      color: #6c757d;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .sub-tab:hover {
+      color: #4c6ef5;
+      background: #f5f7fa;
+    }
+
+    .sub-tab.active {
+      color: #4c6ef5;
+      background: white;
+      border-bottom: 3px solid #4c6ef5;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .search-box {
+        width: 100%;
+        margin-top: 1rem;
+      }
+
+      .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .action-buttons {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-card">
+      <div class="spinner-border mb-3"></div>
+      <p class="text-muted">Loading dashboard...</p>
+    </div>
+  </div>
+
+  <!-- Main Staff Layout -->
+  <div id="staff-panel" class="staff-layout d-none">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <h4><i class="bi bi-person-badge me-2"></i>Staff Panel</h4>
+        <p id="user-info">Loading...</p>
+      </div>
+
+      <div class="sidebar-menu">
+        <!-- Dashboard (shown to all) -->
+        <div class="menu-item active" onclick="showSection('dashboard')">
+          <i class="bi bi-grid-fill"></i>
+          <span>Dashboard</span>
+        </div>
+
+        <!-- EMD Menu Items -->
+        <div class="menu-item emd-only d-none" onclick="showSection('vehicles')">
+          <i class="bi bi-truck"></i>
+          <span>Vehicles</span>
+        </div>
+        <div class="menu-item emd-only d-none" onclick="showSection('price-master')">
+          <i class="bi bi-cash-coin"></i>
+          <span>Price Master</span>
+        </div>
+        <div class="menu-item emd-only d-none" onclick="showSection('ris-validation')">
+          <i class="bi bi-fuel-pump"></i>
+          <span>RIS Validation</span>
+        </div>
+        <div class="menu-item emd-only d-none" onclick="showSection('quantity-tracking')">
+          <i class="bi bi-bar-chart-line"></i>
+          <span>Quantity Tracking</span>
+        </div>
+        <div class="menu-item emd-only d-none" onclick="showSection('emd-ris-list')">
+          <i class="bi bi-list-ul"></i>
+          <span>All RIS</span>
+        </div>
+        <div class="menu-item emd-only d-none" onclick="showSection('emd-dtt-list')">
+          <i class="bi bi-journal-text"></i>
+          <span>All DTTs</span>
+        </div>
+
+        <!-- SPMS Menu Items -->
+        <div class="menu-item spms-only d-none" onclick="showSection('fuel-contracts')">
+          <i class="bi bi-file-earmark-text"></i>
+          <span>Fuel Contracts</span>
+        </div>
+        <div class="menu-item spms-only d-none" onclick="showSection('trip-tickets')">
+          <i class="bi bi-clipboard-check"></i>
+          <span>Trip Tickets</span>
+        </div>
+        <div class="menu-item spms-only d-none" onclick="showSection('ris-management')">
+          <i class="bi bi-fuel-pump"></i>
+          <span>RIS Management</span>
+        </div>
+        <div class="menu-item spms-only d-none" onclick="showSection('analytics')">
+          <i class="bi bi-graph-up"></i>
+          <span>Analytics</span>
+        </div>
+
+        <!-- Settings (shown to all) -->
+        <div class="menu-item" onclick="showSection('settings')">
+          <i class="bi bi-gear"></i>
+          <span>Settings</span>
+        </div>
+      </div>
+
+      <!-- Logout Button Section -->
+      <div style="padding: 1.5rem; margin-top: auto; border-top: 1px solid #e8ecef;">
+        <button onclick="logout()" class="btn-logout w-100">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>Log Out</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+      <!-- Dashboard Section -->
+      <div id="section-dashboard" class="content-section">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Dashboard
+          </h2>
+          <div class="header-actions">
+            <button onclick="logout()" class="btn-logout">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="dashboard-stats">
+          <!-- Stats will be populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Vehicles Section (EMD) -->
+      <div id="section-vehicles" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Vehicle Management
+          </h2>
+          <button onclick="showAddVehicleModal()" class="btn-primary-custom">
+            <i class="bi bi-plus-lg"></i>Add Vehicle
+          </button>
+        </div>
+
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3>All Vehicles</h3>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" placeholder="Search vehicles...">
+            </div>
+          </div>
+          <div id="vehicles-table-container"></div>
+        </div>
+      </div>
+
+      <!-- Price Master Section (EMD) -->
+      <div id="section-price-master" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Price Master
+          </h2>
+          <button onclick="showAddPriceModal()" class="btn-primary-custom">
+            <i class="bi bi-plus-lg"></i>Add Price
+          </button>
+        </div>
+
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3>Fuel Price History</h3>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" placeholder="Search prices...">
+            </div>
+          </div>
+          <div id="price-master-table-container"></div>
+        </div>
+      </div>
+
+      <!-- RIS Validation Section (EMD) -->
+      <div id="section-ris-validation" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            RIS Validation
+          </h2>
+        </div>
+
+        <!-- Sub-tabs for Pending and Validated -->
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="showRisSubTab('pending')">
+            <i class="bi bi-clock me-2"></i>Pending Validation
+          </button>
+          <button class="sub-tab" onclick="showRisSubTab('validated')">
+            <i class="bi bi-check-circle me-2"></i>Validated RIS
+          </button>
+        </div>
+
+        <!-- Pending RIS -->
+        <div id="ris-pending-container" class="data-table-card">
+          <div class="table-header">
+            <h3>Pending RIS for Validation</h3>
+          </div>
+          <div id="ris-pending-table-container"></div>
+        </div>
+
+        <!-- Validated RIS -->
+        <div id="ris-validated-container" class="data-table-card d-none">
+          <div class="table-header">
+            <h3>Validated RIS</h3>
+          </div>
+          <div id="ris-validated-table-container"></div>
+        </div>
+      </div>
+
+      <!-- Quantity Tracking Section (EMD) -->
+      <div id="section-quantity-tracking" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Quantity Tracking
+          </h2>
+          <p class="text-muted">Monitor fuel issuance by vehicle and provider</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="bi bi-fuel-pump-fill"></i>
+              </div>
+              <div class="stat-value" id="tracking-total-quantity">0</div>
+              <div class="stat-label">Total Liters Issued</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <i class="bi bi-cash-coin"></i>
+              </div>
+              <div class="stat-value" id="tracking-total-cost">₱0</div>
+              <div class="stat-label">Total Cost</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <i class="bi bi-truck"></i>
+              </div>
+              <div class="stat-value" id="tracking-total-vehicles">0</div>
+              <div class="stat-label">Vehicles Serviced</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <i class="bi bi-receipt"></i>
+              </div>
+              <div class="stat-value" id="tracking-total-issuances">0</div>
+              <div class="stat-label">Total Issuances</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3><i class="bi bi-table me-2"></i>Fuel Issued by DPWH No & Provider</h3>
+          </div>
+          <div id="quantity-tracking-table-container">
+            <div class="loading-state">
+              <div class="spinner-border"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fuel Contracts Section (SPMS) -->
+      <div id="section-fuel-contracts" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Fuel Contracts
+          </h2>
+          <button onclick="showAddContractModal()" class="btn-primary-custom">
+            <i class="bi bi-plus-lg"></i>Add Contract
+          </button>
+        </div>
+
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3>Active Contracts</h3>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" placeholder="Search contracts...">
+            </div>
+          </div>
+          <div id="fuel-contracts-table-container"></div>
+        </div>
+      </div>
+
+      <!-- Trip Tickets Section (SPMS) -->
+      <div id="section-trip-tickets" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Trip Tickets
+          </h2>
+        </div>
+
+        <!-- Sub-tabs for Approval and Listing -->
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="showDttSubTab('for-approval')">
+            <i class="bi bi-clock me-2"></i>For Approval
+          </button>
+          <button class="sub-tab" onclick="showDttSubTab('all-dtts')">
+            <i class="bi bi-journal-text me-2"></i>All Trip Tickets
+          </button>
+        </div>
+
+        <!-- For Approval Tab -->
+        <div id="dtt-for-approval-container" class="data-table-card">
+          <div class="table-header">
+            <h3>Pending DTT Requests</h3>
+          </div>
+          <div id="dtt-approval-table-container"></div>
+        </div>
+
+        <!-- All DTTs Tab -->
+        <div id="dtt-all-container" class="data-table-card d-none">
+          <div class="table-header">
+            <h3><i class="bi bi-journal-check me-2"></i>Complete DTT History</h3>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" id="spms-dtt-search" placeholder="Search DTT..." onkeyup="filterSpmsDtt()">
+            </div>
+          </div>
+          <div id="spms-dtt-list-container"></div>
+        </div>
+      </div>
+
+      <!-- RIS Management Section (SPMS) -->
+      <div id="section-ris-management" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            RIS Management
+          </h2>
+        </div>
+
+        <!-- Sub-tabs for Finalization and Listing -->
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="showRisManagementSubTab('for-finalization')">
+            <i class="bi bi-check-circle me-2"></i>For Finalization
+          </button>
+          <button class="sub-tab" onclick="showRisManagementSubTab('all-ris')">
+            <i class="bi bi-list-ul me-2"></i>All RIS
+          </button>
+        </div>
+
+        <!-- For Finalization Tab -->
+        <div id="ris-for-finalization-container" class="data-table-card">
+          <div class="table-header">
+            <h3>Validated RIS for Finalization</h3>
+          </div>
+          <div id="ris-finalization-table-container"></div>
+        </div>
+
+        <!-- All RIS Tab -->
+        <div id="ris-all-container" class="data-table-card d-none">
+          <div class="table-header">
+            <h3><i class="bi bi-list-check me-2"></i>Complete RIS History</h3>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" id="spms-ris-search" placeholder="Search RIS..." onkeyup="filterSpmsRis()">
+            </div>
+          </div>
+          <div id="spms-ris-list-container"></div>
+        </div>
+      </div>
+
+      <!-- Analytics Section (SPMS) -->
+      <div id="section-analytics" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Analytics Dashboard
+          </h2>
+        </div>
+
+        <div id="analytics-content">
+          <div class="loading-state">
+            <div class="spinner-border"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMD All RIS Section -->
+      <div id="section-emd-ris-list" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            All RIS Records
+          </h2>
+        </div>
+
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3><i class="bi bi-list-check me-2"></i>Complete RIS History</h3>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" id="emd-ris-search" placeholder="Search RIS..." onkeyup="filterEmdRis()">
+            </div>
+          </div>
+          <div id="emd-ris-list-container"></div>
+        </div>
+      </div>
+
+      <!-- EMD All DTT Section -->
+      <div id="section-emd-dtt-list" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            All DTT Records
+          </h2>
+        </div>
+
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3><i class="bi bi-journal-check me-2"></i>Complete DTT History</h3>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" id="emd-dtt-search" placeholder="Search DTT..." onkeyup="filterEmdDtt()">
+            </div>
+          </div>
+          <div id="emd-dtt-list-container"></div>
+        </div>
+      </div>
+
+      <!-- Settings Section -->
+      <div id="section-settings" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Settings
+          </h2>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="data-table-card">
+              <div class="table-header">
+                <h3>Account Information</h3>
+              </div>
+              <div style="padding: 2rem;">
+                <div class="mb-3">
+                  <label class="form-label text-muted">Name</label>
+                  <p class="fw-bold" id="settings-name">Loading...</p>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label text-muted">Email</label>
+                  <p class="fw-bold" id="settings-email">Loading...</p>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label text-muted">Role</label>
+                  <p id="settings-role">Loading...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="data-table-card">
+              <div class="table-header">
+                <h3>Change Password</h3>
+              </div>
+              <div style="padding: 2rem;">
+                <form onsubmit="changePasswordStaff(event)">
+                  <div class="mb-3">
+                    <label class="form-label">Current Password</label>
+                    <div class="input-group">
+                      <input type="password" id="staff-current-password" class="form-control" required>
+                      <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibilityStaff('staff-current-password', 'staff-current-password-icon')">
+                        <i class="bi bi-eye" id="staff-current-password-icon"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">New Password</label>
+                    <div class="input-group">
+                      <input type="password" id="staff-new-password" class="form-control" minlength="6" required>
+                      <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibilityStaff('staff-new-password', 'staff-new-password-icon')">
+                        <i class="bi bi-eye" id="staff-new-password-icon"></i>
+                      </button>
+                    </div>
+                    <small class="text-muted">Password must be at least 6 characters</small>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Confirm New Password</label>
+                    <div class="input-group">
+                      <input type="password" id="staff-confirm-password" class="form-control" minlength="6" required>
+                      <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibilityStaff('staff-confirm-password', 'staff-confirm-password-icon')">
+                        <i class="bi bi-eye" id="staff-confirm-password-icon"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn-primary-custom" id="staff-change-password-btn">
+                    <i class="bi bi-shield-lock me-2"></i>Change Password
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="modal-system.js"></script>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTPngeGZviiOjv3N1V_wPTGvRUVFOPa14",
+      authDomain: "fuel-vehicle-management.firebaseapp.com",
+      projectId: "fuel-vehicle-management",
+      storageBucket: "fuel-vehicle-management.firebasestorage.app",
+      messagingSenderId: "821758027736",
+      appId: "1:821758027736:web:3b1924046e73cb0c9434ad"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+    let userRole = null;
+
+    // ==================== SECTION NAVIGATION ====================
+
+    function showSection(section) {
+      // Hide all sections
+      document.querySelectorAll('.content-section').forEach(el => el.classList.add('d-none'));
+
+      // Remove active from all menu items
+      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+
+      // Show selected section
+      document.getElementById('section-' + section).classList.remove('d-none');
+
+      // Add active to selected menu item
+      event.currentTarget.classList.add('active');
+
+      // Load data for section
+      if (section === 'vehicles') loadVehicles();
+      else if (section === 'price-master') loadPriceMaster();
+      else if (section === 'ris-validation') {
+        loadRisValidation();
+        loadValidatedRis();
+      }
+      else if (section === 'quantity-tracking') loadQuantityTracking();
+      else if (section === 'emd-ris-list') loadEmdRisList();
+      else if (section === 'emd-dtt-list') loadEmdDttList();
+      else if (section === 'fuel-contracts') loadFuelContracts();
+      else if (section === 'trip-tickets') {
+        loadDttApprovals();
+        loadSpmsDttList();
+      }
+      else if (section === 'ris-management') {
+        loadRisFinalization();
+        loadSpmsRisList();
+      }
+      else if (section === 'analytics') loadAnalytics();
+      else if (section === 'settings') loadSettings();
+    }
+
+    function showDttSubTab(tab) {
+      // Update sub-tab active state
+      document.querySelectorAll('#section-trip-tickets .sub-tab').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      // Show/hide containers
+      if (tab === 'for-approval') {
+        document.getElementById('dtt-for-approval-container').classList.remove('d-none');
+        document.getElementById('dtt-all-container').classList.add('d-none');
+      } else {
+        document.getElementById('dtt-for-approval-container').classList.add('d-none');
+        document.getElementById('dtt-all-container').classList.remove('d-none');
+      }
+    }
+
+    function showRisManagementSubTab(tab) {
+      // Update sub-tab active state
+      document.querySelectorAll('#section-ris-management .sub-tab').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      // Show/hide containers
+      if (tab === 'for-finalization') {
+        document.getElementById('ris-for-finalization-container').classList.remove('d-none');
+        document.getElementById('ris-all-container').classList.add('d-none');
+      } else {
+        document.getElementById('ris-for-finalization-container').classList.add('d-none');
+        document.getElementById('ris-all-container').classList.remove('d-none');
+      }
+    }
+
+    function showRisSubTab(tab) {
+      // Update sub-tab active state
+      document.querySelectorAll('.sub-tab').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      // Show/hide containers
+      if (tab === 'pending') {
+        document.getElementById('ris-pending-container').classList.remove('d-none');
+        document.getElementById('ris-validated-container').classList.add('d-none');
+      } else {
+        document.getElementById('ris-pending-container').classList.add('d-none');
+        document.getElementById('ris-validated-container').classList.remove('d-none');
+      }
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      const mainContent = document.querySelector('.main-content');
+
+      sidebar.classList.toggle('hidden');
+      mainContent.classList.toggle('sidebar-hidden');
+    }
+
+    // ==================== AUTH ====================
+
+    auth.onAuthStateChanged(async (user) => {
+      document.getElementById('loading-screen').classList.add('d-none');
+
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      currentUser = user;
+
+      try {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (!userDoc.exists) {
+          await modalManager.alert({
+            title: 'Error',
+            message: 'User profile not found. Please contact admin.',
+            type: 'error'
+          });
+          return;
+        }
+
+        const userData = userDoc.data();
+        userRole = userData.role;
+
+        // Check if user has staff role
+        if (userRole !== 'emd' && userRole !== 'spms' && userRole !== 'admin') {
+          await modalManager.alert({
+            title: 'Access Denied',
+            message: 'This page is only accessible to EMD and SPMS staff.',
+            type: 'error'
+          });
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 2000);
+          return;
+        }
+
+        // Setup UI based on role
+        setupRoleBasedUI(userRole, userData.displayName);
+
+        // Show main panel
+        document.getElementById('staff-panel').classList.remove('d-none');
+
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        await modalManager.alert({
+          title: 'Error',
+          message: 'Failed to load user data: ' + error.message,
+          type: 'error'
+        });
+      }
+    });
+
+    function setupRoleBasedUI(role, displayName) {
+      const roleNames = {
+        emd: 'EMD Staff',
+        spms: 'SPMS Staff',
+        admin: 'Administrator'
+      };
+
+      document.getElementById('user-info').textContent = `${displayName} - ${roleNames[role]}`;
+
+      if (role === 'emd' || role === 'admin') {
+        // Show EMD menu items
+        document.querySelectorAll('.emd-only').forEach(el => el.classList.remove('d-none'));
+        loadDashboardStats('emd');
+      }
+
+      if (role === 'spms' || role === 'admin') {
+        // Show SPMS menu items
+        document.querySelectorAll('.spms-only').forEach(el => el.classList.remove('d-none'));
+        loadDashboardStats('spms');
+      }
+    }
+
+    async function loadDashboardStats(role) {
+      const container = document.getElementById('dashboard-stats');
+
+      try {
+        let html = '';
+
+        if (role === 'emd') {
+          const [vehicles, pendingRis, priceRecords] = await Promise.all([
+            db.collection('vehicles').get(),
+            db.collection('risRequests').where('status', '==', 'pending_validation').get(),
+            db.collection('priceMaster').get()
+          ]);
+
+          html = `
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #d3f9d8; color: #2f9e44;">
+                <i class="bi bi-truck"></i>
+              </div>
+              <div class="stat-value">${vehicles.size}</div>
+              <div class="stat-label">Total Vehicles</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #fff3bf; color: #e67700;">
+                <i class="bi bi-clock"></i>
+              </div>
+              <div class="stat-value">${pendingRis.size}</div>
+              <div class="stat-label">Pending RIS</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #d0ebff; color: #1864ab;">
+                <i class="bi bi-cash-coin"></i>
+              </div>
+              <div class="stat-value">${priceRecords.size}</div>
+              <div class="stat-label">Price Records</div>
+            </div>
+          `;
+        } else if (role === 'spms') {
+          const [contracts, pendingDtt, pendingRis] = await Promise.all([
+            db.collection('fuelContracts').where('status', '==', 'active').get(),
+            db.collection('dtts').where('status', '==', 'pending_approval').get(),
+            db.collection('risRequests').where('status', '==', 'validated').get()
+          ]);
+
+          // Check for low balance contracts
+          const lowBalanceContracts = [];
+          const criticalBalanceContracts = [];
+
+          contracts.forEach(doc => {
+            const contract = doc.data();
+            const totalAmount = contract.totalAmount || 0;
+            const usedAmount = contract.usedAmount || 0;
+            const remainingBalance = totalAmount - usedAmount;
+            const utilizationPercent = totalAmount > 0 ? (usedAmount / totalAmount) * 100 : 0;
+
+            if (utilizationPercent >= 90) {
+              criticalBalanceContracts.push({
+                contractNo: contract.contractNo,
+                supplier: contract.supplier,
+                remainingBalance: remainingBalance,
+                totalAmount: totalAmount,
+                utilizationPercent: utilizationPercent.toFixed(1)
+              });
+            } else if (utilizationPercent >= 70) {
+              lowBalanceContracts.push({
+                contractNo: contract.contractNo,
+                supplier: contract.supplier,
+                remainingBalance: remainingBalance,
+                totalAmount: totalAmount,
+                utilizationPercent: utilizationPercent.toFixed(1)
+              });
+            }
+          });
+
+          // Build alerts HTML
+          let alertsHtml = '';
+          if (criticalBalanceContracts.length > 0 || lowBalanceContracts.length > 0) {
+            alertsHtml = '<div class="contract-alerts mb-4">';
+
+            if (criticalBalanceContracts.length > 0) {
+              alertsHtml += `
+                <div class="alert alert-danger">
+                  <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle-fill me-3" style="font-size: 1.5rem;"></i>
+                    <div class="flex-fill">
+                      <h5 class="alert-heading mb-2">Critical: Contract Balance Low!</h5>
+                      <p class="mb-2"><strong>${criticalBalanceContracts.length}</strong> contract(s) have less than 10% remaining balance:</p>
+                      <ul class="mb-0">
+              `;
+              criticalBalanceContracts.forEach(c => {
+                alertsHtml += `
+                  <li><strong>${c.contractNo}</strong> (${c.supplier}) - ₱${c.remainingBalance.toLocaleString(undefined, {minimumFractionDigits: 2})} remaining (${c.utilizationPercent}% used)</li>
+                `;
+              });
+              alertsHtml += `
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+
+            if (lowBalanceContracts.length > 0) {
+              alertsHtml += `
+                <div class="alert alert-warning">
+                  <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-circle-fill me-3" style="font-size: 1.5rem;"></i>
+                    <div class="flex-fill">
+                      <h5 class="alert-heading mb-2">Warning: Contract Balance Running Low</h5>
+                      <p class="mb-2"><strong>${lowBalanceContracts.length}</strong> contract(s) have less than 30% remaining balance:</p>
+                      <ul class="mb-0">
+              `;
+              lowBalanceContracts.forEach(c => {
+                alertsHtml += `
+                  <li><strong>${c.contractNo}</strong> (${c.supplier}) - ₱${c.remainingBalance.toLocaleString(undefined, {minimumFractionDigits: 2})} remaining (${c.utilizationPercent}% used)</li>
+                `;
+              });
+              alertsHtml += `
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+
+            alertsHtml += '</div>';
+          }
+
+          html = alertsHtml + `
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon" style="background: #d3f9d8; color: #2f9e44;">
+                  <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div class="stat-value">${contracts.size}</div>
+                <div class="stat-label">Active Contracts</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background: #fff3bf; color: #e67700;">
+                  <i class="bi bi-clipboard-check"></i>
+                </div>
+                <div class="stat-value">${pendingDtt.size}</div>
+                <div class="stat-label">Pending DTT</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background: #e7f5ff; color: #1971c2;">
+                  <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-value">${pendingRis.size}</div>
+                <div class="stat-label">RIS to Finalize</div>
+              </div>
+            </div>
+          `;
+        }
+
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // ==================== SETTINGS ====================
+
+    function loadSettings() {
+      const roleNames = {
+        'driver': 'Driver',
+        'emd': 'Equipment Management Division',
+        'spms': 'Supply & Property Management Section',
+        'admin': 'Administrator'
+      };
+
+      document.getElementById('settings-name').textContent = currentUser.displayName || 'N/A';
+      document.getElementById('settings-email').textContent = currentUser.email;
+      document.getElementById('settings-role').innerHTML = `<span class="badge-custom badge-primary">${roleNames[userRole] || userRole}</span>`;
+    }
+
+    function togglePasswordVisibilityStaff(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+      }
+    }
+
+    async function changePasswordStaff(event) {
+      event.preventDefault();
+
+      const currentPassword = document.getElementById('staff-current-password').value;
+      const newPassword = document.getElementById('staff-new-password').value;
+      const confirmPassword = document.getElementById('staff-confirm-password').value;
+      const changeBtn = document.getElementById('staff-change-password-btn');
+
+      // Validate new password match
+      if (newPassword !== confirmPassword) {
+        await modalManager.alert({
+          title: 'Password Mismatch',
+          message: 'New password and confirmation do not match.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      // Validate password length
+      if (newPassword.length < 6) {
+        await modalManager.alert({
+          title: 'Invalid Password',
+          message: 'Password must be at least 6 characters long.',
+          type: 'warning'
+        });
+        return;
+      }
+
+      // Disable button and show loading state
+      changeBtn.disabled = true;
+      const originalContent = changeBtn.innerHTML;
+      changeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Changing Password...';
+
+      try {
+        const user = auth.currentUser;
+        const credential = firebase.auth.EmailAuthProvider.credential(
+          user.email,
+          currentPassword
+        );
+
+        // Re-authenticate user
+        await user.reauthenticateWithCredential(credential);
+
+        // Update password
+        await user.updatePassword(newPassword);
+
+        // Clear form
+        document.getElementById('staff-current-password').value = '';
+        document.getElementById('staff-new-password').value = '';
+        document.getElementById('staff-confirm-password').value = '';
+
+        await modalManager.alert({
+          title: 'Success',
+          message: 'Your password has been changed successfully!',
+          type: 'success'
+        });
+      } catch (error) {
+        console.error('Error changing password:', error);
+
+        let errorMessage = 'Failed to change password. Please try again.';
+
+        if (error.code === 'auth/wrong-password') {
+          errorMessage = 'Current password is incorrect.';
+        } else if (error.code === 'auth/weak-password') {
+          errorMessage = 'New password is too weak. Please use a stronger password.';
+        } else if (error.code === 'auth/requires-recent-login') {
+          errorMessage = 'For security reasons, please log out and log in again before changing your password.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        await modalManager.alert({
+          title: 'Error',
+          message: errorMessage,
+          type: 'error'
+        });
+      } finally {
+        // Re-enable button
+        changeBtn.disabled = false;
+        changeBtn.innerHTML = originalContent;
+      }
+    }
+
+    async function logout() {
+      const confirmed = await modalManager.confirm({
+        title: 'Confirm Logout',
+        message: 'Are you sure you want to logout?',
+        confirmText: 'Logout',
+        confirmType: 'danger'
+      });
+
+      if (confirmed) {
+        await auth.signOut();
+        window.location.href = 'index.html';
+      }
+    }
+
+    // ==================== EMD: VEHICLE MANAGEMENT ====================
+
+    async function loadVehicles() {
+      const container = document.getElementById('vehicles-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('vehicles').orderBy('brand').get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-truck"></i>
+              <h4>No vehicles yet</h4>
+              <p>Click "Add Vehicle" to register your first vehicle</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Brand</th><th>Model</th><th>Plate No</th><th>DPWH No</th><th>Fuel Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const v = doc.data();
+          const fuelBalance = v.currentFuelBalance || 0;
+          html += `
+            <tr>
+              <td><strong>${v.brand}</strong></td>
+              <td>${v.model}</td>
+              <td><strong>${v.plateNo}</strong></td>
+              <td>${v.dpwhNo}</td>
+              <td>${fuelBalance.toFixed(2)} L</td>
+              <td><span class="badge-custom badge-success">${v.status}</span></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action edit" onclick="editVehicle('${doc.id}')">
+                    <i class="bi bi-pencil"></i> Edit
+                  </button>
+                  <button class="btn-action delete" onclick="deleteVehicle('${doc.id}', '${v.plateNo}')">
+                    <i class="bi bi-trash"></i> Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading vehicles</h4></div>`;
+      }
+    }
+
+    function showAddVehicleModal() {
+      modalManager.show({
+        title: 'Add New Vehicle',
+        size: 'medium',
+        content: `
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Brand</label>
+              <input type="text" id="modal-vehicle-brand" class="form-control text-uppercase" placeholder="TOYOTA">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Model</label>
+              <input type="text" id="modal-vehicle-model" class="form-control text-uppercase" placeholder="VIOS">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Plate Number</label>
+              <input type="text" id="modal-vehicle-plate" class="form-control text-uppercase" placeholder="H1 5750">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">DPWH No</label>
+              <input type="text" id="modal-vehicle-dpwh" class="form-control text-uppercase" placeholder="DPWH-001">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Fuel Capacity (Liters)</label>
+              <input type="number" id="modal-vehicle-capacity" class="form-control" placeholder="50" value="50">
+            </div>
+          </div>
+        `,
+        buttons: [
+          { label: 'Cancel', type: 'secondary' },
+          {
+            label: 'Add Vehicle',
+            type: 'primary',
+            onClick: async () => {
+              const brand = document.getElementById('modal-vehicle-brand').value;
+              const model = document.getElementById('modal-vehicle-model').value;
+              const plateNo = document.getElementById('modal-vehicle-plate').value;
+              const dpwhNo = document.getElementById('modal-vehicle-dpwh').value;
+              const capacity = document.getElementById('modal-vehicle-capacity').value;
+
+              if (!brand || !model || !plateNo || !dpwhNo) {
+                await modalManager.alert({ title: 'Error', message: 'Please fill all required fields', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Adding vehicle...');
+
+              try {
+                const docId = plateNo.replace(/[\s\/\\.#\[\]$]/g, '_');
+                await db.collection('vehicles').doc(docId).set({
+                  brand: brand.toUpperCase(),
+                  model: model.toUpperCase(),
+                  plateNo: plateNo.toUpperCase(),
+                  dpwhNo: dpwhNo.toUpperCase(),
+                  fuelCapacity: parseFloat(capacity) || 50,
+                  currentFuelBalance: 0,
+                  status: 'Available',
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Success', message: 'Vehicle added successfully!', type: 'success' });
+
+                loadVehicles();
+                loadDashboardStats(userRole);
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    async function editVehicle(docId) {
+      try {
+        const doc = await db.collection('vehicles').doc(docId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Vehicle not found', type: 'error' });
+          return;
+        }
+
+        const v = doc.data();
+
+        modalManager.show({
+          title: 'Edit Vehicle',
+          size: 'large',
+          content: `
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Brand</label>
+                <input type="text" id="edit-brand" class="form-control" value="${v.brand || ''}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Model</label>
+                <input type="text" id="edit-model" class="form-control" value="${v.model || ''}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Plate No</label>
+                <input type="text" id="edit-plate" class="form-control" value="${v.plateNo || ''}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">DPWH No</label>
+                <input type="text" id="edit-dpwh" class="form-control" value="${v.dpwhNo || ''}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Fuel Capacity (L)</label>
+                <input type="number" step="0.01" id="edit-capacity" class="form-control" value="${v.fuelCapacity || 0}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Current Fuel Balance (L)</label>
+                <input type="number" step="0.01" id="edit-fuel" class="form-control" value="${v.currentFuelBalance || 0}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Status</label>
+                <select id="edit-status" class="form-select">
+                  <option value="Available" ${v.status === 'Available' ? 'selected' : ''}>Available</option>
+                  <option value="In Use" ${v.status === 'In Use' ? 'selected' : ''}>In Use</option>
+                  <option value="Under Maintenance" ${v.status === 'Under Maintenance' ? 'selected' : ''}>Under Maintenance</option>
+                </select>
+              </div>
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Update Vehicle',
+              type: 'primary',
+              onClick: async () => {
+                const brand = document.getElementById('edit-brand').value.trim();
+                const model = document.getElementById('edit-model').value.trim();
+                const plateNo = document.getElementById('edit-plate').value.trim().toUpperCase();
+                const dpwhNo = document.getElementById('edit-dpwh').value.trim().toUpperCase();
+                const fuelCapacity = parseFloat(document.getElementById('edit-capacity').value);
+                const fuelBalance = parseFloat(document.getElementById('edit-fuel').value);
+                const status = document.getElementById('edit-status').value;
+
+                if (!brand || !model || !plateNo || !dpwhNo) {
+                  await modalManager.alert({ title: 'Error', message: 'Please fill all required fields', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Updating vehicle...');
+
+                try {
+                  await db.collection('vehicles').doc(docId).update({
+                    brand: brand,
+                    model: model,
+                    plateNo: plateNo,
+                    dpwhNo: dpwhNo,
+                    fuelCapacity: fuelCapacity,
+                    currentFuelBalance: fuelBalance,
+                    status: status,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Success', message: 'Vehicle updated successfully!', type: 'success' });
+
+                  loadVehicles();
+                  loadDashboardStats(userRole);
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function deleteVehicle(vehicleId, plateNo) {
+      const confirmed = await modalManager.confirm({
+        title: 'Delete Vehicle',
+        message: `Delete vehicle <strong>${plateNo}</strong>?<br><small class="text-danger">This cannot be undone.</small>`,
+        confirmText: 'Delete',
+        confirmType: 'danger'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading('Deleting vehicle...');
+
+      try {
+        await db.collection('vehicles').doc(vehicleId).delete();
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Deleted', message: 'Vehicle deleted successfully', type: 'success' });
+
+        loadVehicles();
+        loadDashboardStats(userRole);
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== EMD: PRICE MASTER ====================
+
+    async function loadPriceMaster() {
+      const container = document.getElementById('price-master-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('priceMaster').orderBy('weekStartDate', 'desc').get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-cash-coin"></i>
+              <h4>No price records yet</h4>
+              <p>Click "Add Price" to add your first price record</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Provider</th><th>Week Starting</th><th>Diesel (₱/L)</th><th>Gasoline (₱/L)</th><th>Created</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const p = doc.data();
+          const provider = p.provider || 'N/A';
+          const weekDate = p.weekStartDate ? p.weekStartDate.toDate().toLocaleDateString() : 'N/A';
+          const createdDate = p.createdAt ? p.createdAt.toDate().toLocaleDateString() : 'N/A';
+
+          html += `
+            <tr>
+              <td><span class="badge bg-primary">${provider}</span></td>
+              <td><strong>${weekDate}</strong></td>
+              <td>₱${p.dieselPrice.toFixed(2)}</td>
+              <td>₱${p.gasolinePrice.toFixed(2)}</td>
+              <td><small>${createdDate}</small></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action edit" onclick="editPrice('${doc.id}')">
+                    <i class="bi bi-pencil"></i> Edit
+                  </button>
+                  <button class="btn-action delete" onclick="deletePrice('${doc.id}')">
+                    <i class="bi bi-trash"></i> Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading prices</h4></div>`;
+      }
+    }
+
+    function showAddPriceModal() {
+      modalManager.show({
+        title: 'Add Fuel Price',
+        size: 'medium',
+        content: `
+          <div class="mb-3">
+            <label class="form-label">Gasoline Provider</label>
+            <select id="modal-price-provider" class="form-control">
+              <option value="">Select Provider</option>
+              <option value="Petron">Petron</option>
+              <option value="Shell">Shell</option>
+              <option value="Caltex">Caltex</option>
+              <option value="Seaoil">Seaoil</option>
+              <option value="Phoenix">Phoenix</option>
+              <option value="Total">Total</option>
+              <option value="Unioil">Unioil</option>
+              <option value="PTT">PTT</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Week Starting Date</label>
+            <input type="date" id="modal-price-week" class="form-control">
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Diesel Price (₱/L)</label>
+              <input type="number" step="0.01" id="modal-price-diesel" class="form-control" placeholder="65.50">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Gasoline Price (₱/L)</label>
+              <input type="number" step="0.01" id="modal-price-gasoline" class="form-control" placeholder="75.50">
+            </div>
+          </div>
+        `,
+        buttons: [
+          { label: 'Cancel', type: 'secondary' },
+          {
+            label: 'Add Price',
+            type: 'primary',
+            onClick: async () => {
+              const provider = document.getElementById('modal-price-provider').value;
+              const weekDate = document.getElementById('modal-price-week').value;
+              const diesel = document.getElementById('modal-price-diesel').value;
+              const gasoline = document.getElementById('modal-price-gasoline').value;
+
+              if (!provider || !weekDate || !diesel || !gasoline) {
+                await modalManager.alert({ title: 'Error', message: 'Please fill all fields', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Adding price...');
+
+              try {
+                await db.collection('priceMaster').add({
+                  provider: provider,
+                  weekStartDate: firebase.firestore.Timestamp.fromDate(new Date(weekDate)),
+                  dieselPrice: parseFloat(diesel),
+                  gasolinePrice: parseFloat(gasoline),
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  createdBy: currentUser.uid
+                });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Success', message: 'Price added successfully!', type: 'success' });
+
+                loadPriceMaster();
+                loadDashboardStats(userRole);
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    async function editPrice(docId) {
+      try {
+        const doc = await db.collection('priceMaster').doc(docId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Price record not found', type: 'error' });
+          return;
+        }
+
+        const p = doc.data();
+        const weekDate = p.weekStartDate.toDate().toISOString().split('T')[0];
+
+        modalManager.show({
+          title: 'Edit Fuel Price',
+          size: 'medium',
+          content: `
+            <div class="mb-3">
+              <label class="form-label">Gasoline Provider</label>
+              <select id="modal-edit-provider" class="form-control">
+                <option value="">Select Provider</option>
+                <option value="Petron" ${p.provider === 'Petron' ? 'selected' : ''}>Petron</option>
+                <option value="Shell" ${p.provider === 'Shell' ? 'selected' : ''}>Shell</option>
+                <option value="Caltex" ${p.provider === 'Caltex' ? 'selected' : ''}>Caltex</option>
+                <option value="Seaoil" ${p.provider === 'Seaoil' ? 'selected' : ''}>Seaoil</option>
+                <option value="Phoenix" ${p.provider === 'Phoenix' ? 'selected' : ''}>Phoenix</option>
+                <option value="Total" ${p.provider === 'Total' ? 'selected' : ''}>Total</option>
+                <option value="Unioil" ${p.provider === 'Unioil' ? 'selected' : ''}>Unioil</option>
+                <option value="PTT" ${p.provider === 'PTT' ? 'selected' : ''}>PTT</option>
+                <option value="Other" ${p.provider === 'Other' ? 'selected' : ''}>Other</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Week Starting Date</label>
+              <input type="date" id="modal-edit-week" class="form-control" value="${weekDate}">
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Diesel Price (₱/L)</label>
+                <input type="number" step="0.01" id="modal-edit-diesel" class="form-control" value="${p.dieselPrice}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Gasoline Price (₱/L)</label>
+                <input type="number" step="0.01" id="modal-edit-gasoline" class="form-control" value="${p.gasolinePrice}">
+              </div>
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Save Changes',
+              type: 'primary',
+              onClick: async () => {
+                const provider = document.getElementById('modal-edit-provider').value;
+                const weekDate = document.getElementById('modal-edit-week').value;
+                const diesel = document.getElementById('modal-edit-diesel').value;
+                const gasoline = document.getElementById('modal-edit-gasoline').value;
+
+                if (!provider) {
+                  await modalManager.alert({ title: 'Error', message: 'Please select a provider', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Updating price...');
+
+                try {
+                  await db.collection('priceMaster').doc(docId).update({
+                    provider: provider,
+                    weekStartDate: firebase.firestore.Timestamp.fromDate(new Date(weekDate)),
+                    dieselPrice: parseFloat(diesel),
+                    gasolinePrice: parseFloat(gasoline),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Success', message: 'Price updated successfully!', type: 'success' });
+
+                  loadPriceMaster();
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function deletePrice(docId) {
+      const confirmed = await modalManager.confirm({
+        title: 'Delete Price Record',
+        message: 'Delete this price record?',
+        confirmText: 'Delete',
+        confirmType: 'danger'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading('Deleting price...');
+
+      try {
+        await db.collection('priceMaster').doc(docId).delete();
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Deleted', message: 'Price record deleted', type: 'success' });
+
+        loadPriceMaster();
+        loadDashboardStats(userRole);
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== EMD: RIS VALIDATION ====================
+
+    async function loadRisValidation() {
+      const container = document.getElementById('ris-pending-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('risRequests')
+          .where('status', '==', 'pending_validation')
+          .orderBy('createdAt', 'desc')
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-check-circle"></i>
+              <h4>No pending RIS</h4>
+              <p>All RIS have been validated</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Temp RIS No</th><th>Vehicle</th><th>Fuel Type</th><th>Quantity (L)</th><th>Driver</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const r = doc.data();
+          const reqDate = r.createdAt ? r.createdAt.toDate().toLocaleDateString() : 'N/A';
+
+          html += `
+            <tr>
+              <td><strong>${r.temporaryRisNo}</strong></td>
+              <td>${r.vehiclePlateNo}</td>
+              <td>${r.fuelType}</td>
+              <td>${r.quantityRequested} L</td>
+              <td>${r.driverName}</td>
+              <td><small>${reqDate}</small></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action view" onclick="viewRisDetails('${doc.id}')">
+                    <i class="bi bi-eye"></i> View
+                  </button>
+                  <button class="btn-action validate" onclick="validateRis('${doc.id}')">
+                    <i class="bi bi-check-circle"></i> Validate
+                  </button>
+                  <button class="btn-action reject" onclick="rejectRis('${doc.id}')">
+                    <i class="bi bi-x-circle"></i> Reject
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading RIS validation:', error);
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading RIS</h4><p>${error.message}</p></div>`;
+      }
+    }
+
+    async function loadValidatedRis() {
+      const container = document.getElementById('ris-validated-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('risRequests')
+          .where('status', '==', 'validated')
+          .orderBy('validatedAt', 'desc')
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-check-circle"></i>
+              <h4>No validated RIS yet</h4>
+              <p>Validated RIS will appear here</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Temp RIS No</th><th>Vehicle</th><th>Fuel Type</th><th>Quantity (L)</th><th>Driver</th><th>Validated</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const r = doc.data();
+          const validatedDate = r.validatedAt ? r.validatedAt.toDate().toLocaleDateString() : 'N/A';
+
+          html += `
+            <tr>
+              <td><strong>${r.temporaryRisNo}</strong></td>
+              <td>${r.vehiclePlateNo}</td>
+              <td>${r.fuelType}</td>
+              <td>${r.quantityRequested} L</td>
+              <td>${r.driverName}</td>
+              <td><small>${validatedDate}</small></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action view" onclick="viewRisDetails('${doc.id}')">
+                    <i class="bi bi-eye"></i> View
+                  </button>
+                  <button class="btn-action print" onclick="printTemporaryRis('${doc.id}')">
+                    <i class="bi bi-printer"></i> Print
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading validated RIS</h4></div>`;
+      }
+    }
+
+    async function loadQuantityTracking() {
+      const container = document.getElementById('quantity-tracking-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        // Get all finalized RIS
+        const snapshot = await db.collection('risRequests')
+          .where('status', '==', 'Finalized')
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-info-circle"></i>
+              <h4>No finalized RIS yet</h4>
+              <p>Fuel issuance data will appear here once RIS are finalized</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Group by DPWH No and Provider
+        const tracking = {};
+
+        snapshot.forEach(doc => {
+          const r = doc.data();
+          const dpwhNo = r.dpwhNo || 'N/A';
+          const provider = r.gasolineProvider || 'Unknown Provider';
+          const key = `${dpwhNo}|${provider}`;
+
+          if (!tracking[key]) {
+            tracking[key] = {
+              dpwhNo: dpwhNo,
+              provider: provider,
+              totalQuantity: 0,
+              totalCost: 0,
+              count: 0,
+              fuelType: r.fuelType || 'N/A'
+            };
+          }
+
+          tracking[key].totalQuantity += (r.issuanceQty || 0);
+          tracking[key].totalCost += (r.totalCost || 0);
+          tracking[key].count += 1;
+        });
+
+        // Convert to array and sort by total quantity
+        const trackingArray = Object.values(tracking).sort((a, b) => b.totalQuantity - a.totalQuantity);
+
+        // Calculate summary statistics
+        let totalQuantity = 0;
+        let totalCost = 0;
+        let totalIssuances = snapshot.size;
+        let uniqueVehicles = new Set();
+
+        trackingArray.forEach(item => {
+          totalQuantity += item.totalQuantity;
+          totalCost += item.totalCost;
+          uniqueVehicles.add(item.dpwhNo);
+        });
+
+        // Update summary cards
+        document.getElementById('tracking-total-quantity').textContent = totalQuantity.toLocaleString() + ' L';
+        document.getElementById('tracking-total-cost').textContent = '₱' + totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('tracking-total-vehicles').textContent = uniqueVehicles.size;
+        document.getElementById('tracking-total-issuances').textContent = totalIssuances;
+
+        let html = `
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>DPWH No</th>
+                <th>Gasoline Provider</th>
+                <th>Fuel Type</th>
+                <th>Total Quantity (L)</th>
+                <th>Total Cost</th>
+                <th>No. of Issuances</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        trackingArray.forEach(item => {
+          html += `
+            <tr>
+              <td><strong>${item.dpwhNo}</strong></td>
+              <td>${item.provider}</td>
+              <td><span class="badge-custom badge-info">${item.fuelType}</span></td>
+              <td><strong>${item.totalQuantity.toLocaleString()} L</strong></td>
+              <td>₱${item.totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td><span class="badge-custom badge-secondary">${item.count}</span></td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading quantity tracking:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-exclamation-triangle"></i>
+            <h4>Error loading tracking data</h4>
+            <p>${error.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    async function viewRisDetails(risId) {
+      try {
+        const doc = await db.collection('risRequests').doc(risId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'RIS not found', type: 'error' });
+          return;
+        }
+
+        const r = doc.data();
+        const reqDate = r.createdAt ? r.createdAt.toDate().toLocaleString() : 'N/A';
+
+        modalManager.show({
+          title: 'RIS Details',
+          size: 'large',
+          content: `
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <strong>Temporary RIS No:</strong><br>${r.temporaryRisNo}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Status:</strong><br><span class="badge-custom badge-${r.status === 'pending_validation' ? 'pending' : r.status === 'validated' ? 'validated' : 'approved'}">${r.status}</span>
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Vehicle:</strong><br>${r.vehiclePlateNo}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Driver:</strong><br>${r.driverName}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Fuel Type:</strong><br>${r.fuelType}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Quantity:</strong><br>${r.quantityRequested} Liters
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Purpose:</strong><br>${r.purpose || 'N/A'}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Requested:</strong><br>${reqDate}
+              </div>
+              ${r.validatedAt ? `
+              <div class="col-md-6 mb-3">
+                <strong>Validated By:</strong><br>${r.validatedBy || 'N/A'}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Validated At:</strong><br>${r.validatedAt.toDate().toLocaleString()}
+              </div>
+              ` : ''}
+            </div>
+          `,
+          buttons: [
+            { label: 'Close', type: 'secondary' }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function validateRis(risId) {
+      const confirmed = await modalManager.confirm({
+        title: 'Validate RIS',
+        message: 'Validate this RIS request?',
+        confirmText: 'Validate',
+        confirmType: 'primary'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading('Validating RIS...');
+
+      try {
+        await db.collection('risRequests').doc(risId).update({
+          status: 'validated',
+          validatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          validatedBy: currentUser.displayName || currentUser.email
+        });
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Success', message: 'RIS validated successfully!', type: 'success' });
+
+        loadRisValidation();
+        loadValidatedRis();
+        loadDashboardStats(userRole);
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function rejectRis(risId) {
+      modalManager.show({
+        title: 'Reject RIS',
+        size: 'medium',
+        content: `
+          <div class="mb-3">
+            <label class="form-label">Reason for Rejection</label>
+            <textarea id="modal-reject-reason" class="form-control" rows="4" placeholder="Enter reason..."></textarea>
+          </div>
+        `,
+        buttons: [
+          { label: 'Cancel', type: 'secondary' },
+          {
+            label: 'Reject',
+            type: 'danger',
+            onClick: async () => {
+              const reason = document.getElementById('modal-reject-reason').value;
+
+              if (!reason) {
+                await modalManager.alert({ title: 'Error', message: 'Please provide a reason', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Rejecting RIS...');
+
+              try {
+                await db.collection('risRequests').doc(risId).update({
+                  status: 'rejected',
+                  rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  rejectedBy: currentUser.displayName || currentUser.email,
+                  rejectionReason: reason
+                });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Rejected', message: 'RIS has been rejected', type: 'success' });
+
+                loadRisValidation();
+                loadDashboardStats(userRole);
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    async function printTemporaryRis(risId) {
+      try {
+        const doc = await db.collection('risRequests').doc(risId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'RIS not found', type: 'error' });
+          return;
+        }
+
+        const r = doc.data();
+
+        // Create print window
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <html>
+          <head>
+            <title>Temporary RIS - ${r.temporaryRisNo}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              h2 { text-align: center; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #000; padding: 10px; text-align: left; }
+              th { background-color: #f0f0f0; }
+            </style>
+          </head>
+          <body>
+            <h2>REQUISITION AND ISSUE SLIP (TEMPORARY)</h2>
+            <p><strong>Temporary RIS No:</strong> ${r.temporaryRisNo}</p>
+            <table>
+              <tr><th>Field</th><th>Value</th></tr>
+              <tr><td>Vehicle Plate No</td><td>${r.vehiclePlateNo}</td></tr>
+              <tr><td>Driver Name</td><td>${r.driverName}</td></tr>
+              <tr><td>Fuel Type</td><td>${r.fuelType}</td></tr>
+              <tr><td>Quantity Requested</td><td>${r.quantityRequested} Liters</td></tr>
+              <tr><td>Purpose</td><td>${r.purpose || 'N/A'}</td></tr>
+              <tr><td>Status</td><td>${r.status}</td></tr>
+              <tr><td>Validated By</td><td>${r.validatedBy || 'N/A'}</td></tr>
+            </table>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== SPMS: FUEL CONTRACTS ====================
+
+    async function loadFuelContracts() {
+      const container = document.getElementById('fuel-contracts-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('fuelContracts').orderBy('createdAt', 'desc').get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-file-earmark-text"></i>
+              <h4>No contracts yet</h4>
+              <p>Click "Add Contract" to create your first fuel contract</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Contract No</th><th>Supplier</th><th>Fuel Type</th><th>Contract Amount</th><th>Used Amount</th><th>Remaining Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const c = doc.data();
+          const remainingAmount = c.totalAmount - (c.usedAmount || 0);
+          const statusBadge = c.status === 'active' ? 'success' : 'danger';
+
+          html += `
+            <tr>
+              <td><strong>${c.contractNo}</strong></td>
+              <td>${c.supplierName}</td>
+              <td>${c.fuelType}</td>
+              <td>₱${c.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td>₱${(c.usedAmount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td>₱${remainingAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td><span class="badge-custom badge-${statusBadge}">${c.status}</span></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action view" onclick="viewContractDetails('${doc.id}')">
+                    <i class="bi bi-eye"></i> View
+                  </button>
+                  ${c.status === 'active' ? `
+                  <button class="btn-action delete" onclick="closeContract('${doc.id}')">
+                    <i class="bi bi-x-circle"></i> Close
+                  </button>
+                  ` : ''}
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading contracts</h4></div>`;
+      }
+    }
+
+    function showAddContractModal() {
+      modalManager.show({
+        title: 'Add Fuel Contract',
+        size: 'large',
+        content: `
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Contract Number</label>
+              <input type="text" id="modal-contract-no" class="form-control text-uppercase" placeholder="CONTRACT-2024-001">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Supplier Name</label>
+              <input type="text" id="modal-supplier-name" class="form-control text-uppercase" placeholder="SHELL PILIPINAS">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Fuel Type</label>
+              <select id="modal-fuel-type" class="form-select">
+                <option value="Diesel">Diesel</option>
+                <option value="Gasoline">Gasoline</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Total Liters</label>
+              <input type="number" step="0.01" id="modal-total-liters" class="form-control" placeholder="10000">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Price Per Liter (₱)</label>
+              <input type="number" step="0.01" id="modal-price-per-liter" class="form-control" placeholder="65.50">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Start Date</label>
+              <input type="date" id="modal-start-date" class="form-control">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">End Date</label>
+              <input type="date" id="modal-end-date" class="form-control">
+            </div>
+          </div>
+        `,
+        buttons: [
+          { label: 'Cancel', type: 'secondary' },
+          {
+            label: 'Add Contract',
+            type: 'primary',
+            onClick: async () => {
+              const contractNo = document.getElementById('modal-contract-no').value;
+              const supplierName = document.getElementById('modal-supplier-name').value;
+              const fuelType = document.getElementById('modal-fuel-type').value;
+              const totalLiters = document.getElementById('modal-total-liters').value;
+              const pricePerLiter = document.getElementById('modal-price-per-liter').value;
+              const startDate = document.getElementById('modal-start-date').value;
+              const endDate = document.getElementById('modal-end-date').value;
+
+              if (!contractNo || !supplierName || !totalLiters || !pricePerLiter || !startDate || !endDate) {
+                await modalManager.alert({ title: 'Error', message: 'Please fill all fields', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Adding contract...');
+
+              try {
+                const totalAmount = parseFloat(totalLiters) * parseFloat(pricePerLiter);
+                await db.collection('fuelContracts').add({
+                  contractNo: contractNo.toUpperCase(),
+                  supplierName: supplierName.toUpperCase(),
+                  fuelType: fuelType,
+                  totalLiters: parseFloat(totalLiters),
+                  usedLiters: 0,
+                  pricePerLiter: parseFloat(pricePerLiter),
+                  totalAmount: totalAmount,
+                  usedAmount: 0,
+                  startDate: firebase.firestore.Timestamp.fromDate(new Date(startDate)),
+                  endDate: firebase.firestore.Timestamp.fromDate(new Date(endDate)),
+                  status: 'active',
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  createdBy: currentUser.uid
+                });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Success', message: 'Contract added successfully!', type: 'success' });
+
+                loadFuelContracts();
+                loadDashboardStats(userRole);
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    async function viewContractDetails(contractId) {
+      try {
+        const doc = await db.collection('fuelContracts').doc(contractId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Contract not found', type: 'error' });
+          return;
+        }
+
+        const c = doc.data();
+        const remainingAmount = c.totalAmount - (c.usedAmount || 0);
+        const percentage = ((c.usedAmount || 0) / c.totalAmount * 100).toFixed(2);
+
+        modalManager.show({
+          title: 'Contract Details',
+          size: 'large',
+          content: `
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <strong>Contract No:</strong><br>${c.contractNo}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Status:</strong><br><span class="badge-custom badge-${c.status === 'active' ? 'success' : 'danger'}">${c.status}</span>
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Supplier:</strong><br>${c.supplierName}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Fuel Type:</strong><br>${c.fuelType}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Contract Amount:</strong><br>₱${c.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Used Amount:</strong><br>₱${(c.usedAmount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Remaining Amount:</strong><br>₱${remainingAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Utilization:</strong><br>${percentage}%
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Total Liters:</strong><br>${c.totalLiters.toFixed(2)} L
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Price Per Liter:</strong><br>₱${c.pricePerLiter.toFixed(2)}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>Start Date:</strong><br>${c.startDate.toDate().toLocaleDateString()}
+              </div>
+              <div class="col-md-6 mb-3">
+                <strong>End Date:</strong><br>${c.endDate.toDate().toLocaleDateString()}
+              </div>
+            </div>
+          `,
+          buttons: [
+            { label: 'Close', type: 'secondary' }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function closeContract(contractId) {
+      const confirmed = await modalManager.confirm({
+        title: 'Close Contract',
+        message: 'Are you sure you want to close this contract?',
+        confirmText: 'Close Contract',
+        confirmType: 'danger'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading('Closing contract...');
+
+      try {
+        await db.collection('fuelContracts').doc(contractId).update({
+          status: 'closed',
+          closedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Success', message: 'Contract closed', type: 'success' });
+
+        loadFuelContracts();
+        loadDashboardStats(userRole);
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== SPMS: DTT APPROVAL ====================
+
+    async function loadDttApprovals() {
+      const container = document.getElementById('dtt-approval-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        // Load both pending approvals and cancellation requests
+        const [pendingSnapshot, cancellationSnapshot] = await Promise.all([
+          db.collection('dtts')
+            .where('status', '==', 'pending_approval')
+            .orderBy('createdAt', 'desc')
+            .get(),
+          db.collection('dtts')
+            .where('status', '==', 'cancellation-requested')
+            .orderBy('cancellationRequestedAt', 'desc')
+            .get()
+        ]);
+
+        const allDocs = [...pendingSnapshot.docs, ...cancellationSnapshot.docs];
+
+        if (allDocs.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-clipboard-check"></i>
+              <h4>No pending requests</h4>
+              <p>All requests have been processed</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>DTT No</th><th>Vehicle</th><th>Driver</th><th>Destination</th><th>Type</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
+
+        allDocs.forEach(doc => {
+          const d = doc.data();
+          const isCancellation = d.status === 'cancellation-requested';
+          const reqDate = isCancellation
+            ? (d.cancellationRequestedAt ? d.cancellationRequestedAt.toDate().toLocaleDateString() : 'N/A')
+            : (d.createdAt ? d.createdAt.toDate().toLocaleDateString() : 'N/A');
+
+          // Format vehicle display as "Brand Model (DPWH No.)"
+          const vehicleDisplay = d.vehicleBrand && d.vehicleModel
+            ? `${d.vehicleBrand} ${d.vehicleModel} (${d.vehicleDpwhNo || d.plateNo})`
+            : d.plateNo || 'N/A';
+
+          html += `
+            <tr ${isCancellation ? 'style="background: #fff3cd;"' : ''}>
+              <td><strong>${d.dttId || 'N/A'}</strong></td>
+              <td>${vehicleDisplay}</td>
+              <td>${d.driverName || d.driverEmail}</td>
+              <td>${d.destination || 'N/A'}</td>
+              <td>
+                ${isCancellation
+                  ? `<span class="badge bg-warning text-dark">Cancellation Request</span><br><small class="text-muted">Reason: ${d.cancellationReason || 'N/A'}</small>`
+                  : '<span class="badge bg-primary">New Request</span>'
+                }
+              </td>
+              <td><small>${reqDate}</small></td>
+              <td>
+                <div class="action-buttons">
+                  ${isCancellation ? `
+                    <button class="btn-action" style="background: #dc3545;" onclick="approveCancellation('${doc.id}')">
+                      <i class="bi bi-x-circle"></i> Cancel Trip
+                    </button>
+                    <button class="btn-action approve" onclick="rejectCancellation('${doc.id}')">
+                      <i class="bi bi-check-circle"></i> Keep Approved
+                    </button>
+                  ` : `
+                    <button class="btn-action approve" onclick="approveDtt('${doc.id}')">
+                      <i class="bi bi-check-circle"></i> Approve
+                    </button>
+                    <button class="btn-action reject" onclick="rejectDtt('${doc.id}')">
+                      <i class="bi bi-x-circle"></i> Reject
+                    </button>
+                  `}
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading DTT requests:', error);
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading DTT requests</h4><p>${error.message}</p></div>`;
+      }
+    }
+
+    async function approveDtt(dttId) {
+      const confirmed = await modalManager.confirm({
+        title: 'Approve DTT',
+        message: 'Approve this DTT request?',
+        confirmText: 'Approve',
+        confirmType: 'primary'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading('Approving DTT...');
+
+      try {
+        await db.collection('dtts').doc(dttId).update({
+          status: 'approved',
+          approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          approvedBy: currentUser.displayName || currentUser.email
+        });
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Success', message: 'DTT approved successfully!', type: 'success' });
+
+        loadDttApprovals();
+        loadDashboardStats(userRole);
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function rejectDtt(dttId) {
+      modalManager.show({
+        title: 'Reject DTT',
+        size: 'medium',
+        content: `
+          <div class="mb-3">
+            <label class="form-label">Reason for Rejection</label>
+            <textarea id="modal-dtt-reject-reason" class="form-control" rows="4" placeholder="Enter reason..."></textarea>
+          </div>
+        `,
+        buttons: [
+          { label: 'Cancel', type: 'secondary' },
+          {
+            label: 'Reject',
+            type: 'danger',
+            onClick: async () => {
+              const reason = document.getElementById('modal-dtt-reject-reason').value;
+
+              if (!reason) {
+                await modalManager.alert({ title: 'Error', message: 'Please provide a reason', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Rejecting DTT...');
+
+              try {
+                await db.collection('dtts').doc(dttId).update({
+                  status: 'rejected',
+                  rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  rejectedBy: currentUser.displayName || currentUser.email,
+                  rejectionReason: reason
+                });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Rejected', message: 'DTT has been rejected', type: 'success' });
+
+                loadDttApprovals();
+                loadDashboardStats(userRole);
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    // Approve cancellation request (cancel the trip)
+    async function approveCancellation(dttId) {
+      try {
+        const dttDoc = await db.collection('dtts').doc(dttId).get();
+        if (!dttDoc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Trip not found', type: 'error' });
+          return;
+        }
+
+        const dtt = dttDoc.data();
+
+        const confirmed = await modalManager.confirm({
+          title: 'Approve Cancellation',
+          message: `Cancel this trip?<br><br><strong>DTT No:</strong> ${dtt.dttId}<br><strong>Destination:</strong> ${dtt.destination}<br><strong>Reason:</strong> ${dtt.cancellationReason || 'N/A'}`,
+          confirmText: 'Yes, Cancel Trip',
+          confirmType: 'danger'
+        });
+
+        if (!confirmed) return;
+
+        const loadingId = modalManager.loading('Cancelling trip...');
+
+        try {
+          await db.collection('dtts').doc(dttId).update({
+            status: 'cancelled',
+            cancelledAt: firebase.firestore.FieldValue.serverTimestamp(),
+            cancelledBy: currentUser.displayName || currentUser.email
+          });
+
+          modalManager.close(loadingId);
+          await modalManager.alert({ title: 'Cancelled', message: 'Trip has been cancelled', type: 'success' });
+
+          loadDttApprovals();
+          loadDashboardStats(userRole);
+        } catch (error) {
+          modalManager.close(loadingId);
+          await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+        }
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // Reject cancellation request (keep trip approved)
+    async function rejectCancellation(dttId) {
+      try {
+        const dttDoc = await db.collection('dtts').doc(dttId).get();
+        if (!dttDoc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Trip not found', type: 'error' });
+          return;
+        }
+
+        const dtt = dttDoc.data();
+
+        modalManager.show({
+          title: 'Reject Cancellation Request',
+          size: 'medium',
+          content: `
+            <div class="alert alert-info mb-3">
+              <strong>DTT No:</strong> ${dtt.dttId}<br>
+              <strong>Destination:</strong> ${dtt.destination}<br>
+              <strong>Driver's Reason:</strong> ${dtt.cancellationReason || 'N/A'}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Reason for Rejecting Cancellation</label>
+              <textarea id="modal-reject-cancellation-reason" class="form-control" rows="4" placeholder="Enter reason..."></textarea>
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Reject Cancellation',
+              type: 'primary',
+              onClick: async () => {
+                const reason = document.getElementById('modal-reject-cancellation-reason').value.trim();
+
+                if (!reason) {
+                  await modalManager.alert({ title: 'Error', message: 'Please provide a reason', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Rejecting cancellation request...');
+
+                try {
+                  await db.collection('dtts').doc(dttId).update({
+                    status: 'approved',
+                    cancellationRejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    cancellationRejectedBy: currentUser.displayName || currentUser.email,
+                    cancellationRejectionReason: reason
+                  });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({
+                    title: 'Cancellation Rejected',
+                    message: 'Trip remains approved. Driver has been notified.',
+                    type: 'success'
+                  });
+
+                  loadDttApprovals();
+                  loadDashboardStats(userRole);
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== SPMS: RIS FINALIZATION ====================
+
+    async function loadRisFinalization() {
+      const container = document.getElementById('ris-finalization-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('risRequests')
+          .where('status', '==', 'validated')
+          .orderBy('validatedAt', 'desc')
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-check-circle"></i>
+              <h4>No RIS to finalize</h4>
+              <p>Validated RIS will appear here for finalization</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Temp RIS No</th><th>Vehicle</th><th>Fuel Type</th><th>Quantity (L)</th><th>Driver</th><th>Validated</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const r = doc.data();
+          const validatedDate = r.validatedAt ? r.validatedAt.toDate().toLocaleDateString() : 'N/A';
+
+          html += `
+            <tr>
+              <td><strong>${r.temporaryRisNo}</strong></td>
+              <td>${r.vehiclePlateNo}</td>
+              <td>${r.fuelType}</td>
+              <td>${r.quantityRequested} L</td>
+              <td>${r.driverName}</td>
+              <td><small>${validatedDate}</small></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action approve" onclick="finalizeRis('${doc.id}')">
+                    <i class="bi bi-check-circle"></i> Finalize & Issue
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading RIS finalization:', error);
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading RIS</h4><p>${error.message}</p></div>`;
+      }
+    }
+
+    // Generate RIS Number in format YYYY-MM-#### (resets every year)
+    async function generateRisNumber() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+
+      // Get all RIS from current year
+      const startOfYear = new Date(year, 0, 1);
+      const snapshot = await db.collection('risRequests')
+        .where('status', '==', 'issued')
+        .where('issuedAt', '>=', firebase.firestore.Timestamp.fromDate(startOfYear))
+        .get();
+
+      // Calculate next number (starts from 1)
+      const nextNumber = snapshot.size + 1;
+      const numberPart = String(nextNumber).padStart(4, '0');
+
+      return `RIS-${year}-${month}-${numberPart}`;
+    }
+
+    async function finalizeRis(risId) {
+      try {
+        const doc = await db.collection('risRequests').doc(risId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'RIS not found', type: 'error' });
+          return;
+        }
+
+        const r = doc.data();
+
+        // Generate RIS number
+        const suggestedRisNo = await generateRisNumber();
+
+        // Get active contracts for this fuel type
+        const contractsSnapshot = await db.collection('fuelContracts')
+          .where('fuelType', '==', r.fuelType)
+          .where('status', '==', 'active')
+          .get();
+
+        if (contractsSnapshot.empty) {
+          await modalManager.alert({
+            title: 'Error',
+            message: `No active contract found for ${r.fuelType}`,
+            type: 'error'
+          });
+          return;
+        }
+
+        // Build contract options
+        let contractOptions = '';
+        contractsSnapshot.forEach(cDoc => {
+          const c = cDoc.data();
+          const remainingAmount = c.totalAmount - (c.usedAmount || 0);
+          contractOptions += `<option value="${cDoc.id}">${c.contractNo} - Balance: ₱${remainingAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</option>`;
+        });
+
+        modalManager.show({
+          title: 'Finalize RIS',
+          size: 'medium',
+          content: `
+            <div class="mb-3">
+              <label class="form-label">Select Contract</label>
+              <select id="modal-select-contract" class="form-select">
+                ${contractOptions}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Real RIS Number</label>
+              <input type="text" id="modal-real-ris-no" class="form-control" value="${suggestedRisNo}" placeholder="RIS-2025-11-0001">
+              <small class="text-muted">Format: RIS-YYYY-MM-#### (auto-generated, editable)</small>
+            </div>
+            <div class="alert alert-info">
+              <strong>Quantity:</strong> ${r.quantityRequested} Liters<br>
+              <strong>Fuel Type:</strong> ${r.fuelType}
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Finalize & Issue',
+              type: 'primary',
+              onClick: async () => {
+                const contractId = document.getElementById('modal-select-contract').value;
+                const realRisNo = document.getElementById('modal-real-ris-no').value;
+
+                if (!realRisNo) {
+                  await modalManager.alert({ title: 'Error', message: 'Please enter RIS number', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Finalizing RIS...');
+
+                try {
+                  // Update contract balance
+                  const contractDoc = await db.collection('fuelContracts').doc(contractId).get();
+                  const contract = contractDoc.data();
+                  const newUsedLiters = (contract.usedLiters || 0) + r.quantityRequested;
+                  const newUsedAmount = (contract.usedAmount || 0) + (r.quantityRequested * contract.pricePerLiter);
+
+                  await db.collection('fuelContracts').doc(contractId).update({
+                    usedLiters: newUsedLiters,
+                    usedAmount: newUsedAmount
+                  });
+
+                  // Update RIS
+                  await db.collection('risRequests').doc(risId).update({
+                    status: 'issued',
+                    realRisNo: realRisNo,
+                    contractId: contractId,
+                    issuedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    issuedBy: currentUser.displayName || currentUser.email
+                  });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({
+                    title: 'Success',
+                    message: 'RIS finalized and fuel issued!',
+                    type: 'success'
+                  });
+
+                  loadRisFinalization();
+                  loadDashboardStats(userRole);
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== ANALYTICS ====================
+
+    async function loadAnalytics() {
+      const container = document.getElementById('analytics-content');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const [fuelRequests, contracts] = await Promise.all([
+          db.collection('risRequests').get(),
+          db.collection('fuelContracts').get()
+        ]);
+
+        let totalFuelIssued = 0;
+        let totalContracts = contracts.size;
+        let activeContracts = 0;
+        let totalContractValue = 0;
+        let usedContractValue = 0;
+
+        fuelRequests.forEach(doc => {
+          const r = doc.data();
+          if (r.status === 'issued') {
+            totalFuelIssued += r.quantityRequested || 0;
+          }
+        });
+
+        contracts.forEach(doc => {
+          const c = doc.data();
+          if (c.status === 'active') activeContracts++;
+          totalContractValue += c.totalAmount || 0;
+          usedContractValue += c.usedAmount || 0;
+        });
+
+        const utilizationRate = totalContractValue > 0 ? ((usedContractValue / totalContractValue) * 100).toFixed(2) : 0;
+
+        let html = `
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #d3f9d8; color: #2f9e44;">
+                <i class="bi bi-fuel-pump"></i>
+              </div>
+              <div class="stat-value">${totalFuelIssued.toFixed(2)}</div>
+              <div class="stat-label">Total Fuel Issued (L)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #e7f5ff; color: #1971c2;">
+                <i class="bi bi-file-earmark-text"></i>
+              </div>
+              <div class="stat-value">${activeContracts}</div>
+              <div class="stat-label">Active Contracts</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #fff3bf; color: #e67700;">
+                <i class="bi bi-graph-up"></i>
+              </div>
+              <div class="stat-value">${utilizationRate}%</div>
+              <div class="stat-label">Contract Utilization</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background: #f3d9fa; color: #862e9c;">
+                <i class="bi bi-clipboard-data"></i>
+              </div>
+              <div class="stat-value">${fuelRequests.size}</div>
+              <div class="stat-label">Total RIS Requests</div>
+            </div>
+          </div>
+
+          <!-- Contract Balances Table -->
+          <div class="data-table-card mt-4">
+            <div class="table-header">
+              <h3><i class="bi bi-wallet2 me-2"></i>Contract Balances</h3>
+            </div>
+            <table class="table-custom">
+              <thead>
+                <tr>
+                  <th>Contract No</th>
+                  <th>Supplier</th>
+                  <th>Fuel Type</th>
+                  <th>Total Amount</th>
+                  <th>Used Amount</th>
+                  <th>Remaining Balance</th>
+                  <th>Utilization</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        // Add contract rows
+        const contractsArray = [];
+        contracts.forEach(doc => {
+          contractsArray.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Sort by remaining balance (descending)
+        contractsArray.sort((a, b) => {
+          const remainingA = (a.totalAmount || 0) - (a.usedAmount || 0);
+          const remainingB = (b.totalAmount || 0) - (b.usedAmount || 0);
+          return remainingB - remainingA;
+        });
+
+        if (contractsArray.length === 0) {
+          html += `
+            <tr>
+              <td colspan="8" class="text-center text-muted">No contracts found</td>
+            </tr>
+          `;
+        } else {
+          contractsArray.forEach(contract => {
+            const totalAmount = contract.totalAmount || 0;
+            const usedAmount = contract.usedAmount || 0;
+            const remainingBalance = totalAmount - usedAmount;
+            const utilization = totalAmount > 0 ? ((usedAmount / totalAmount) * 100).toFixed(1) : 0;
+
+            // Status badge color
+            let statusColor = 'secondary';
+            if (contract.status === 'Active') statusColor = 'success';
+            else if (contract.status === 'Expired') statusColor = 'danger';
+            else if (contract.status === 'Closed') statusColor = 'warning';
+
+            // Remaining balance color
+            let balanceColor = '';
+            if (remainingBalance <= 0) balanceColor = 'text-danger';
+            else if (remainingBalance < totalAmount * 0.2) balanceColor = 'text-warning';
+            else balanceColor = 'text-success';
+
+            html += `
+              <tr>
+                <td><strong>${contract.contractNo || 'N/A'}</strong></td>
+                <td>${contract.supplier || 'N/A'}</td>
+                <td><span class="badge-custom badge-info">${contract.fuelType || 'N/A'}</span></td>
+                <td>₱${totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td>₱${usedAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="${balanceColor}"><strong>₱${remainingBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
+                <td>
+                  <div class="progress" style="height: 20px;">
+                    <div class="progress-bar ${utilization >= 80 ? 'bg-danger' : utilization >= 50 ? 'bg-warning' : 'bg-success'}"
+                         role="progressbar"
+                         style="width: ${utilization}%"
+                         aria-valuenow="${utilization}"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                      ${utilization}%
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge-custom badge-${statusColor}">${contract.status || 'N/A'}</span></td>
+              </tr>
+            `;
+          });
+        }
+
+        html += `
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        container.innerHTML = html;
+      } catch (error) {
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading analytics</h4></div>`;
+      }
+    }
+
+    // EMD All RIS List
+    let allEmdRisData = [];
+    async function loadEmdRisList() {
+      const container = document.getElementById('emd-ris-list-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('risRequests').orderBy('createdAt', 'desc').get();
+
+        allEmdRisData = [];
+        snapshot.forEach(doc => {
+          allEmdRisData.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderEmdRisList(allEmdRisData);
+      } catch (error) {
+        console.error('Error loading EMD RIS list:', error);
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading RIS</h4><p>${error.message}</p></div>`;
+      }
+    }
+
+    function renderEmdRisList(data) {
+      const container = document.getElementById('emd-ris-list-container');
+
+      if (data.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><h4>No RIS found</h4></div>';
+        return;
+      }
+
+      let html = `
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>RIS ID</th>
+              <th>Type</th>
+              <th>Vehicle/Equipment</th>
+              <th>Quantity</th>
+              <th>Purpose</th>
+              <th>Status</th>
+              <th>Requested Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach(ris => {
+        const reqDate = ris.createdAt ? ris.createdAt.toDate().toLocaleDateString() : 'N/A';
+        const vehicle = ris.requestType === 'vehicle' ? `${ris.vehicle || ris.plateNo}` :
+                       ris.requestType === 'dredge' ? `${ris.dredgeType} (${ris.dpwhNo})` :
+                       ris.equipmentName || 'N/A';
+
+        let statusBadge = '';
+        if (ris.status === 'pending_validation') statusBadge = 'badge-warning';
+        else if (ris.status === 'validated') statusBadge = 'badge-info';
+        else if (ris.status === 'issued') statusBadge = 'badge-success';
+        else if (ris.status === 'rejected') statusBadge = 'badge-danger';
+        else statusBadge = 'badge-secondary';
+
+        html += `
+          <tr>
+            <td><strong>${ris.risId || ris.id}</strong></td>
+            <td><span class="badge-custom badge-info">${ris.requestType || 'N/A'}</span></td>
+            <td>${vehicle}</td>
+            <td>${ris.requisitionQty || 0} L</td>
+            <td>${(ris.purpose || '').substring(0, 50)}${ris.purpose && ris.purpose.length > 50 ? '...' : ''}</td>
+            <td><span class="badge-custom ${statusBadge}">${ris.status || 'N/A'}</span></td>
+            <td>${reqDate}</td>
+            <td>
+              <button class="btn-action btn-view" onclick="viewRisDetails('${ris.id}')" title="View Details">
+                <i class="bi bi-eye"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function filterEmdRis() {
+      const searchTerm = document.getElementById('emd-ris-search').value.toLowerCase();
+      const filtered = allEmdRisData.filter(ris => {
+        return (ris.risId || '').toLowerCase().includes(searchTerm) ||
+               (ris.plateNo || '').toLowerCase().includes(searchTerm) ||
+               (ris.vehicle || '').toLowerCase().includes(searchTerm) ||
+               (ris.purpose || '').toLowerCase().includes(searchTerm) ||
+               (ris.status || '').toLowerCase().includes(searchTerm);
+      });
+      renderEmdRisList(filtered);
+    }
+
+    // EMD All DTT List
+    let allEmdDttData = [];
+    async function loadEmdDttList() {
+      const container = document.getElementById('emd-dtt-list-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('dtts').orderBy('createdAt', 'desc').get();
+
+        allEmdDttData = [];
+        snapshot.forEach(doc => {
+          allEmdDttData.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderEmdDttList(allEmdDttData);
+      } catch (error) {
+        console.error('Error loading EMD DTT list:', error);
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading DTT</h4><p>${error.message}</p></div>`;
+      }
+    }
+
+    function renderEmdDttList(data) {
+      const container = document.getElementById('emd-dtt-list-container');
+
+      if (data.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><h4>No DTT found</h4></div>';
+        return;
+      }
+
+      let html = `
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>DTT ID</th>
+              <th>Driver</th>
+              <th>Vehicle</th>
+              <th>Destination</th>
+              <th>Period From</th>
+              <th>Period To</th>
+              <th>Status</th>
+              <th>Created Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach(dtt => {
+        const createdDate = dtt.createdAt ? dtt.createdAt.toDate().toLocaleDateString() : 'N/A';
+        const vehicleDisplay = dtt.vehicleBrand && dtt.vehicleModel
+          ? `${dtt.vehicleBrand} ${dtt.vehicleModel} (${dtt.vehicleDpwhNo || dtt.plateNo})`
+          : dtt.plateNo || 'N/A';
+
+        let statusBadge = '';
+        if (dtt.status === 'pending_approval') statusBadge = 'badge-warning';
+        else if (dtt.status === 'Approved') statusBadge = 'badge-success';
+        else if (dtt.status === 'In-Progress') statusBadge = 'badge-info';
+        else if (dtt.status === 'Completed') statusBadge = 'badge-success';
+        else if (dtt.status === 'Rejected') statusBadge = 'badge-danger';
+        else statusBadge = 'badge-secondary';
+
+        html += `
+          <tr>
+            <td><strong>${dtt.dttId || dtt.id}</strong></td>
+            <td>${dtt.driverName || dtt.driverEmail || 'N/A'}</td>
+            <td>${vehicleDisplay}</td>
+            <td>${dtt.destination || 'N/A'}</td>
+            <td>${dtt.periodFrom || 'N/A'}</td>
+            <td>${dtt.periodTo || 'N/A'}</td>
+            <td><span class="badge-custom ${statusBadge}">${dtt.status || 'N/A'}</span></td>
+            <td>${createdDate}</td>
+            <td>
+              <button class="btn-action btn-view" onclick="viewDttDetails('${dtt.id}')" title="View Details">
+                <i class="bi bi-eye"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function filterEmdDtt() {
+      const searchTerm = document.getElementById('emd-dtt-search').value.toLowerCase();
+      const filtered = allEmdDttData.filter(dtt => {
+        return (dtt.dttId || '').toLowerCase().includes(searchTerm) ||
+               (dtt.driverName || '').toLowerCase().includes(searchTerm) ||
+               (dtt.plateNo || '').toLowerCase().includes(searchTerm) ||
+               (dtt.destination || '').toLowerCase().includes(searchTerm) ||
+               (dtt.status || '').toLowerCase().includes(searchTerm);
+      });
+      renderEmdDttList(filtered);
+    }
+
+    // SPMS All RIS List (same as EMD)
+    let allSpmsRisData = [];
+    async function loadSpmsRisList() {
+      const container = document.getElementById('spms-ris-list-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('risRequests').orderBy('createdAt', 'desc').get();
+
+        allSpmsRisData = [];
+        snapshot.forEach(doc => {
+          allSpmsRisData.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderSpmsRisList(allSpmsRisData);
+      } catch (error) {
+        console.error('Error loading SPMS RIS list:', error);
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading RIS</h4><p>${error.message}</p></div>`;
+      }
+    }
+
+    function renderSpmsRisList(data) {
+      const container = document.getElementById('spms-ris-list-container');
+
+      if (data.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><h4>No RIS found</h4></div>';
+        return;
+      }
+
+      let html = `
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>RIS ID</th>
+              <th>Real RIS No</th>
+              <th>Type</th>
+              <th>Vehicle/Equipment</th>
+              <th>Quantity</th>
+              <th>Contract</th>
+              <th>Status</th>
+              <th>Created Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach(ris => {
+        const reqDate = ris.createdAt ? ris.createdAt.toDate().toLocaleDateString() : 'N/A';
+        const vehicle = ris.requestType === 'vehicle' ? `${ris.vehicle || ris.plateNo}` :
+                       ris.requestType === 'dredge' ? `${ris.dredgeType} (${ris.dpwhNo})` :
+                       ris.equipmentName || 'N/A';
+
+        let statusBadge = '';
+        if (ris.status === 'pending_validation') statusBadge = 'badge-warning';
+        else if (ris.status === 'validated') statusBadge = 'badge-info';
+        else if (ris.status === 'issued') statusBadge = 'badge-success';
+        else if (ris.status === 'rejected') statusBadge = 'badge-danger';
+        else statusBadge = 'badge-secondary';
+
+        html += `
+          <tr>
+            <td><strong>${ris.risId || ris.id}</strong></td>
+            <td>${ris.realRisNo || '-'}</td>
+            <td><span class="badge-custom badge-info">${ris.requestType || 'N/A'}</span></td>
+            <td>${vehicle}</td>
+            <td>${ris.requisitionQty || 0} L</td>
+            <td>${ris.contractId || '-'}</td>
+            <td><span class="badge-custom ${statusBadge}">${ris.status || 'N/A'}</span></td>
+            <td>${reqDate}</td>
+            <td>
+              <button class="btn-action btn-view" onclick="viewRisDetails('${ris.id}')" title="View Details">
+                <i class="bi bi-eye"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function filterSpmsRis() {
+      const searchTerm = document.getElementById('spms-ris-search').value.toLowerCase();
+      const filtered = allSpmsRisData.filter(ris => {
+        return (ris.risId || '').toLowerCase().includes(searchTerm) ||
+               (ris.realRisNo || '').toLowerCase().includes(searchTerm) ||
+               (ris.plateNo || '').toLowerCase().includes(searchTerm) ||
+               (ris.vehicle || '').toLowerCase().includes(searchTerm) ||
+               (ris.contractId || '').toLowerCase().includes(searchTerm) ||
+               (ris.status || '').toLowerCase().includes(searchTerm);
+      });
+      renderSpmsRisList(filtered);
+    }
+
+    // SPMS All DTT List (same as EMD)
+    let allSpmsDttData = [];
+    async function loadSpmsDttList() {
+      const container = document.getElementById('spms-dtt-list-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('dtts').orderBy('createdAt', 'desc').get();
+
+        allSpmsDttData = [];
+        snapshot.forEach(doc => {
+          allSpmsDttData.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderSpmsDttList(allSpmsDttData);
+      } catch (error) {
+        console.error('Error loading SPMS DTT list:', error);
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading DTT</h4><p>${error.message}</p></div>`;
+      }
+    }
+
+    function renderSpmsDttList(data) {
+      const container = document.getElementById('spms-dtt-list-container');
+
+      if (data.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><h4>No DTT found</h4></div>';
+        return;
+      }
+
+      let html = `
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>DTT ID</th>
+              <th>Driver</th>
+              <th>Vehicle</th>
+              <th>Destination</th>
+              <th>Period From</th>
+              <th>Period To</th>
+              <th>Status</th>
+              <th>Created Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach(dtt => {
+        const createdDate = dtt.createdAt ? dtt.createdAt.toDate().toLocaleDateString() : 'N/A';
+        const vehicleDisplay = dtt.vehicleBrand && dtt.vehicleModel
+          ? `${dtt.vehicleBrand} ${dtt.vehicleModel} (${dtt.vehicleDpwhNo || dtt.plateNo})`
+          : dtt.plateNo || 'N/A';
+
+        let statusBadge = '';
+        if (dtt.status === 'pending_approval') statusBadge = 'badge-warning';
+        else if (dtt.status === 'Approved') statusBadge = 'badge-success';
+        else if (dtt.status === 'In-Progress') statusBadge = 'badge-info';
+        else if (dtt.status === 'Completed') statusBadge = 'badge-success';
+        else if (dtt.status === 'Rejected') statusBadge = 'badge-danger';
+        else statusBadge = 'badge-secondary';
+
+        html += `
+          <tr>
+            <td><strong>${dtt.dttId || dtt.id}</strong></td>
+            <td>${dtt.driverName || dtt.driverEmail || 'N/A'}</td>
+            <td>${vehicleDisplay}</td>
+            <td>${dtt.destination || 'N/A'}</td>
+            <td>${dtt.periodFrom || 'N/A'}</td>
+            <td>${dtt.periodTo || 'N/A'}</td>
+            <td><span class="badge-custom ${statusBadge}">${dtt.status || 'N/A'}</span></td>
+            <td>${createdDate}</td>
+            <td>
+              <button class="btn-action btn-view" onclick="viewDttDetails('${dtt.id}')" title="View Details">
+                <i class="bi bi-eye"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function filterSpmsDtt() {
+      const searchTerm = document.getElementById('spms-dtt-search').value.toLowerCase();
+      const filtered = allSpmsDttData.filter(dtt => {
+        return (dtt.dttId || '').toLowerCase().includes(searchTerm) ||
+               (dtt.driverName || '').toLowerCase().includes(searchTerm) ||
+               (dtt.plateNo || '').toLowerCase().includes(searchTerm) ||
+               (dtt.destination || '').toLowerCase().includes(searchTerm) ||
+               (dtt.status || '').toLowerCase().includes(searchTerm);
+      });
+      renderSpmsDttList(filtered);
+    }
+
+  </script>
+</body>
+</html>

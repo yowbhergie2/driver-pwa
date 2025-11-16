@@ -3,166 +3,852 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Setup - DPWH</title>
+  <title>Admin Control Panel - DPWH Fuel & Fleet Management</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="modal-styles.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      overflow-x: hidden;
+    }
+
+    /* Login Screen */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 20px;
+      padding: 3rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 450px;
+      width: 100%;
+    }
+
+    .login-card h3 {
+      color: #1a1a2e;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .login-card p {
+      color: #6c757d;
+      margin-bottom: 2rem;
+    }
+
+    /* Main Layout */
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: white;
+      border-right: 1px solid #e8ecef;
+      padding: 2rem 0 0 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-brand {
+      padding: 0 1.5rem 2rem 1.5rem;
+      border-bottom: 1px solid #e8ecef;
+    }
+
+    .sidebar-brand h4 {
+      color: #1a1a2e;
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .sidebar-brand p {
+      color: #6c757d;
+      font-size: 0.875rem;
+      margin: 0;
+    }
+
+    .sidebar-menu {
+      padding: 1.5rem 1rem;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 0.875rem 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 12px;
+      color: #6c757d;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .menu-item i {
+      font-size: 1.25rem;
+      margin-right: 1rem;
+      width: 24px;
+    }
+
+    .menu-item:hover {
+      background: #f5f7fa;
+      color: #4c6ef5;
+    }
+
+    .menu-item.active {
+      background: #4c6ef5;
+      color: white;
+    }
+
+    .menu-item.active:hover {
+      background: #4263eb;
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: 280px;
+      flex: 1;
+      padding: 2rem;
+      transition: margin-left 0.3s ease;
+    }
+
+    .main-content.sidebar-hidden {
+      margin-left: 0;
+    }
+
+    /* Sidebar Toggle Button */
+    .sidebar-toggle {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: 1px solid #e8ecef;
+      border-radius: 10px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 101;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle:hover {
+      background: #4c6ef5;
+      color: white;
+      border-color: #4c6ef5;
+    }
+
+    .sidebar.hidden ~ .sidebar-toggle {
+      display: flex;
+    }
+
+    /* Header */
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .content-header h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .content-header h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .sidebar-collapse-btn {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: 1px solid #e8ecef;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-collapse-btn:hover {
+      background: #f5f7fa;
+      border-color: #4c6ef5;
+      color: #4c6ef5;
+    }
+
+    /* Buttons */
+    .btn-primary-custom {
+      background: #4c6ef5;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary-custom:hover {
+      background: #4263eb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 110, 245, 0.4);
+    }
+
+    .btn-logout {
+      background: white;
+      color: #6c757d;
+      border: 1px solid #e8ecef;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-logout:hover {
+      border-color: #fa5252;
+      color: #fa5252;
+      background: #fff5f5;
+    }
+
+    /* Sub-tabs */
+    .sub-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #e8ecef;
+      padding-bottom: 0;
+    }
+
+    .sub-tab-btn {
+      background: transparent;
+      border: none;
+      padding: 1rem 1.5rem;
+      color: #6c757d;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sub-tab-btn:hover {
+      color: #4c6ef5;
+      background: rgba(76, 110, 245, 0.05);
+    }
+
+    .sub-tab-btn.active {
+      color: #4c6ef5;
+      border-bottom-color: #4c6ef5;
+    }
+
+    .sub-tab-content {
+      display: none;
+    }
+
+    .sub-tab-content.active {
+      display: block;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid #e8ecef;
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      color: #6c757d;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* Data Table */
+    .data-table-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e8ecef;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e8ecef;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .table-header h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0;
+    }
+
+    .search-box {
+      position: relative;
+      width: 300px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.625rem 1rem 0.625rem 2.5rem;
+      border: 1px solid #e8ecef;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: #4c6ef5;
+      box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.1);
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+
+    .table-custom {
+      width: 100%;
+      margin: 0;
+    }
+
+    .table-custom thead {
+      background: #f8f9fa;
+      border-bottom: 2px solid #e8ecef;
+    }
+
+    .table-custom th {
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: none;
+    }
+
+    .table-custom td {
+      padding: 1.25rem 1.5rem;
+      color: #1a1a2e;
+      border-bottom: 1px solid #e8ecef;
+      vertical-align: middle;
+    }
+
+    .table-custom tbody tr {
+      transition: all 0.2s ease;
+    }
+
+    .table-custom tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .table-custom tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-action {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid #e8ecef;
+      background: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action.edit:hover {
+      border-color: #4c6ef5;
+      color: #4c6ef5;
+      background: #f0f3ff;
+    }
+
+    .btn-action.delete:hover {
+      border-color: #fa5252;
+      color: #fa5252;
+      background: #fff5f5;
+    }
+
+    /* Badge */
+    .badge-custom {
+      padding: 0.375rem 0.875rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-primary {
+      background: #e7f5ff;
+      color: #1971c2;
+    }
+
+    .badge-success {
+      background: #d3f9d8;
+      color: #2f9e44;
+    }
+
+    .badge-warning {
+      background: #fff3bf;
+      color: #e67700;
+    }
+
+    .badge-danger {
+      background: #ffe3e3;
+      color: #c92a2a;
+    }
+
+    .badge-info {
+      background: #d0ebff;
+      color: #1864ab;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      color: #dee2e6;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h4 {
+      color: #6c757d;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      color: #adb5bd;
+    }
+
+    /* Loading */
+    .loading-state {
+      text-align: center;
+      padding: 3rem;
+    }
+
+    .spinner-border {
+      color: #4c6ef5;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .search-box {
+        width: 100%;
+        margin-top: 1rem;
+      }
+
+      .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
 </head>
-<body class="bg-light">
+<body>
 
   <!-- Login Screen -->
-  <div id="login-screen" class="container mt-5">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header bg-danger text-white">
-            <h4 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Admin Authentication Required</h4>
-          </div>
-          <div class="card-body">
-            <div class="alert alert-warning">
-              <i class="bi bi-exclamation-triangle me-2"></i>
-              <strong>Admin Access Only</strong><br>
-              Please login with admin credentials to access vehicle import and setup.
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Admin Email</label>
-              <input type="email" id="admin-email" class="form-control" placeholder="admin@dpwh.gov.ph">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Password</label>
-              <input type="password" id="admin-password" class="form-control">
-            </div>
-            <button onclick="adminLogin()" class="btn btn-danger w-100">
-              <i class="bi bi-box-arrow-in-right me-2"></i>Login as Admin
-            </button>
-            <div id="login-result" class="mt-3"></div>
-          </div>
-        </div>
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="text-center mb-4">
+        <i class="bi bi-shield-lock-fill" style="font-size: 3rem; color: #4c6ef5;"></i>
       </div>
+      <h3 class="text-center">Admin Login</h3>
+      <p class="text-center">DPWH Vehicle Management System</p>
+      <div class="mb-3">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="admin-email" class="form-control" placeholder="admin@dpwh.gov.ph">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" id="admin-password" class="form-control" placeholder="Enter your password">
+      </div>
+      <button onclick="adminLogin()" class="btn-primary-custom w-100">
+        <i class="bi bi-box-arrow-in-right"></i>
+        Sign In
+      </button>
+      <div id="login-result" class="mt-3"></div>
     </div>
   </div>
 
-  <!-- Main Admin Panel -->
-  <div id="admin-panel" class="container mt-5 d-none">
-    <div class="row justify-content-center">
-      <div class="col-md-10">
+  <!-- Main Admin Layout -->
+  <div id="admin-panel" class="admin-layout d-none">
 
-        <!-- Header -->
-        <div class="card mb-4">
-          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Admin Setup - DPWH Vehicle Management</h4>
-            <button onclick="adminLogout()" class="btn btn-sm btn-light">
-              <i class="bi bi-box-arrow-right me-2"></i>Logout
-            </button>
-          </div>
-          <div class="card-body">
-            <p class="mb-0">Setup EMD Staff account and import vehicles database.</p>
-          </div>
-        </div>
-
-        <!-- Step 1: Create EMD Account -->
-        <div class="card mb-4">
-          <div class="card-header bg-success text-white">
-            <h5 class="mb-0">Step 1: Create EMD Staff Account</h5>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <label class="form-label">Email</label>
-              <input type="email" id="emd-email" class="form-control" placeholder="emd@dpwh.gov.ph">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Password</label>
-              <input type="password" id="emd-password" class="form-control" placeholder="Minimum 6 characters">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Full Name</label>
-              <input type="text" id="emd-name" class="form-control" placeholder="Juan Dela Cruz">
-            </div>
-            <button onclick="createEmdAccount()" class="btn btn-success">
-              <i class="bi bi-person-plus me-2"></i>Create EMD Account
-            </button>
-            <div id="emd-result" class="mt-3"></div>
-          </div>
-        </div>
-
-        <!-- Step 2: Import Vehicles -->
-        <div class="card mb-4">
-          <div class="card-header bg-info text-white">
-            <h5 class="mb-0">Step 2: Import Service Vehicles</h5>
-          </div>
-          <div class="card-body">
-            <div class="alert alert-info">
-              <i class="bi bi-info-circle me-2"></i>
-              <strong>Format:</strong> Paste your vehicle list in CSV format (one vehicle per line).
-              <br><small>Example: TOYOTA,VIOS,H1 5750,DPWH-001</small>
-              <br><small class="text-muted">Note: Special characters in plate numbers (/, spaces) will be handled automatically.</small>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Vehicle List (CSV format: Brand,Model,PlateNo,DpwhNo)</label>
-              <textarea id="vehicle-csv" class="form-control" rows="10" placeholder="TOYOTA,VIOS,H1 5750,DPWH-001
-MITSUBISHI,STRADA,H1 5751,DPWH-002
-ISUZU,D-MAX,H1 5752,DPWH-003"></textarea>
-            </div>
-
-            <button onclick="importVehicles()" class="btn btn-info">
-              <i class="bi bi-upload me-2"></i>Import Vehicles
-            </button>
-            <div id="vehicle-result" class="mt-3"></div>
-          </div>
-        </div>
-
-        <!-- Step 3: Manual Add Vehicle -->
-        <div class="card mb-4">
-          <div class="card-header bg-warning">
-            <h5 class="mb-0">Step 3: Add Single Vehicle (Optional)</h5>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-3 mb-3">
-                <label class="form-label">Brand</label>
-                <input type="text" id="vehicle-brand" class="form-control text-uppercase" placeholder="TOYOTA">
-              </div>
-              <div class="col-md-3 mb-3">
-                <label class="form-label">Model</label>
-                <input type="text" id="vehicle-model" class="form-control text-uppercase" placeholder="VIOS">
-              </div>
-              <div class="col-md-3 mb-3">
-                <label class="form-label">Plate Number</label>
-                <input type="text" id="vehicle-plate" class="form-control text-uppercase" placeholder="H1 5750">
-              </div>
-              <div class="col-md-3 mb-3">
-                <label class="form-label">DPWH No.</label>
-                <input type="text" id="vehicle-dpwh" class="form-control text-uppercase" placeholder="DPWH-001">
-              </div>
-            </div>
-            <button onclick="addSingleVehicle()" class="btn btn-warning">
-              <i class="bi bi-plus-circle me-2"></i>Add Vehicle
-            </button>
-            <div id="single-vehicle-result" class="mt-3"></div>
-          </div>
-        </div>
-
-        <!-- Current Vehicles -->
-        <div class="card mb-4">
-          <div class="card-header bg-dark text-white">
-            <h5 class="mb-0">Current Vehicles in Database</h5>
-          </div>
-          <div class="card-body">
-            <button onclick="loadVehicles()" class="btn btn-secondary mb-3">
-              <i class="bi bi-arrow-clockwise me-2"></i>Refresh List
-            </button>
-            <div id="vehicles-list"></div>
-          </div>
-        </div>
-
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <h4><i class="bi bi-gear-wide-connected me-2"></i>Admin Panel</h4>
+        <p>DPWH Vehicle System</p>
       </div>
+
+      <div class="sidebar-menu">
+        <div class="menu-item active" onclick="showSection('dashboard')">
+          <i class="bi bi-grid-fill"></i>
+          <span>Dashboard</span>
+        </div>
+        <div class="menu-item" onclick="showSection('users')">
+          <i class="bi bi-people-fill"></i>
+          <span>Users</span>
+        </div>
+        <div class="menu-item" onclick="showSection('vehicles')">
+          <i class="bi bi-truck"></i>
+          <span>Vehicles</span>
+        </div>
+        <div class="menu-item" onclick="showSection('document-setup')">
+          <i class="bi bi-file-earmark-text"></i>
+          <span>Document Setup</span>
+        </div>
+        <div class="menu-item" onclick="showSection('history')">
+          <i class="bi bi-clock-history"></i>
+          <span>History</span>
+        </div>
+      </div>
+
+      <div style="padding: 1.5rem; margin-top: auto; border-top: 1px solid #e8ecef;">
+        <button onclick="adminLogout()" class="btn-logout w-100">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>Log Out</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+      <!-- Dashboard Section -->
+      <div id="section-dashboard" class="content-section">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Dashboard
+          </h2>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #e7f5ff; color: #1971c2;">
+              <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-value" id="stat-users">0</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #d3f9d8; color: #2f9e44;">
+              <i class="bi bi-truck"></i>
+            </div>
+            <div class="stat-value" id="stat-vehicles">0</div>
+            <div class="stat-label">Vehicles</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #fff3bf; color: #e67700;">
+              <i class="bi bi-person-badge"></i>
+            </div>
+            <div class="stat-value" id="stat-officers">0</div>
+            <div class="stat-label">Officers/Signatories</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #d0ebff; color: #1864ab;">
+              <i class="bi bi-building"></i>
+            </div>
+            <div class="stat-value" id="stat-divisions">0</div>
+            <div class="stat-label">Divisions/Offices</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Section -->
+      <div id="section-users" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            User Management
+          </h2>
+          <button onclick="openAddUserModal()" class="btn-primary-custom">
+            <i class="bi bi-plus-lg"></i>Add User
+          </button>
+        </div>
+
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3>All Users</h3>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" placeholder="Search users...">
+            </div>
+          </div>
+          <div id="users-table-container"></div>
+        </div>
+      </div>
+
+      <!-- Vehicles Section -->
+      <div id="section-vehicles" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Vehicle Management
+          </h2>
+          <button onclick="openAddVehicleModal()" class="btn-primary-custom">
+            <i class="bi bi-plus-lg"></i>Add Vehicle
+          </button>
+        </div>
+
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3>All Vehicles</h3>
+            <div class="search-box">
+              <i class="bi bi-search"></i>
+              <input type="text" placeholder="Search vehicles...">
+            </div>
+          </div>
+          <div id="vehicles-table-container"></div>
+        </div>
+      </div>
+
+      <!-- Document Setup Section (Consolidated) -->
+      <div id="section-document-setup" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Document Setup
+          </h2>
+        </div>
+
+        <!-- Sub-tabs for Document Setup -->
+        <div class="sub-tabs">
+          <button class="sub-tab-btn active" onclick="switchDocSetupTab('officers')">
+            <i class="bi bi-person-badge"></i> Officers/Signatories
+          </button>
+          <button class="sub-tab-btn" onclick="switchDocSetupTab('divisions')">
+            <i class="bi bi-building"></i> Divisions/Offices
+          </button>
+          <button class="sub-tab-btn" onclick="switchDocSetupTab('authorities')">
+            <i class="bi bi-pen-fill"></i> Approving Authorities
+          </button>
+        </div>
+
+        <!-- Officers/Signatories Tab -->
+        <div id="docsetup-tab-officers" class="sub-tab-content active">
+          <div class="content-header">
+            <h3>Officers/Signatories Master</h3>
+            <button onclick="openAddOfficerModal()" class="btn-primary-custom">
+              <i class="bi bi-plus-lg"></i>Add Officer
+            </button>
+          </div>
+
+          <div class="data-table-card">
+            <div class="table-header">
+              <h3>All Officers/Signatories</h3>
+              <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="officers-search" placeholder="Search officers..." onkeyup="filterOfficers()">
+              </div>
+            </div>
+            <div id="officers-table-container"></div>
+          </div>
+        </div>
+
+        <!-- Divisions/Offices Tab -->
+        <div id="docsetup-tab-divisions" class="sub-tab-content">
+          <div class="content-header">
+            <h3>Divisions/Offices Master</h3>
+            <button onclick="openAddDivisionModal()" class="btn-primary-custom">
+              <i class="bi bi-plus-lg"></i>Add Division
+            </button>
+          </div>
+
+          <div class="data-table-card">
+            <div class="table-header">
+              <h3>All Divisions/Offices</h3>
+              <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="divisions-search" placeholder="Search divisions..." onkeyup="filterDivisions()">
+              </div>
+            </div>
+            <div id="divisions-table-container"></div>
+          </div>
+        </div>
+
+        <!-- Approving Authorities Tab -->
+        <div id="docsetup-tab-authorities" class="sub-tab-content">
+          <div class="content-header">
+            <h3>Approving Authorities Master</h3>
+            <button onclick="openAddAuthorityModal()" class="btn-primary-custom">
+              <i class="bi bi-plus-lg"></i>Add Authority
+            </button>
+          </div>
+
+          <div class="data-table-card">
+            <div class="table-header">
+              <h3>All Approving Authorities</h3>
+              <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="authorities-search" placeholder="Search authorities..." onkeyup="filterAuthorities()">
+              </div>
+            </div>
+            <div id="authorities-table-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Section -->
+      <div id="section-history" class="content-section d-none">
+        <div class="content-header">
+          <h2>
+            <button onclick="toggleSidebar()" class="sidebar-collapse-btn">
+              <i class="bi bi-list"></i>
+            </button>
+            Transaction History
+          </h2>
+          <button onclick="loadHistory()" class="btn-logout">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+
+        <div class="data-table-card">
+          <div class="table-header">
+            <h3>Recent Activities</h3>
+          </div>
+          <div id="history-table-container"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- Firebase -->
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="modal-system.js"></script>
 
   <script>
     // Firebase Config
@@ -179,233 +865,1975 @@ ISUZU,D-MAX,H1 5752,DPWH-003"></textarea>
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Create EMD Account
-    async function createEmdAccount() {
-      const email = document.getElementById('emd-email').value;
-      const password = document.getElementById('emd-password').value;
-      const name = document.getElementById('emd-name').value;
-      const resultDiv = document.getElementById('emd-result');
+    // Section Navigation
+    function showSection(section) {
+      // Hide all sections
+      document.querySelectorAll('.content-section').forEach(el => el.classList.add('d-none'));
 
-      if (!email || !password || !name) {
-        resultDiv.innerHTML = '<div class="alert alert-warning">Please fill in all fields</div>';
-        return;
+      // Remove active from all menu items
+      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+
+      // Show selected section
+      document.getElementById('section-' + section).classList.remove('d-none');
+
+      // Add active to selected menu item
+      event.currentTarget.classList.add('active');
+
+      // Load data for section
+      if (section === 'users') loadUsers();
+      else if (section === 'vehicles') loadVehicles();
+      else if (section === 'document-setup') {
+        // Load all three sub-sections for document setup
+        loadOfficers();
+        loadDivisions();
+        loadAuthorities();
       }
-
-      if (password.length < 6) {
-        resultDiv.innerHTML = '<div class="alert alert-warning">Password must be at least 6 characters</div>';
-        return;
-      }
-
-      try {
-        // Create user
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-
-        // Create user document with EMD role
-        await db.collection('users').doc(user.uid).set({
-          email: email,
-          displayName: name,
-          role: 'emd', // EMD Staff role
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          assignedVehicles: []
-        });
-
-        resultDiv.innerHTML = `
-          <div class="alert alert-success">
-            <strong>Success!</strong><br>
-            EMD account created: ${email}<br>
-            UID: ${user.uid}<br>
-            Role: EMD Staff
-          </div>
-        `;
-
-        // Sign out immediately
-        await auth.signOut();
-      } catch (error) {
-        resultDiv.innerHTML = `
-          <div class="alert alert-danger">
-            <strong>Error:</strong> ${error.message}
-          </div>
-        `;
-      }
+      else if (section === 'history') loadHistory();
     }
 
-    // Import Vehicles from CSV
-    async function importVehicles() {
-      const csv = document.getElementById('vehicle-csv').value;
-      const resultDiv = document.getElementById('vehicle-result');
+    // Switch between Document Setup sub-tabs
+    function switchDocSetupTab(tab) {
+      // Hide all sub-tab contents
+      document.querySelectorAll('#section-document-setup .sub-tab-content').forEach(el => el.classList.remove('active'));
 
-      if (!csv.trim()) {
-        resultDiv.innerHTML = '<div class="alert alert-warning">Please enter vehicle data</div>';
-        return;
-      }
+      // Remove active from all sub-tab buttons
+      document.querySelectorAll('#section-document-setup .sub-tab-btn').forEach(el => el.classList.remove('active'));
 
-      resultDiv.innerHTML = '<div class="alert alert-info">Importing vehicles...</div>';
+      // Show selected sub-tab content
+      document.getElementById('docsetup-tab-' + tab).classList.add('active');
 
-      const lines = csv.trim().split('\n');
-      let successCount = 0;
-      let errorCount = 0;
-      let errors = [];
-
-      for (const line of lines) {
-        const parts = line.split(',').map(p => p.trim());
-        if (parts.length < 4) continue;
-
-        const [brand, model, plateNo, dpwhNo] = parts;
-
-        try {
-          // Sanitize plate number for use as document ID
-          // Replace spaces, slashes, and special chars with underscore
-          const docId = plateNo.replace(/[\s\/\\.#\[\]$]/g, '_');
-
-          await db.collection('vehicles').doc(docId).set({
-            brand: brand.toUpperCase(),
-            model: model.toUpperCase(),
-            plateNo: plateNo.toUpperCase(),
-            dpwhNo: dpwhNo.toUpperCase(),
-            fuelCapacity: 50,
-            currentFuelBalance: 0,
-            status: 'Available',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          successCount++;
-        } catch (error) {
-          errorCount++;
-          errors.push(`${plateNo}: ${error.message}`);
-        }
-      }
-
-      let resultHtml = `
-        <div class="alert alert-success">
-          <strong>Import Complete!</strong><br>
-          Successfully imported: ${successCount} vehicles<br>
-          ${errorCount > 0 ? `Errors: ${errorCount}<br>` : ''}
-        </div>
-      `;
-
-      if (errors.length > 0) {
-        resultHtml += '<div class="alert alert-warning"><strong>Errors:</strong><ul>';
-        errors.forEach(err => {
-          resultHtml += `<li>${err}</li>`;
-        });
-        resultHtml += '</ul></div>';
-      }
-
-      resultDiv.innerHTML = resultHtml;
-      loadVehicles();
+      // Add active to selected sub-tab button
+      event.currentTarget.classList.add('active');
     }
 
-    // Add Single Vehicle
-    async function addSingleVehicle() {
-      const brand = document.getElementById('vehicle-brand').value;
-      const model = document.getElementById('vehicle-model').value;
-      const plateNo = document.getElementById('vehicle-plate').value;
-      const dpwhNo = document.getElementById('vehicle-dpwh').value;
-      const resultDiv = document.getElementById('single-vehicle-result');
+    // ==================== USERS ====================
 
-      if (!brand || !model || !plateNo || !dpwhNo) {
-        resultDiv.innerHTML = '<div class="alert alert-warning">Please fill in all required fields</div>';
-        return;
-      }
+    async function loadUsers() {
+      const container = document.getElementById('users-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
 
       try {
-        // Sanitize plate number for use as document ID
-        const docId = plateNo.replace(/[\s\/\\.#\[\]$]/g, '_');
-
-        await db.collection('vehicles').doc(docId).set({
-          brand: brand.toUpperCase(),
-          model: model.toUpperCase(),
-          plateNo: plateNo.toUpperCase(),
-          dpwhNo: dpwhNo.toUpperCase(),
-          fuelCapacity: 50,
-          currentFuelBalance: 0,
-          status: 'Available',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        resultDiv.innerHTML = `
-          <div class="alert alert-success">
-            Vehicle added: ${brand} ${model} (${plateNo}) - ${dpwhNo}
-          </div>
-        `;
-
-        // Clear form
-        document.getElementById('vehicle-brand').value = '';
-        document.getElementById('vehicle-model').value = '';
-        document.getElementById('vehicle-plate').value = '';
-        document.getElementById('vehicle-dpwh').value = '';
-
-        loadVehicles();
-      } catch (error) {
-        resultDiv.innerHTML = `
-          <div class="alert alert-danger">
-            <strong>Error:</strong> ${error.message}
-          </div>
-        `;
-      }
-    }
-
-    // Load and Display Vehicles
-    async function loadVehicles() {
-      const listDiv = document.getElementById('vehicles-list');
-      listDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
-
-      try {
-        const snapshot = await db.collection('vehicles').get();
+        const snapshot = await db.collection('users').orderBy('createdAt', 'desc').get();
 
         if (snapshot.empty) {
-          listDiv.innerHTML = '<div class="alert alert-info">No vehicles found</div>';
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-people"></i>
+              <h4>No users yet</h4>
+              <p>Click "Add User" to create your first user account</p>
+            </div>
+          `;
           return;
         }
 
-        let html = `
-          <table class="table table-striped table-sm">
-            <thead>
-              <tr>
-                <th>Brand</th>
-                <th>Model</th>
-                <th>Plate No</th>
-                <th>DPWH No</th>
-                <th>Capacity (L)</th>
-                <th>Balance (L)</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
+        const roleColors = {
+          admin: 'danger',
+          driver: 'primary',
+          emd: 'success',
+          spms: 'warning'
+        };
+
+        let html = '<table class="table-custom"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Created</th><th>Actions</th></tr></thead><tbody>';
 
         snapshot.forEach(doc => {
-          const vehicle = doc.data();
+          const user = doc.data();
+          const createdDate = user.createdAt ? user.createdAt.toDate().toLocaleDateString() : 'N/A';
           html += `
             <tr>
-              <td>${vehicle.brand}</td>
-              <td>${vehicle.model}</td>
-              <td><strong>${vehicle.plateNo}</strong></td>
-              <td><strong>${vehicle.dpwhNo || 'N/A'}</strong></td>
-              <td>${vehicle.fuelCapacity}</td>
-              <td>${vehicle.currentFuelBalance || 0}</td>
-              <td><span class="badge bg-success">${vehicle.status}</span></td>
+              <td><strong>${user.displayName}</strong></td>
+              <td>${user.email}</td>
+              <td><span class="badge-custom badge-${roleColors[user.role]}">${user.role}</span></td>
+              <td>${createdDate}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action edit" onclick="editUser('${doc.id}')">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn-action delete" onclick="deleteUser('${doc.id}', '${user.displayName}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
             </tr>
           `;
         });
 
         html += '</tbody></table>';
-        html += `<p class="text-muted">Total vehicles: ${snapshot.size}</p>`;
-
-        listDiv.innerHTML = html;
+        container.innerHTML = html;
       } catch (error) {
-        listDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading users</h4><p>${error.message}</p></div>`;
       }
     }
 
-    // Admin Login
+    function toggleModalPassword() {
+      const passwordInput = document.getElementById('modal-user-password');
+      const icon = document.getElementById('modal-password-toggle-icon');
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+      }
+    }
+
+    function openAddUserModal() {
+      modalManager.show({
+        title: 'Add New User',
+        size: 'medium',
+        content: `
+          <div class="mb-3">
+            <label class="form-label">Role</label>
+            <select id="modal-user-role" class="form-select">
+              <option value="">-- Select Role --</option>
+              <option value="admin">Admin - Full Access</option>
+              <option value="driver">Driver - DTT & Fuel Requests</option>
+              <option value="emd">EMD Staff - Vehicle & RIS Validation</option>
+              <option value="spms">SPMS Staff - Approvals & Issuance</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" id="modal-user-email" class="form-control" placeholder="user@dpwh.gov.ph">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <div class="input-group">
+              <input type="password" id="modal-user-password" class="form-control" placeholder="Minimum 6 characters">
+              <button class="btn btn-outline-secondary" type="button" onclick="toggleModalPassword()" style="border: 2px solid #e8ecef; border-left: none;">
+                <i class="bi bi-eye" id="modal-password-toggle-icon"></i>
+              </button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="modal-user-name" class="form-control" placeholder="Juan Dela Cruz">
+          </div>
+        `,
+        buttons: [
+          {
+            label: 'Cancel',
+            type: 'secondary'
+          },
+          {
+            label: 'Create User',
+            type: 'primary',
+            onClick: async () => {
+              const role = document.getElementById('modal-user-role').value;
+              const email = document.getElementById('modal-user-email').value;
+              const password = document.getElementById('modal-user-password').value;
+              const name = document.getElementById('modal-user-name').value;
+
+              if (!role || !email || !password || !name) {
+                await modalManager.alert({ title: 'Error', message: 'Please fill all fields', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Creating user...');
+
+              try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                await user.updateProfile({ displayName: name });
+
+                const userData = {
+                  email: email,
+                  displayName: name,
+                  role: role,
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (role === 'emd') userData.permissions = ['manage_vehicles', 'validate_ris'];
+                else if (role === 'spms') userData.permissions = ['approve_dtt', 'approve_ris', 'issue_fuel'];
+
+                await db.collection('users').doc(user.uid).set(userData);
+                await logTransaction('user_created', { userId: user.uid, userName: name, userRole: role });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Success', message: 'User created successfully!', type: 'success' });
+
+                loadUsers();
+                loadStats();
+                await auth.signOut();
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    async function editUser(userId) {
+      try {
+        const doc = await db.collection('users').doc(userId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'User not found', type: 'error' });
+          return;
+        }
+
+        const user = doc.data();
+
+        modalManager.show({
+          title: 'Edit User',
+          size: 'medium',
+          content: `
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="edit-user-name" class="form-control" value="${user.displayName || ''}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Role</label>
+              <select id="edit-user-role" class="form-select">
+                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin - Full Access</option>
+                <option value="driver" ${user.role === 'driver' ? 'selected' : ''}>Driver - DTT & Fuel Requests</option>
+                <option value="emd" ${user.role === 'emd' ? 'selected' : ''}>EMD Staff - Vehicle & RIS Validation</option>
+                <option value="spms" ${user.role === 'spms' ? 'selected' : ''}>SPMS Staff - Approvals & Issuance</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="text" class="form-control" value="${user.email || ''}" disabled>
+              <small class="text-muted">Email cannot be changed</small>
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Update User',
+              type: 'primary',
+              onClick: async () => {
+                const name = document.getElementById('edit-user-name').value.trim();
+                const role = document.getElementById('edit-user-role').value;
+
+                if (!name || !role) {
+                  await modalManager.alert({ title: 'Error', message: 'Please fill all fields', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Updating user...');
+
+                try {
+                  await db.collection('users').doc(userId).update({
+                    displayName: name,
+                    role: role,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+
+                  await logTransaction('user_updated', {
+                    userId: userId,
+                    userName: name,
+                    userRole: role
+                  });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Success', message: 'User updated successfully!', type: 'success' });
+
+                  loadUsers();
+                  loadStats();
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function deleteUser(userId, userName) {
+      const confirmed = await modalManager.confirm({
+        title: 'Delete User',
+        message: `
+          <p>Delete user <strong>${userName}</strong>?</p>
+          <div class="alert alert-warning mt-3" style="text-align: left;">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Important:</strong> This only removes the user from the database.
+            To fully delete the account and allow the email to be reused, you must also delete from
+            <strong>Firebase Console → Authentication</strong>.
+          </div>
+          <p class="text-danger mt-2"><small>This cannot be undone.</small></p>
+        `,
+        confirmText: 'Delete from Database',
+        confirmType: 'danger'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading('Deleting user...');
+
+      try {
+        await db.collection('users').doc(userId).delete();
+        await logTransaction('user_deleted', { userId, userName });
+
+        modalManager.close(loadingId);
+        await modalManager.alert({
+          title: 'User Removed from Database',
+          message: `
+            <p>User <strong>${userName}</strong> has been removed from the database.</p>
+            <div class="alert alert-info mt-3" style="text-align: left;">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>Next Step:</strong> To allow this email to be reused or fully delete the account:<br>
+              1. Go to <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a><br>
+              2. Navigate to <strong>Authentication → Users</strong><br>
+              3. Find and delete this user's authentication account
+            </div>
+          `,
+          type: 'success'
+        });
+
+        loadUsers();
+        loadStats();
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== VEHICLES ====================
+
+    async function loadVehicles() {
+      const container = document.getElementById('vehicles-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('vehicles').get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-truck"></i>
+              <h4>No vehicles yet</h4>
+              <p>Click "Add Vehicle" to register your first vehicle</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Brand</th><th>Model</th><th>Plate No</th><th>DPWH No</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const v = doc.data();
+          html += `
+            <tr>
+              <td><strong>${v.brand}</strong></td>
+              <td>${v.model}</td>
+              <td><strong>${v.plateNo}</strong></td>
+              <td>${v.dpwhNo}</td>
+              <td><span class="badge-custom badge-success">${v.status}</span></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action edit" onclick="editVehicle('${doc.id}')">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn-action delete" onclick="deleteVehicle('${doc.id}', '${v.plateNo}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading vehicles</h4></div>`;
+      }
+    }
+
+    function openAddVehicleModal() {
+      modalManager.show({
+        title: 'Add New Vehicle',
+        size: 'medium',
+        content: `
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Brand</label>
+              <input type="text" id="modal-vehicle-brand" class="form-control text-uppercase" placeholder="TOYOTA">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Model</label>
+              <input type="text" id="modal-vehicle-model" class="form-control text-uppercase" placeholder="VIOS">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Plate Number</label>
+              <input type="text" id="modal-vehicle-plate" class="form-control text-uppercase" placeholder="H1 5750">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">DPWH No</label>
+              <input type="text" id="modal-vehicle-dpwh" class="form-control text-uppercase" placeholder="DPWH-001">
+            </div>
+          </div>
+        `,
+        buttons: [
+          { label: 'Cancel', type: 'secondary' },
+          {
+            label: 'Add Vehicle',
+            type: 'primary',
+            onClick: async () => {
+              const brand = document.getElementById('modal-vehicle-brand').value;
+              const model = document.getElementById('modal-vehicle-model').value;
+              const plateNo = document.getElementById('modal-vehicle-plate').value;
+              const dpwhNo = document.getElementById('modal-vehicle-dpwh').value;
+
+              if (!brand || !model || !plateNo || !dpwhNo) {
+                await modalManager.alert({ title: 'Error', message: 'Please fill all fields', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Adding vehicle...');
+
+              try {
+                const docId = plateNo.replace(/[\s\/\\.#\[\]$]/g, '_');
+                await db.collection('vehicles').doc(docId).set({
+                  brand: brand.toUpperCase(),
+                  model: model.toUpperCase(),
+                  plateNo: plateNo.toUpperCase(),
+                  dpwhNo: dpwhNo.toUpperCase(),
+                  fuelCapacity: 50,
+                  currentFuelBalance: 0,
+                  status: 'Available',
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await logTransaction('vehicle_added', { vehiclePlate: plateNo.toUpperCase() });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Success', message: 'Vehicle added!', type: 'success' });
+
+                loadVehicles();
+                loadStats();
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    async function editVehicle(vehicleId) {
+      try {
+        const doc = await db.collection('vehicles').doc(vehicleId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Vehicle not found', type: 'error' });
+          return;
+        }
+
+        const v = doc.data();
+
+        modalManager.show({
+          title: 'Edit Vehicle',
+          size: 'large',
+          content: `
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Brand</label>
+                <input type="text" id="edit-brand" class="form-control text-uppercase" value="${v.brand || ''}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Model</label>
+                <input type="text" id="edit-model" class="form-control text-uppercase" value="${v.model || ''}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Plate No</label>
+                <input type="text" id="edit-plate" class="form-control text-uppercase" value="${v.plateNo || ''}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">DPWH No</label>
+                <input type="text" id="edit-dpwh" class="form-control text-uppercase" value="${v.dpwhNo || ''}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Fuel Capacity (L)</label>
+                <input type="number" step="0.01" id="edit-capacity" class="form-control" value="${v.fuelCapacity || 0}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Current Fuel Balance (L)</label>
+                <input type="number" step="0.01" id="edit-fuel" class="form-control" value="${v.currentFuelBalance || 0}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Status</label>
+                <select id="edit-status" class="form-select">
+                  <option value="Available" ${v.status === 'Available' ? 'selected' : ''}>Available</option>
+                  <option value="In Use" ${v.status === 'In Use' ? 'selected' : ''}>In Use</option>
+                  <option value="Under Maintenance" ${v.status === 'Under Maintenance' ? 'selected' : ''}>Under Maintenance</option>
+                </select>
+              </div>
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Update Vehicle',
+              type: 'primary',
+              onClick: async () => {
+                const brand = document.getElementById('edit-brand').value.trim();
+                const model = document.getElementById('edit-model').value.trim();
+                const plateNo = document.getElementById('edit-plate').value.trim().toUpperCase();
+                const dpwhNo = document.getElementById('edit-dpwh').value.trim().toUpperCase();
+                const fuelCapacity = parseFloat(document.getElementById('edit-capacity').value);
+                const fuelBalance = parseFloat(document.getElementById('edit-fuel').value);
+                const status = document.getElementById('edit-status').value;
+
+                if (!brand || !model || !plateNo || !dpwhNo) {
+                  await modalManager.alert({ title: 'Error', message: 'Please fill all required fields', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Updating vehicle...');
+
+                try {
+                  await db.collection('vehicles').doc(vehicleId).update({
+                    brand: brand,
+                    model: model,
+                    plateNo: plateNo,
+                    dpwhNo: dpwhNo,
+                    fuelCapacity: fuelCapacity,
+                    currentFuelBalance: fuelBalance,
+                    status: status,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+
+                  await logTransaction('vehicle_updated', {
+                    vehicleId: vehicleId,
+                    vehiclePlate: plateNo
+                  });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Success', message: 'Vehicle updated successfully!', type: 'success' });
+
+                  loadVehicles();
+                  loadStats();
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function deleteVehicle(vehicleId, plateNo) {
+      const confirmed = await modalManager.confirm({
+        title: 'Delete Vehicle',
+        message: `Delete vehicle <strong>${plateNo}</strong>?`,
+        confirmText: 'Delete',
+        confirmType: 'danger'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading('Deleting vehicle...');
+
+      try {
+        await db.collection('vehicles').doc(vehicleId).delete();
+        await logTransaction('vehicle_deleted', { vehicleId, vehiclePlate: plateNo });
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Deleted', message: 'Vehicle deleted', type: 'success' });
+
+        loadVehicles();
+        loadStats();
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== OFFICERS/SIGNATORIES ====================
+
+    async function loadOfficers() {
+      const container = document.getElementById('officers-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('officers').orderBy('name').get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-person-badge"></i>
+              <h4>No officers yet</h4>
+              <p>Click "Add Officer" to add your first officer/signatory</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Name</th><th>Position</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const officer = doc.data();
+          const positionDisplay = officer.position ? officer.position.replace(/\n/g, '<br>') : 'N/A';
+
+          const statusAction = officer.status === 'active' ? 'Deactivate' : 'Activate';
+          const iconType = officer.status === 'active' ? 'x-circle' : 'check-circle';
+          const btnClass = officer.status === 'active' ? 'delete' : 'success';
+
+          html += `
+            <tr>
+              <td><strong>${officer.name}</strong></td>
+              <td style="white-space: pre-line;">${positionDisplay}</td>
+              <td><span class="badge-custom badge-${officer.status === 'active' ? 'success' : 'secondary'}">${officer.status || 'active'}</span></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action edit" onclick="editOfficer('${doc.id}')" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn-action ${btnClass}" onclick="toggleOfficerStatus('${doc.id}', '${officer.status || 'active'}')" title="${statusAction}">
+                    <i class="bi bi-${iconType}"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading officers:', error);
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading officers</h4></div>`;
+      }
+    }
+
+    function openAddOfficerModal() {
+      modalManager.show({
+        title: 'Add Officer/Signatory',
+        size: 'medium',
+        content: `
+          <div class="mb-3">
+            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+            <input type="text" id="modal-officer-name" class="form-control text-uppercase" placeholder="ENGR. JUAN DELA CRUZ">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Position <span class="text-danger">*</span></label>
+            <textarea id="modal-officer-position" class="form-control" rows="4" placeholder="Chief&#10;Equipment Management Division&#10;Department of Public Works and Highways&#10;Regional Office II"></textarea>
+            <small class="text-muted">Enter position with proper capitalization (not auto-uppercase)</small>
+          </div>
+        `,
+        buttons: [
+          { label: 'Cancel', type: 'secondary' },
+          {
+            label: 'Add Officer',
+            type: 'primary',
+            onClick: async () => {
+              const name = document.getElementById('modal-officer-name').value.trim();
+              const position = document.getElementById('modal-officer-position').value.trim();
+
+              if (!name || !position) {
+                await modalManager.alert({ title: 'Error', message: 'Please fill all required fields', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Adding officer...');
+
+              try {
+                await db.collection('officers').add({
+                  name: name.toUpperCase(),
+                  position: position,
+                  status: 'active',
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await logTransaction('officer_added', { officerName: name.toUpperCase() });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Success', message: 'Officer added successfully!', type: 'success' });
+
+                loadOfficers();
+                loadStats();
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    async function editOfficer(officerId) {
+      try {
+        const doc = await db.collection('officers').doc(officerId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Officer not found', type: 'error' });
+          return;
+        }
+
+        const officer = doc.data();
+
+        modalManager.show({
+          title: 'Edit Officer/Signatory',
+          size: 'medium',
+          content: `
+            <div class="mb-3">
+              <label class="form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" id="modal-edit-officer-name" class="form-control text-uppercase" value="${officer.name}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Position <span class="text-danger">*</span></label>
+              <textarea id="modal-edit-officer-position" class="form-control" rows="4">${officer.position}</textarea>
+              <small class="text-muted">Enter position with proper capitalization (not auto-uppercase)</small>
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Save Changes',
+              type: 'primary',
+              onClick: async () => {
+                const name = document.getElementById('modal-edit-officer-name').value.trim();
+                const position = document.getElementById('modal-edit-officer-position').value.trim();
+
+                if (!name || !position) {
+                  await modalManager.alert({ title: 'Error', message: 'Please fill all required fields', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Updating officer...');
+
+                try {
+                  await db.collection('officers').doc(officerId).update({
+                    name: name.toUpperCase(),
+                    position: position,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+
+                  await logTransaction('officer_updated', { officerId, officerName: name.toUpperCase() });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Success', message: 'Officer updated successfully!', type: 'success' });
+
+                  loadOfficers();
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function toggleOfficerStatus(officerId, currentStatus) {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const action = newStatus === 'active' ? 'activate' : 'deactivate';
+
+      const confirmed = await modalManager.confirm({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Officer`,
+        message: `Are you sure you want to ${action} this officer?`,
+        confirmText: action.charAt(0).toUpperCase() + action.slice(1),
+        confirmType: newStatus === 'active' ? 'primary' : 'danger'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading(`${action.charAt(0).toUpperCase() + action.slice(1)}ing officer...`);
+
+      try {
+        await db.collection('officers').doc(officerId).update({
+          status: newStatus,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await logTransaction(`officer_${action}d`, { officerId });
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Success', message: `Officer ${action}d successfully!`, type: 'success' });
+
+        loadOfficers();
+        loadStats();
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    function filterOfficers() {
+      const searchTerm = document.getElementById('officers-search').value.toLowerCase();
+      const rows = document.querySelectorAll('#officers-table-container tbody tr');
+
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+      });
+    }
+
+    // ==================== DIVISIONS/OFFICES ====================
+
+    async function loadDivisions() {
+      const container = document.getElementById('divisions-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('divisions').orderBy('name').get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-building"></i>
+              <h4>No divisions yet</h4>
+              <p>Click "Add Division" to add your first division/office</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Division Name</th><th>Code</th><th>Recommending Officer</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const div = doc.data();
+          const officerPosition = div.recommendingOfficer?.position ? div.recommendingOfficer.position.replace(/\n/g, '<br>') : '';
+          const officerDisplay = div.recommendingOfficer ? `${div.recommendingOfficer.name}<br><small class="text-muted" style="white-space: normal;">${officerPosition}</small>` : 'N/A';
+
+          const statusAction = div.status === 'active' ? 'Deactivate' : 'Activate';
+          const iconType = div.status === 'active' ? 'x-circle' : 'check-circle';
+          const btnClass = div.status === 'active' ? 'delete' : 'success';
+
+          html += `
+            <tr>
+              <td><strong>${div.name}</strong></td>
+              <td><span class="badge bg-primary">${div.code}</span></td>
+              <td>${officerDisplay}</td>
+              <td><span class="badge-custom badge-${div.status === 'active' ? 'success' : 'secondary'}">${div.status || 'active'}</span></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action edit" onclick="editDivision('${doc.id}')" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn-action ${btnClass}" onclick="toggleDivisionStatus('${doc.id}', '${div.status || 'active'}')" title="${statusAction}">
+                    <i class="bi bi-${iconType}"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading divisions:', error);
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading divisions</h4></div>`;
+      }
+    }
+
+    async function openAddDivisionModal() {
+      // Load officers for dropdown
+      const officersSnapshot = await db.collection('officers').where('status', '==', 'active').orderBy('name').get();
+      let officerOptions = '<option value="">-- Select Officer --</option>';
+      const officersData = {};
+
+      officersSnapshot.forEach(doc => {
+        const officer = doc.data();
+        officersData[doc.id] = officer;
+        officerOptions += `<option value="${doc.id}">${officer.name}</option>`;
+      });
+
+      // Make officers data available globally for the preview function
+      window.officersDataDiv = officersData;
+
+      modalManager.show({
+        title: 'Add New Division/Office',
+        size: 'medium',
+        content: `
+          <div class="mb-3">
+            <label class="form-label">Division/Office Name <span class="text-danger">*</span></label>
+            <input type="text" id="modal-div-name" class="form-control text-uppercase" placeholder="EQUIPMENT MANAGEMENT DIVISION">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Division Code <span class="text-danger">*</span></label>
+            <input type="text" id="modal-div-code" class="form-control text-uppercase" placeholder="EMD" maxlength="10">
+          </div>
+          <hr>
+          <h6 class="mb-3">Default Recommending Officer</h6>
+          <div class="mb-3">
+            <label class="form-label">Select Officer</label>
+            <select id="modal-div-officer" class="form-control" onchange="updateOfficerPreview('div')">
+              ${officerOptions}
+            </select>
+          </div>
+          <div id="officer-preview-div" class="alert alert-info d-none">
+            <strong>Position:</strong><br>
+            <span id="officer-position-preview-div"></span>
+          </div>
+        `,
+        buttons: [
+          { label: 'Cancel', type: 'secondary' },
+          {
+            label: 'Add Division',
+            type: 'primary',
+            onClick: async () => {
+              const name = document.getElementById('modal-div-name').value.trim();
+              const code = document.getElementById('modal-div-code').value.trim();
+              const officerId = document.getElementById('modal-div-officer').value;
+
+              if (!name || !code) {
+                await modalManager.alert({ title: 'Error', message: 'Please fill required fields (Name and Code)', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Adding division...');
+
+              try {
+                const divisionData = {
+                  name: name.toUpperCase(),
+                  code: code.toUpperCase(),
+                  status: 'active',
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (officerId && window.officersDataDiv[officerId]) {
+                  const officer = window.officersDataDiv[officerId];
+                  divisionData.recommendingOfficer = {
+                    name: officer.name,
+                    position: officer.position
+                  };
+                }
+
+                await db.collection('divisions').add(divisionData);
+                await logTransaction('division_added', { divisionName: name.toUpperCase(), code: code.toUpperCase() });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Success', message: 'Division added successfully!', type: 'success' });
+
+                loadDivisions();
+                loadStats();
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    function updateOfficerPreview(context) {
+      const officerId = document.getElementById(`modal-${context}-officer`).value;
+      const preview = document.getElementById(`officer-preview-${context}`);
+      const positionSpan = document.getElementById(`officer-position-preview-${context}`);
+
+      if (officerId && window[`officersData${context.charAt(0).toUpperCase() + context.slice(1)}`][officerId]) {
+        const officer = window[`officersData${context.charAt(0).toUpperCase() + context.slice(1)}`][officerId];
+        positionSpan.innerHTML = officer.position.replace(/\n/g, '<br>');
+
+        // Update name preview if it exists (for auth context)
+        const nameSpan = document.getElementById(`officer-name-preview-${context}`);
+        if (nameSpan) {
+          nameSpan.textContent = officer.name;
+        }
+
+        preview.classList.remove('d-none');
+      } else {
+        preview.classList.add('d-none');
+      }
+    }
+
+    async function editDivision(divId) {
+      try {
+        const doc = await db.collection('divisions').doc(divId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Division not found', type: 'error' });
+          return;
+        }
+
+        const div = doc.data();
+
+        // Load officers for dropdown
+        const officersSnapshot = await db.collection('officers').where('status', '==', 'active').orderBy('name').get();
+        let officerOptions = '<option value="">-- Select Officer --</option>';
+        const officersData = {};
+        let currentOfficerId = '';
+
+        officersSnapshot.forEach(doc => {
+          const officer = doc.data();
+          officersData[doc.id] = officer;
+          // Check if this is the current officer
+          if (div.recommendingOfficer && officer.name === div.recommendingOfficer.name) {
+            currentOfficerId = doc.id;
+          }
+          const selected = div.recommendingOfficer && officer.name === div.recommendingOfficer.name ? 'selected' : '';
+          officerOptions += `<option value="${doc.id}" ${selected}>${officer.name}</option>`;
+        });
+
+        // Make officers data available globally
+        window.officersDataDivEdit = officersData;
+
+        modalManager.show({
+          title: 'Edit Division/Office',
+          size: 'medium',
+          content: `
+            <div class="mb-3">
+              <label class="form-label">Division/Office Name <span class="text-danger">*</span></label>
+              <input type="text" id="modal-edit-div-name" class="form-control text-uppercase" value="${div.name}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Division Code <span class="text-danger">*</span></label>
+              <input type="text" id="modal-edit-div-code" class="form-control text-uppercase" value="${div.code}" maxlength="10">
+            </div>
+            <hr>
+            <h6 class="mb-3">Default Recommending Officer</h6>
+            <div class="mb-3">
+              <label class="form-label">Select Officer</label>
+              <select id="modal-edit-div-officer" class="form-control" onchange="updateOfficerPreviewEdit('div')">
+                ${officerOptions}
+              </select>
+            </div>
+            <div id="officer-preview-div-edit" class="alert alert-info ${currentOfficerId ? '' : 'd-none'}">
+              <strong>Position:</strong><br>
+              <span id="officer-position-preview-div-edit">${div.recommendingOfficer?.position ? div.recommendingOfficer.position.replace(/\n/g, '<br>') : ''}</span>
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Save Changes',
+              type: 'primary',
+              onClick: async () => {
+                const name = document.getElementById('modal-edit-div-name').value.trim();
+                const code = document.getElementById('modal-edit-div-code').value.trim();
+                const officerId = document.getElementById('modal-edit-div-officer').value;
+
+                if (!name || !code) {
+                  await modalManager.alert({ title: 'Error', message: 'Please fill required fields', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Updating division...');
+
+                try {
+                  const updateData = {
+                    name: name.toUpperCase(),
+                    code: code.toUpperCase(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  };
+
+                  if (officerId && window.officersDataDivEdit[officerId]) {
+                    const officer = window.officersDataDivEdit[officerId];
+                    updateData.recommendingOfficer = {
+                      name: officer.name,
+                      position: officer.position
+                    };
+                  } else {
+                    updateData.recommendingOfficer = firebase.firestore.FieldValue.delete();
+                  }
+
+                  await db.collection('divisions').doc(divId).update(updateData);
+                  await logTransaction('division_updated', { divisionId: divId, divisionName: name.toUpperCase() });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Success', message: 'Division updated successfully!', type: 'success' });
+
+                  loadDivisions();
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    function updateOfficerPreviewEdit(context) {
+      const officerId = document.getElementById(`modal-edit-${context}-officer`).value;
+      const preview = document.getElementById(`officer-preview-${context}-edit`);
+      const positionSpan = document.getElementById(`officer-position-preview-${context}-edit`);
+
+      if (officerId && window[`officersData${context.charAt(0).toUpperCase() + context.slice(1)}Edit`][officerId]) {
+        const officer = window[`officersData${context.charAt(0).toUpperCase() + context.slice(1)}Edit`][officerId];
+        positionSpan.innerHTML = officer.position.replace(/\n/g, '<br>');
+
+        // Update name preview if it exists (for auth context)
+        const nameSpan = document.getElementById(`officer-name-preview-${context}-edit`);
+        if (nameSpan) {
+          nameSpan.textContent = officer.name;
+        }
+
+        preview.classList.remove('d-none');
+      } else {
+        preview.classList.add('d-none');
+      }
+    }
+
+    async function toggleDivisionStatus(divId, currentStatus) {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const action = newStatus === 'active' ? 'activate' : 'deactivate';
+
+      const confirmed = await modalManager.confirm({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Division`,
+        message: `Are you sure you want to ${action} this division?`,
+        confirmText: action.charAt(0).toUpperCase() + action.slice(1),
+        confirmType: newStatus === 'active' ? 'primary' : 'danger'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading(`${action.charAt(0).toUpperCase() + action.slice(1)}ing division...`);
+
+      try {
+        await db.collection('divisions').doc(divId).update({
+          status: newStatus,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await logTransaction(`division_${action}d`, { divisionId: divId });
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Success', message: `Division ${action}d successfully!`, type: 'success' });
+
+        loadDivisions();
+        loadStats();
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    function filterDivisions() {
+      const searchTerm = document.getElementById('divisions-search').value.toLowerCase();
+      const rows = document.querySelectorAll('#divisions-table-container tbody tr');
+
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+      });
+    }
+
+    // OLD SIGNATORY FUNCTIONS REMOVED - REPLACED WITH DIVISIONS ABOVE
+
+    // ==================== APPROVING AUTHORITIES ====================
+
+    async function loadAuthorities() {
+      const container = document.getElementById('authorities-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('approvingAuthorities').orderBy('name').get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-pen"></i>
+              <h4>No approving authorities yet</h4>
+              <p>Click "Add Authority" to add your first approving authority</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Name</th><th>Position</th><th>Default Prefix</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const auth = doc.data();
+
+          const statusAction = auth.status === 'active' ? 'Deactivate' : 'Activate';
+          const iconType = auth.status === 'active' ? 'x-circle' : 'check-circle';
+          const btnClass = auth.status === 'active' ? 'delete' : 'success';
+          const positionDisplay = auth.position ? auth.position.replace(/\n/g, '<br>') : 'N/A';
+
+          html += `
+            <tr>
+              <td><strong>${auth.name}</strong></td>
+              <td style="white-space: normal;">${positionDisplay}</td>
+              <td><small class="text-muted">${auth.defaultPrefix || 'None'}</small></td>
+              <td><span class="badge-custom badge-${auth.status === 'active' ? 'success' : 'secondary'}">${auth.status || 'active'}</span></td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action edit" onclick="editAuthority('${doc.id}')" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn-action ${btnClass}" onclick="toggleAuthorityStatus('${doc.id}', '${auth.status || 'active'}')" title="${statusAction}">
+                    <i class="bi bi-${iconType}"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading authorities:', error);
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading authorities</h4></div>`;
+      }
+    }
+
+    async function openAddAuthorityModal() {
+      // Load officers for dropdown
+      const officersSnapshot = await db.collection('officers').where('status', '==', 'active').orderBy('name').get();
+      let officerOptions = '<option value="">-- Select Officer --</option>';
+      const officersData = {};
+
+      officersSnapshot.forEach(doc => {
+        const officer = doc.data();
+        officersData[doc.id] = officer;
+        officerOptions += `<option value="${doc.id}">${officer.name}</option>`;
+      });
+
+      // Make officers data available globally
+      window.officersDataAuth = officersData;
+
+      modalManager.show({
+        title: 'Add Approving Authority',
+        size: 'medium',
+        content: `
+          <div class="mb-3">
+            <label class="form-label">Approving Authority <span class="text-danger">*</span></label>
+            <select id="modal-auth-officer" class="form-control" onchange="updateOfficerPreview('auth')">
+              ${officerOptions}
+            </select>
+          </div>
+          <div id="officer-preview-auth" class="alert alert-info d-none">
+            <strong>Name:</strong> <span id="officer-name-preview-auth"></span><br>
+            <strong>Position:</strong><br>
+            <span id="officer-position-preview-auth"></span>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Default Prefix</label>
+            <select id="modal-auth-prefix" class="form-control">
+              <option value="">None</option>
+              <option value="By Authority of the Regional Director:">By Authority of the Regional Director:</option>
+              <option value="By Authority of the OIC-Regional Director:">By Authority of the OIC-Regional Director:</option>
+            </select>
+            <small class="text-muted">This prefix will be pre-filled in trip ticket forms (can be changed per ticket)</small>
+          </div>
+        `,
+        buttons: [
+          { label: 'Cancel', type: 'secondary' },
+          {
+            label: 'Add Authority',
+            type: 'primary',
+            onClick: async () => {
+              const officerId = document.getElementById('modal-auth-officer').value;
+              const prefix = document.getElementById('modal-auth-prefix').value;
+
+              if (!officerId) {
+                await modalManager.alert({ title: 'Error', message: 'Please select an officer', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Adding authority...');
+
+              try {
+                const officer = window.officersDataAuth[officerId];
+
+                await db.collection('approvingAuthorities').add({
+                  name: officer.name,
+                  position: officer.position,
+                  defaultPrefix: prefix,
+                  status: 'active',
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await logTransaction('authority_added', { authorityName: officer.name });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Success', message: 'Approving authority added successfully!', type: 'success' });
+
+                loadAuthorities();
+                loadStats();
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    async function editAuthority(authId) {
+      try {
+        const doc = await db.collection('approvingAuthorities').doc(authId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Authority not found', type: 'error' });
+          return;
+        }
+
+        const auth = doc.data();
+
+        // Load officers for dropdown
+        const officersSnapshot = await db.collection('officers').where('status', '==', 'active').orderBy('name').get();
+        let officerOptions = '<option value="">-- Select Officer --</option>';
+        const officersData = {};
+        let currentOfficerId = '';
+
+        officersSnapshot.forEach(doc => {
+          const officer = doc.data();
+          officersData[doc.id] = officer;
+          // Check if this is the current officer
+          if (auth.name === officer.name) {
+            currentOfficerId = doc.id;
+          }
+          const selected = auth.name === officer.name ? 'selected' : '';
+          officerOptions += `<option value="${doc.id}" ${selected}>${officer.name}</option>`;
+        });
+
+        // Make officers data available globally
+        window.officersDataAuthEdit = officersData;
+
+        // Determine selected prefix
+        const prefixOptions = [
+          { value: '', label: 'None' },
+          { value: 'By Authority of the Regional Director:', label: 'By Authority of the Regional Director:' },
+          { value: 'By Authority of the OIC-Regional Director:', label: 'By Authority of the OIC-Regional Director:' }
+        ];
+
+        let prefixDropdown = '';
+        prefixOptions.forEach(option => {
+          const selected = auth.defaultPrefix === option.value ? 'selected' : '';
+          prefixDropdown += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+        });
+
+        modalManager.show({
+          title: 'Edit Approving Authority',
+          size: 'medium',
+          content: `
+            <div class="mb-3">
+              <label class="form-label">Approving Authority <span class="text-danger">*</span></label>
+              <select id="modal-edit-auth-officer" class="form-control" onchange="updateOfficerPreviewEdit('auth')">
+                ${officerOptions}
+              </select>
+            </div>
+            <div id="officer-preview-auth-edit" class="alert alert-info ${currentOfficerId ? '' : 'd-none'}">
+              <strong>Name:</strong> <span id="officer-name-preview-auth-edit">${auth.name}</span><br>
+              <strong>Position:</strong><br>
+              <span id="officer-position-preview-auth-edit">${auth.position ? auth.position.replace(/\n/g, '<br>') : ''}</span>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Default Prefix</label>
+              <select id="modal-edit-auth-prefix" class="form-control">
+                ${prefixDropdown}
+              </select>
+              <small class="text-muted">This prefix will be pre-filled in trip ticket forms (can be changed per ticket)</small>
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Save Changes',
+              type: 'primary',
+              onClick: async () => {
+                const officerId = document.getElementById('modal-edit-auth-officer').value;
+                const prefix = document.getElementById('modal-edit-auth-prefix').value;
+
+                if (!officerId) {
+                  await modalManager.alert({ title: 'Error', message: 'Please select an officer', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Updating authority...');
+
+                try {
+                  const officer = window.officersDataAuthEdit[officerId];
+
+                  await db.collection('approvingAuthorities').doc(authId).update({
+                    name: officer.name,
+                    position: officer.position,
+                    defaultPrefix: prefix,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+
+                  await logTransaction('authority_updated', { authorityId: authId, authorityName: officer.name });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Success', message: 'Authority updated successfully!', type: 'success' });
+
+                  loadAuthorities();
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function toggleAuthorityStatus(authId, currentStatus) {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const action = newStatus === 'active' ? 'activate' : 'deactivate';
+
+      const confirmed = await modalManager.confirm({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Authority`,
+        message: `Are you sure you want to ${action} this approving authority?`,
+        confirmText: action.charAt(0).toUpperCase() + action.slice(1),
+        confirmType: newStatus === 'active' ? 'primary' : 'danger'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading(`${action.charAt(0).toUpperCase() + action.slice(1)}ing authority...`);
+
+      try {
+        await db.collection('approvingAuthorities').doc(authId).update({
+          status: newStatus,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await logTransaction(`authority_${action}d`, { authorityId: authId });
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Success', message: `Authority ${action}d successfully!`, type: 'success' });
+
+        loadAuthorities();
+        loadStats();
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    function filterAuthorities() {
+      const searchTerm = document.getElementById('authorities-search').value.toLowerCase();
+      const rows = document.querySelectorAll('#authorities-table-container tbody tr');
+
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+      });
+    }
+
+    // LEGACY: OLD SIGNATORY AND OFFICE FUNCTIONS BELOW (TO BE REMOVED)
+
+    async function editSignatory(sigId) {
+      try {
+        const doc = await db.collection('signatories').doc(sigId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Signatory not found', type: 'error' });
+          return;
+        }
+
+        const sig = doc.data();
+
+        modalManager.show({
+          title: 'Edit Signatory',
+          size: 'medium',
+          content: `
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="edit-sig-name" class="form-control text-uppercase" value="${sig.name || ''}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Position</label>
+              <input type="text" id="edit-sig-position" class="form-control text-uppercase" value="${sig.position || ''}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Role/Function</label>
+              <select id="edit-sig-role" class="form-select">
+                <option value="regional_director" ${sig.role === 'regional_director' ? 'selected' : ''}>Regional Director (Approver)</option>
+                <option value="chief_emd" ${sig.role === 'chief_emd' ? 'selected' : ''}>Chief, Equipment Management Division</option>
+                <option value="supply_officer" ${sig.role === 'supply_officer' ? 'selected' : ''}>Supply Officer III (Issuer)</option>
+                <option value="admin_officer" ${sig.role === 'admin_officer' ? 'selected' : ''}>Administrative Officer V</option>
+                <option value="other" ${sig.role === 'other' ? 'selected' : ''}>Other Position</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Office/Division</label>
+              <input type="text" id="edit-sig-office" class="form-control text-uppercase" value="${sig.office || ''}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Status</label>
+              <select id="edit-sig-status" class="form-select">
+                <option value="active" ${sig.status === 'active' ? 'selected' : ''}>Active</option>
+                <option value="inactive" ${sig.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+              </select>
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Update Signatory',
+              type: 'primary',
+              onClick: async () => {
+                const name = document.getElementById('edit-sig-name').value.trim();
+                const position = document.getElementById('edit-sig-position').value.trim();
+                const role = document.getElementById('edit-sig-role').value;
+                const office = document.getElementById('edit-sig-office').value.trim();
+                const status = document.getElementById('edit-sig-status').value;
+
+                if (!name || !position || !role) {
+                  await modalManager.alert({ title: 'Error', message: 'Please fill all required fields', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Updating signatory...');
+
+                try {
+                  await db.collection('signatories').doc(sigId).update({
+                    name: name.toUpperCase(),
+                    position: position.toUpperCase(),
+                    role: role,
+                    office: office.toUpperCase() || 'N/A',
+                    status: status,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+
+                  await logTransaction('signatory_updated', {
+                    signatoryId: sigId,
+                    signatoryName: name.toUpperCase()
+                  });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Success', message: 'Signatory updated successfully!', type: 'success' });
+
+                  loadSignatories();
+                  loadStats();
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function deleteSignatory(sigId, sigName) {
+      const confirmed = await modalManager.confirm({
+        title: 'Delete Signatory',
+        message: `Delete signatory <strong>${sigName}</strong>?`,
+        confirmText: 'Delete',
+        confirmType: 'danger'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading('Deleting signatory...');
+
+      try {
+        await db.collection('signatories').doc(sigId).delete();
+        await logTransaction('signatory_deleted', { signatoryId: sigId, signatoryName: sigName });
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Deleted', message: 'Signatory deleted', type: 'success' });
+
+        loadSignatories();
+        loadStats();
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== OFFICES ====================
+
+    async function loadOffices() {
+      const container = document.getElementById('offices-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('offices').orderBy('createdAt', 'desc').get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-building"></i>
+              <h4>No offices yet</h4>
+              <p>Click "Add Office" to add your first office</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Name</th><th>Code</th><th>Type</th><th>Contact</th><th>Actions</th></tr></thead><tbody>';
+
+        const typeColors = {
+          regional: 'primary',
+          district: 'success',
+          division: 'info',
+          section: 'warning'
+        };
+
+        snapshot.forEach(doc => {
+          const office = doc.data();
+          html += `
+            <tr>
+              <td><strong>${office.name}</strong></td>
+              <td>${office.code}</td>
+              <td><span class="badge-custom badge-${typeColors[office.type]}">${office.type}</span></td>
+              <td>${office.contact}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-action edit" onclick="editOffice('${doc.id}')">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn-action delete" onclick="deleteOffice('${doc.id}', '${office.name}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        container.innerHTML = `<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h4>Error loading offices</h4></div>`;
+      }
+    }
+
+    function openAddOfficeModal() {
+      modalManager.show({
+        title: 'Add New Office',
+        size: 'medium',
+        content: `
+          <div class="mb-3">
+            <label class="form-label">Office Type</label>
+            <select id="modal-office-type" class="form-select">
+              <option value="">-- Select Type --</option>
+              <option value="regional">Regional Office</option>
+              <option value="district">District Engineering Office</option>
+              <option value="division">Division</option>
+              <option value="section">Section</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Office Code</label>
+            <input type="text" id="modal-office-code" class="form-control text-uppercase" placeholder="RO-02">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Office Name</label>
+            <input type="text" id="modal-office-name" class="form-control text-uppercase" placeholder="REGIONAL OFFICE II">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Address</label>
+            <textarea id="modal-office-address" class="form-control text-uppercase" rows="2" placeholder="REGIONAL CENTER, TUGUEGARAO CITY"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Contact Number</label>
+            <input type="text" id="modal-office-contact" class="form-control" placeholder="(078) 844-1793">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" id="modal-office-email" class="form-control" placeholder="ro2@dpwh.gov.ph">
+          </div>
+        `,
+        buttons: [
+          { label: 'Cancel', type: 'secondary' },
+          {
+            label: 'Add Office',
+            type: 'primary',
+            onClick: async () => {
+              const type = document.getElementById('modal-office-type').value;
+              const code = document.getElementById('modal-office-code').value;
+              const name = document.getElementById('modal-office-name').value;
+              const address = document.getElementById('modal-office-address').value;
+              const contact = document.getElementById('modal-office-contact').value;
+              const email = document.getElementById('modal-office-email').value;
+
+              if (!type || !code || !name) {
+                await modalManager.alert({ title: 'Error', message: 'Please fill required fields', type: 'warning' });
+                return;
+              }
+
+              const loadingId = modalManager.loading('Adding office...');
+
+              try {
+                await db.collection('offices').add({
+                  type: type,
+                  code: code.toUpperCase(),
+                  name: name.toUpperCase(),
+                  address: address.toUpperCase() || 'N/A',
+                  contact: contact || 'N/A',
+                  email: email || 'N/A',
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await logTransaction('office_added', { officeCode: code.toUpperCase() });
+
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Success', message: 'Office added!', type: 'success' });
+
+                loadOffices();
+                loadStats();
+              } catch (error) {
+                modalManager.close(loadingId);
+                await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    async function editOffice(officeId) {
+      try {
+        const doc = await db.collection('offices').doc(officeId).get();
+        if (!doc.exists) {
+          await modalManager.alert({ title: 'Error', message: 'Office not found', type: 'error' });
+          return;
+        }
+
+        const office = doc.data();
+
+        modalManager.show({
+          title: 'Edit Office',
+          size: 'medium',
+          content: `
+            <div class="mb-3">
+              <label class="form-label">Office Type</label>
+              <select id="edit-office-type" class="form-select">
+                <option value="regional" ${office.type === 'regional' ? 'selected' : ''}>Regional Office</option>
+                <option value="district" ${office.type === 'district' ? 'selected' : ''}>District Engineering Office</option>
+                <option value="division" ${office.type === 'division' ? 'selected' : ''}>Division</option>
+                <option value="section" ${office.type === 'section' ? 'selected' : ''}>Section</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Office Code</label>
+              <input type="text" id="edit-office-code" class="form-control text-uppercase" value="${office.code || ''}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Office Name</label>
+              <input type="text" id="edit-office-name" class="form-control text-uppercase" value="${office.name || ''}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Address</label>
+              <textarea id="edit-office-address" class="form-control text-uppercase" rows="2">${office.address || ''}</textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Contact Number</label>
+              <input type="text" id="edit-office-contact" class="form-control" value="${office.contact || ''}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" id="edit-office-email" class="form-control" value="${office.email || ''}">
+            </div>
+          `,
+          buttons: [
+            { label: 'Cancel', type: 'secondary' },
+            {
+              label: 'Update Office',
+              type: 'primary',
+              onClick: async () => {
+                const type = document.getElementById('edit-office-type').value;
+                const code = document.getElementById('edit-office-code').value.trim();
+                const name = document.getElementById('edit-office-name').value.trim();
+                const address = document.getElementById('edit-office-address').value.trim();
+                const contact = document.getElementById('edit-office-contact').value.trim();
+                const email = document.getElementById('edit-office-email').value.trim();
+
+                if (!type || !code || !name) {
+                  await modalManager.alert({ title: 'Error', message: 'Please fill all required fields', type: 'warning' });
+                  return;
+                }
+
+                const loadingId = modalManager.loading('Updating office...');
+
+                try {
+                  await db.collection('offices').doc(officeId).update({
+                    type: type,
+                    code: code.toUpperCase(),
+                    name: name.toUpperCase(),
+                    address: address.toUpperCase() || 'N/A',
+                    contact: contact || 'N/A',
+                    email: email || 'N/A',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+
+                  await logTransaction('office_updated', {
+                    officeId: officeId,
+                    officeCode: code.toUpperCase()
+                  });
+
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Success', message: 'Office updated successfully!', type: 'success' });
+
+                  loadOffices();
+                  loadStats();
+                } catch (error) {
+                  modalManager.close(loadingId);
+                  await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+                }
+              }
+            }
+          ]
+        });
+      } catch (error) {
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    async function deleteOffice(officeId, officeName) {
+      const confirmed = await modalManager.confirm({
+        title: 'Delete Office',
+        message: `Delete office <strong>${officeName}</strong>?`,
+        confirmText: 'Delete',
+        confirmType: 'danger'
+      });
+
+      if (!confirmed) return;
+
+      const loadingId = modalManager.loading('Deleting office...');
+
+      try {
+        await db.collection('offices').doc(officeId).delete();
+        await logTransaction('office_deleted', { officeId, officeName });
+
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Deleted', message: 'Office deleted', type: 'success' });
+
+        loadOffices();
+        loadStats();
+      } catch (error) {
+        modalManager.close(loadingId);
+        await modalManager.alert({ title: 'Error', message: error.message, type: 'error' });
+      }
+    }
+
+    // ==================== HISTORY ====================
+
+    async function loadHistory() {
+      const container = document.getElementById('history-table-container');
+      container.innerHTML = '<div class="loading-state"><div class="spinner-border"></div></div>';
+
+      try {
+        const snapshot = await db.collection('adminTransactions')
+          .orderBy('timestamp', 'desc')
+          .limit(50)
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-clock-history"></i>
+              <h4>No history yet</h4>
+              <p>Transaction history will appear here</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<table class="table-custom"><thead><tr><th>Action</th><th>Details</th><th>Performed By</th><th>Date</th></tr></thead><tbody>';
+
+        snapshot.forEach(doc => {
+          const tx = doc.data();
+          const timestamp = tx.timestamp ? tx.timestamp.toDate().toLocaleString() : 'N/A';
+          const actionName = tx.action.replace(/_/g, ' ').toUpperCase();
+
+          let detailsStr = '';
+          if (tx.details) {
+            Object.keys(tx.details).forEach(key => {
+              detailsStr += `${key}: ${tx.details[key]}<br>`;
+            });
+          }
+
+          html += `
+            <tr>
+              <td><span class="badge-custom badge-info">${actionName}</span></td>
+              <td><small>${detailsStr}</small></td>
+              <td>${tx.performedBy}</td>
+              <td><small>${timestamp}</small></td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading history:', error);
+
+        let errorMessage = 'Unable to load transaction history. Please try again.';
+        let errorDetails = '';
+
+        if (error.code === 'permission-denied') {
+          errorMessage = 'Access Denied';
+          errorDetails = 'You do not have permission to view transaction history.';
+        } else if (error.code === 'unavailable') {
+          errorMessage = 'Connection Error';
+          errorDetails = 'Unable to connect to the server. Please check your internet connection.';
+        } else if (error.message) {
+          errorDetails = error.message;
+        }
+
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+            <h4>${errorMessage}</h4>
+            <p class="text-muted">${errorDetails}</p>
+            <button onclick="loadHistory()" class="btn-primary-custom mt-3">
+              <i class="bi bi-arrow-clockwise me-2"></i>Retry
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // ==================== UTILITIES ====================
+
+    async function logTransaction(action, details) {
+      try {
+        const user = auth.currentUser;
+        await db.collection('adminTransactions').add({
+          action: action,
+          details: details,
+          performedBy: user ? user.displayName || user.email : 'System',
+          performedByUid: user ? user.uid : null,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (error) {
+        console.error('Error logging transaction:', error);
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const [users, vehicles, officers, divisions] = await Promise.all([
+          db.collection('users').get(),
+          db.collection('vehicles').get(),
+          db.collection('officers').get(),
+          db.collection('divisions').get()
+        ]);
+
+        document.getElementById('stat-users').textContent = users.size;
+        document.getElementById('stat-vehicles').textContent = vehicles.size;
+        document.getElementById('stat-officers').textContent = officers.size;
+        document.getElementById('stat-divisions').textContent = divisions.size;
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // ==================== AUTH ====================
+
     async function adminLogin() {
       const email = document.getElementById('admin-email').value;
       const password = document.getElementById('admin-password').value;
       const resultDiv = document.getElementById('login-result');
 
       if (!email || !password) {
-        resultDiv.innerHTML = '<div class="alert alert-warning">Please enter email and password</div>';
+        resultDiv.innerHTML = '<div class="alert alert-warning">Please enter credentials</div>';
         return;
       }
 
@@ -413,34 +2841,39 @@ ISUZU,D-MAX,H1 5752,DPWH-003"></textarea>
 
       try {
         await auth.signInWithEmailAndPassword(email, password);
-        // Success - auth state listener will handle UI
       } catch (error) {
-        resultDiv.innerHTML = `
-          <div class="alert alert-danger">
-            <strong>Login Failed:</strong> ${error.message}
-          </div>
-        `;
+        resultDiv.innerHTML = `<div class="alert alert-danger">Login failed: ${error.message}</div>`;
       }
     }
 
-    // Admin Logout
     async function adminLogout() {
-      try {
+      const confirmed = await modalManager.confirm({
+        title: 'Logout',
+        message: 'Are you sure you want to logout?',
+        confirmText: 'Logout'
+      });
+
+      if (confirmed) {
         await auth.signOut();
-      } catch (error) {
-        console.error('Logout error:', error);
       }
+    }
+
+    // Sidebar Toggle
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      const mainContent = document.querySelector('.main-content');
+
+      sidebar.classList.toggle('hidden');
+      mainContent.classList.toggle('sidebar-hidden');
     }
 
     // Auth state listener
     auth.onAuthStateChanged(user => {
       if (user) {
-        // User is logged in
         document.getElementById('login-screen').classList.add('d-none');
         document.getElementById('admin-panel').classList.remove('d-none');
-        loadVehicles();
+        loadStats();
       } else {
-        // User is logged out
         document.getElementById('login-screen').classList.remove('d-none');
         document.getElementById('admin-panel').classList.add('d-none');
       }

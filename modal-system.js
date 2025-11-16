@@ -116,13 +116,19 @@ class ModalManager {
     // Attach button event listeners
     buttons.forEach((btn, index) => {
       const buttonElement = modal.querySelector(`[data-action="${index}"]`);
-      if (buttonElement && btn.onClick) {
+      if (buttonElement) {
         buttonElement.addEventListener('click', async (e) => {
-          if (btn.closeOnClick !== false) {
-            await btn.onClick(e, modal);
-            this.close(modalId);
+          if (btn.onClick) {
+            // Button has onClick handler
+            if (btn.closeOnClick !== false) {
+              await btn.onClick(e, modal);
+              this.close(modalId);
+            } else {
+              await btn.onClick(e, modal);
+            }
           } else {
-            await btn.onClick(e, modal);
+            // No onClick handler - just close the modal (for Cancel buttons)
+            this.close(modalId);
           }
         });
       }

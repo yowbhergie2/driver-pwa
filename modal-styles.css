@@ -433,37 +433,64 @@ body.modal-open {
   outline-offset: 2px;
 }
 
-/* Dark Mode Support (Optional) */
+/* Force Light Mode - Override browser dark mode */
 @media (prefers-color-scheme: dark) {
   .gmail-modal {
-    background: #2d2e30;
-    color: #e8eaed;
+    background: white !important;
+    color: #3c4043 !important;
   }
 
   .gmail-modal-header,
   .gmail-modal-footer {
-    background: #35363a;
-    border-color: #5f6368;
+    background: #f8f9fa !important;
+    border-color: #e0e0e0 !important;
   }
 
-  .gmail-modal-title,
+  .gmail-modal-title {
+    color: #202124 !important;
+  }
+
   .gmail-modal-message {
-    color: #e8eaed;
+    color: #3c4043 !important;
+  }
+
+  .gmail-modal-body {
+    background: white !important;
+    color: #3c4043 !important;
   }
 
   .gmail-modal-close {
-    color: #9aa0a6;
+    color: #5f6368 !important;
   }
 
   .gmail-modal-close:hover {
-    background: #3c4043;
-    color: #e8eaed;
+    background: #e8eaed !important;
+    color: #202124 !important;
   }
 
   .gmail-modal-body .form-control,
-  .gmail-modal-body .form-select {
-    background: #3c4043;
-    color: #e8eaed;
-    border-color: #5f6368;
+  .gmail-modal-body .form-select,
+  .gmail-modal-body input,
+  .gmail-modal-body select,
+  .gmail-modal-body textarea {
+    background: white !important;
+    color: #3c4043 !important;
+    border-color: #dadce0 !important;
+  }
+
+  .gmail-modal-body .form-label,
+  .gmail-modal-body label {
+    color: #5f6368 !important;
+  }
+
+  .gmail-modal-body .form-control::placeholder,
+  .gmail-modal-body input::placeholder,
+  .gmail-modal-body textarea::placeholder {
+    color: #80868b !important;
+  }
+
+  /* Ensure all text inputs are visible */
+  .gmail-modal-body .mb-3 {
+    color: #3c4043 !important;
   }
 }

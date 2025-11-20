@@ -141,7 +141,13 @@
 
         .file-input-group {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .file-input-group-full {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 15px;
         }
 
@@ -201,6 +207,13 @@
             align-items: center;
             justify-content: center;
             font-size: 1.5em;
+            overflow: hidden;
+        }
+
+        .card-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .card-body {
@@ -421,10 +434,14 @@
                 <div class="form-group">
                     <label class="school-label">Select School:</label>
                     <select id="school" required>
-                        <option value="Miami Dade College">Miami Dade College</option>
-                        <option value="Florida State University">Florida State University</option>
-                        <option value="University of Miami">University of Miami</option>
-                        <option value="Florida International University">Florida International University</option>
+                        <option value="Lincoln High School">Lincoln High School</option>
+                        <option value="Washington Elementary School">Washington Elementary School</option>
+                        <option value="Roosevelt Middle School">Roosevelt Middle School</option>
+                        <option value="Jefferson High School">Jefferson High School</option>
+                        <option value="Kennedy Elementary School">Kennedy Elementary School</option>
+                        <option value="Madison Middle School">Madison Middle School</option>
+                        <option value="Franklin High School">Franklin High School</option>
+                        <option value="Wilson Elementary School">Wilson Elementary School</option>
                     </select>
                 </div>
 
@@ -440,7 +457,7 @@
                     <div class="form-group">
                         <label class="title-label">Employee Title:</label>
                         <div class="input-with-btn">
-                            <input type="text" id="title" placeholder="Professor of Computer Science" required>
+                            <input type="text" id="title" placeholder="Mathematics Teacher" required>
                             <button type="button" class="action-btn clear-btn" onclick="clearField('title')">✕</button>
                         </div>
                     </div>
@@ -458,7 +475,7 @@
                     <div class="form-group">
                         <label class="dept-label">Department:</label>
                         <div class="input-with-btn">
-                            <input type="text" id="department" placeholder="Faculty" required>
+                            <input type="text" id="department" placeholder="Mathematics Department" required>
                             <button type="button" class="action-btn clear-btn" onclick="clearField('department')">✕</button>
                         </div>
                     </div>
@@ -468,7 +485,7 @@
                 <div class="form-group">
                     <label class="email-label">Staff Email Address:</label>
                     <div class="input-with-btn">
-                        <input type="email" id="email" placeholder="adam.smith@mdc.edu" required>
+                        <input type="email" id="email" placeholder="adam.smith@lincolnhs.edu" required>
                         <button type="button" class="action-btn copy-btn" onclick="copyEmail()">📋 Copy</button>
                     </div>
                 </div>
@@ -476,7 +493,7 @@
                 <!-- School Address -->
                 <div class="form-group">
                     <label class="address-label">School Address:</label>
-                    <input type="text" id="address" placeholder="300 NE 2nd Ave, Miami, FL 33132" required>
+                    <input type="text" id="address" placeholder="123 Main Street, Springfield, IL 62701" required>
                 </div>
 
                 <!-- Issue Date and Valid Until -->
@@ -494,7 +511,11 @@
                 <!-- Image Customization -->
                 <div class="form-group">
                     <label class="image-label">Image Customization</label>
-                    <div class="file-input-group">
+                    <div class="file-input-group-full">
+                        <div class="file-wrapper">
+                            <label>School Logo</label>
+                            <input type="file" id="schoolLogo" accept="image/*">
+                        </div>
                         <div class="file-wrapper">
                             <label>Staff Photo</label>
                             <input type="file" id="staffPhoto" accept="image/*">
@@ -505,7 +526,7 @@
                         </div>
                         <div class="file-wrapper">
                             <label>Director Name</label>
-                            <input type="text" id="directorName" placeholder="Dr. J. Rodriguez">
+                            <input type="text" id="directorName" placeholder="Mrs. Sarah Johnson">
                         </div>
                     </div>
                 </div>
@@ -523,8 +544,8 @@
                 </div>
 
                 <div class="card-body">
-                    <div class="school-name" id="previewSchool">MIAMI DADE COLLEGE</div>
-                    <div class="school-subtitle">Teaching & Service</div>
+                    <div class="school-name" id="previewSchool">LINCOLN HIGH SCHOOL</div>
+                    <div class="school-subtitle">Staff Identification</div>
 
                     <div class="card-content">
                         <div class="photo-container" id="photoContainer">
@@ -533,16 +554,16 @@
 
                         <div class="staff-info">
                             <div class="staff-name" id="previewName">ADAM SMITH</div>
-                            <div class="staff-detail"><strong>Title:</strong> <span id="previewTitle">Professor of Computer Science</span></div>
-                            <div class="staff-detail"><strong>Dept:</strong> <span id="previewDept">Faculty</span></div>
+                            <div class="staff-detail"><strong>Title:</strong> <span id="previewTitle">Mathematics Teacher</span></div>
+                            <div class="staff-detail"><strong>Dept:</strong> <span id="previewDept">Mathematics Department</span></div>
                             <div class="staff-detail"><strong>ID No:</strong> <span id="previewId">987654</span></div>
                         </div>
                     </div>
 
                     <div class="card-footer">
-                        <div class="footer-info"><strong>Email:</strong> <span id="previewEmail">adam.smith@mdc.edu</span></div>
+                        <div class="footer-info"><strong>Email:</strong> <span id="previewEmail">adam.smith@lincolnhs.edu</span></div>
                         <div class="footer-info"><strong>Issued:</strong> <span id="previewIssue">11/8/2025</span> | <strong>Valid Until:</strong> <span id="previewValid">11/8/2029</span></div>
-                        <div class="footer-info"><strong>School Address:</strong> <span id="previewAddress">300 NE 2nd Ave, Miami, FL 33132</span></div>
+                        <div class="footer-info"><strong>School Address:</strong> <span id="previewAddress">123 Main Street, Springfield, IL 62701</span></div>
 
                         <div class="signature-section">
                             <div class="signature-img" id="signatureContainer">
@@ -555,8 +576,8 @@
                         </div>
 
                         <div class="director-info" style="margin-top: 10px;">
-                            <div class="director-name" id="previewDirector">Dr. J. Rodriguez</div>
-                            <div class="director-title">Teaching & Learning Director II</div>
+                            <div class="director-name" id="previewDirector">Mrs. Sarah Johnson</div>
+                            <div class="director-title">Principal</div>
                         </div>
                     </div>
                 </div>
@@ -589,7 +610,7 @@
         });
 
         document.getElementById('title').addEventListener('input', function() {
-            document.getElementById('previewTitle').textContent = this.value || 'Professor of Computer Science';
+            document.getElementById('previewTitle').textContent = this.value || 'Mathematics Teacher';
         });
 
         document.getElementById('employeeId').addEventListener('input', function() {
@@ -600,15 +621,15 @@
         });
 
         document.getElementById('department').addEventListener('input', function() {
-            document.getElementById('previewDept').textContent = this.value || 'Faculty';
+            document.getElementById('previewDept').textContent = this.value || 'Mathematics Department';
         });
 
         document.getElementById('email').addEventListener('input', function() {
-            document.getElementById('previewEmail').textContent = this.value || 'adam.smith@mdc.edu';
+            document.getElementById('previewEmail').textContent = this.value || 'adam.smith@lincolnhs.edu';
         });
 
         document.getElementById('address').addEventListener('input', function() {
-            document.getElementById('previewAddress').textContent = this.value || '300 NE 2nd Ave, Miami, FL 33132';
+            document.getElementById('previewAddress').textContent = this.value || '123 Main Street, Springfield, IL 62701';
         });
 
         document.getElementById('issueDate').addEventListener('change', function() {
@@ -620,7 +641,7 @@
         });
 
         document.getElementById('directorName').addEventListener('input', function() {
-            document.getElementById('previewDirector').textContent = this.value || 'Dr. J. Rodriguez';
+            document.getElementById('previewDirector').textContent = this.value || 'Mrs. Sarah Johnson';
         });
 
         // Staff photo upload
@@ -644,6 +665,19 @@
                 reader.onload = function(event) {
                     const signatureContainer = document.getElementById('signatureContainer');
                     signatureContainer.innerHTML = `<img src="${event.target.result}" alt="Signature">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // School logo upload
+        document.getElementById('schoolLogo').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const logoContainer = document.querySelector('.card-logo');
+                    logoContainer.innerHTML = `<img src="${event.target.result}" alt="School Logo">`;
                 };
                 reader.readAsDataURL(file);
             }

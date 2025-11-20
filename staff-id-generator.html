@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Staff ID Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .form-section, .preview-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #4a3f7f;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        label::before {
+            font-size: 1.2em;
+        }
+
+        .school-label::before { content: '🎓'; }
+        .name-label::before { content: '👤'; }
+        .title-label::before { content: '📋'; }
+        .id-label::before { content: '🆔'; }
+        .dept-label::before { content: '🏢'; }
+        .email-label::before { content: '✉️'; }
+        .address-label::before { content: '📍'; }
+        .date-label::before { content: '📅'; }
+        .valid-label::before { content: '📅'; }
+        .image-label::before { content: '📷'; }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-with-btn {
+            position: relative;
+        }
+
+        .action-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: transform 0.2s;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+        }
+
+        .clear-btn {
+            background: linear-gradient(135deg, #ee0979, #ff6a00);
+        }
+
+        .file-input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .file-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .file-wrapper label {
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        input[type="file"] {
+            font-size: 0.85em;
+            padding: 8px;
+        }
+
+        /* ID Card Preview */
+        .preview-section h2 {
+            color: #4a3f7f;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .id-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            max-width: 400px;
+            margin: 0 auto 20px;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .card-logo {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .card-body {
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            position: relative;
+        }
+
+        .card-body::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="60" fill="rgba(0,0,0,0.03)" font-family="Arial">🎓</text></svg>') center/contain no-repeat;
+            opacity: 0.5;
+        }
+
+        .school-name {
+            text-align: center;
+            color: #3730a3;
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .school-subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+        }
+
+        .card-content {
+            display: flex;
+            gap: 15px;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 15px;
+        }
+
+        .photo-container {
+            width: 100px;
+            height: 120px;
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 3px solid white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-placeholder {
+            font-size: 3em;
+            color: #64748b;
+        }
+
+        .staff-info {
+            flex: 1;
+        }
+
+        .staff-name {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .staff-detail {
+            font-size: 0.85em;
+            color: #475569;
+            margin-bottom: 3px;
+        }
+
+        .staff-detail strong {
+            color: #1e293b;
+        }
+
+        .card-footer {
+            border-top: 2px solid rgba(0, 0, 0, 0.1);
+            padding-top: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-info {
+            font-size: 0.75em;
+            color: #475569;
+            margin-bottom: 2px;
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 10px;
+        }
+
+        .signature-img {
+            width: 100px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-style: italic;
+            color: #64748b;
+            font-size: 0.8em;
+        }
+
+        .signature-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .director-info {
+            text-align: right;
+        }
+
+        .director-name {
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #1e293b;
+        }
+
+        .director-title {
+            font-size: 0.75em;
+            color: #64748b;
+        }
+
+        .barcode {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .barcode-img {
+            height: 40px;
+            background: white;
+            padding: 5px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .barcode-number {
+            font-size: 0.7em;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .download-btn::before {
+            content: '⬇️';
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 968px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .form-section,
+            .download-btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Form Section -->
+        <div class="form-section">
+            <h1>School Staff ID Generator</h1>
+            <p class="subtitle">ヤネイサンヤ</p>
+            <p class="subtitle">Soul Calibre</p>
+            <p class="subtitle">THE TERMINATOR</p>
+
+            <form id="staffForm">
+                <!-- School Selection -->
+                <div class="form-group">
+                    <label class="school-label">Select School:</label>
+                    <select id="school" required>
+                        <option value="Miami Dade College">Miami Dade College</option>
+                        <option value="Florida State University">Florida State University</option>
+                        <option value="University of Miami">University of Miami</option>
+                        <option value="Florida International University">Florida International University</option>
+                    </select>
+                </div>
+
+                <!-- Full Name and Title -->
+                <div class="input-group">
+                    <div class="form-group">
+                        <label class="name-label">Full Name:</label>
+                        <div class="input-with-btn">
+                            <input type="text" id="fullName" placeholder="Adam Smith" required>
+                            <button type="button" class="action-btn clear-btn" onclick="clearField('fullName')">✕</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="title-label">Employee Title:</label>
+                        <div class="input-with-btn">
+                            <input type="text" id="title" placeholder="Professor of Computer Science" required>
+                            <button type="button" class="action-btn clear-btn" onclick="clearField('title')">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employee ID and Department -->
+                <div class="input-group">
+                    <div class="form-group">
+                        <label class="id-label">Employee ID No.:</label>
+                        <div class="input-with-btn">
+                            <input type="text" id="employeeId" placeholder="987654" required>
+                            <button type="button" class="action-btn clear-btn" onclick="clearField('employeeId')">✕</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="dept-label">Department:</label>
+                        <div class="input-with-btn">
+                            <input type="text" id="department" placeholder="Faculty" required>
+                            <button type="button" class="action-btn clear-btn" onclick="clearField('department')">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="email-label">Staff Email Address:</label>
+                    <div class="input-with-btn">
+                        <input type="email" id="email" placeholder="adam.smith@mdc.edu" required>
+                        <button type="button" class="action-btn copy-btn" onclick="copyEmail()">📋 Copy</button>
+                    </div>
+                </div>
+
+                <!-- School Address -->
+                <div class="form-group">
+                    <label class="address-label">School Address:</label>
+                    <input type="text" id="address" placeholder="300 NE 2nd Ave, Miami, FL 33132" required>
+                </div>
+
+                <!-- Issue Date and Valid Until -->
+                <div class="input-group">
+                    <div class="form-group">
+                        <label class="date-label">Issue Date:</label>
+                        <input type="date" id="issueDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="valid-label">Valid Until:</label>
+                        <input type="date" id="validUntil" required>
+                    </div>
+                </div>
+
+                <!-- Image Customization -->
+                <div class="form-group">
+                    <label class="image-label">Image Customization</label>
+                    <div class="file-input-group">
+                        <div class="file-wrapper">
+                            <label>Staff Photo</label>
+                            <input type="file" id="staffPhoto" accept="image/*">
+                        </div>
+                        <div class="file-wrapper">
+                            <label>Director Signature</label>
+                            <input type="file" id="directorSignature" accept="image/*">
+                        </div>
+                        <div class="file-wrapper">
+                            <label>Director Name</label>
+                            <input type="text" id="directorName" placeholder="Dr. J. Rodriguez">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="preview-section">
+            <h2>ID Card Preview</h2>
+
+            <div class="id-card" id="idCard">
+                <div class="card-header">
+                    <h3>STAFF ID</h3>
+                    <div class="card-logo">🎓</div>
+                </div>
+
+                <div class="card-body">
+                    <div class="school-name" id="previewSchool">MIAMI DADE COLLEGE</div>
+                    <div class="school-subtitle">Teaching & Service</div>
+
+                    <div class="card-content">
+                        <div class="photo-container" id="photoContainer">
+                            <div class="photo-placeholder">👤</div>
+                        </div>
+
+                        <div class="staff-info">
+                            <div class="staff-name" id="previewName">ADAM SMITH</div>
+                            <div class="staff-detail"><strong>Title:</strong> <span id="previewTitle">Professor of Computer Science</span></div>
+                            <div class="staff-detail"><strong>Dept:</strong> <span id="previewDept">Faculty</span></div>
+                            <div class="staff-detail"><strong>ID No:</strong> <span id="previewId">987654</span></div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="footer-info"><strong>Email:</strong> <span id="previewEmail">adam.smith@mdc.edu</span></div>
+                        <div class="footer-info"><strong>Issued:</strong> <span id="previewIssue">11/8/2025</span> | <strong>Valid Until:</strong> <span id="previewValid">11/8/2029</span></div>
+                        <div class="footer-info"><strong>School Address:</strong> <span id="previewAddress">300 NE 2nd Ave, Miami, FL 33132</span></div>
+
+                        <div class="signature-section">
+                            <div class="signature-img" id="signatureContainer">
+                                <span style="font-style: italic; font-family: cursive;">Signature</span>
+                            </div>
+                            <div class="barcode">
+                                <svg id="barcode" class="barcode-img" width="120" height="40"></svg>
+                                <div class="barcode-number" id="barcodeNumber">987654</div>
+                            </div>
+                        </div>
+
+                        <div class="director-info" style="margin-top: 10px;">
+                            <div class="director-name" id="previewDirector">Dr. J. Rodriguez</div>
+                            <div class="director-title">Teaching & Learning Director II</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="download-btn" onclick="downloadID()">Download Staff ID</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script>
+        // Set default dates
+        const today = new Date();
+        const fourYearsLater = new Date(today.getFullYear() + 4, today.getMonth(), today.getDate());
+
+        document.getElementById('issueDate').valueAsDate = today;
+        document.getElementById('validUntil').valueAsDate = fourYearsLater;
+
+        // Generate initial barcode
+        updateBarcode('987654');
+
+        // Real-time preview updates
+        document.getElementById('school').addEventListener('change', function() {
+            document.getElementById('previewSchool').textContent = this.value.toUpperCase();
+        });
+
+        document.getElementById('fullName').addEventListener('input', function() {
+            document.getElementById('previewName').textContent = this.value.toUpperCase() || 'ADAM SMITH';
+        });
+
+        document.getElementById('title').addEventListener('input', function() {
+            document.getElementById('previewTitle').textContent = this.value || 'Professor of Computer Science';
+        });
+
+        document.getElementById('employeeId').addEventListener('input', function() {
+            const id = this.value || '987654';
+            document.getElementById('previewId').textContent = id;
+            document.getElementById('barcodeNumber').textContent = id;
+            updateBarcode(id);
+        });
+
+        document.getElementById('department').addEventListener('input', function() {
+            document.getElementById('previewDept').textContent = this.value || 'Faculty';
+        });
+
+        document.getElementById('email').addEventListener('input', function() {
+            document.getElementById('previewEmail').textContent = this.value || 'adam.smith@mdc.edu';
+        });
+
+        document.getElementById('address').addEventListener('input', function() {
+            document.getElementById('previewAddress').textContent = this.value || '300 NE 2nd Ave, Miami, FL 33132';
+        });
+
+        document.getElementById('issueDate').addEventListener('change', function() {
+            document.getElementById('previewIssue').textContent = formatDate(this.value);
+        });
+
+        document.getElementById('validUntil').addEventListener('change', function() {
+            document.getElementById('previewValid').textContent = formatDate(this.value);
+        });
+
+        document.getElementById('directorName').addEventListener('input', function() {
+            document.getElementById('previewDirector').textContent = this.value || 'Dr. J. Rodriguez';
+        });
+
+        // Staff photo upload
+        document.getElementById('staffPhoto').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const photoContainer = document.getElementById('photoContainer');
+                    photoContainer.innerHTML = `<img src="${event.target.result}" alt="Staff Photo">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Director signature upload
+        document.getElementById('directorSignature').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const signatureContainer = document.getElementById('signatureContainer');
+                    signatureContainer.innerHTML = `<img src="${event.target.result}" alt="Signature">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Helper functions
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+        }
+
+        function clearField(fieldId) {
+            document.getElementById(fieldId).value = '';
+            document.getElementById(fieldId).dispatchEvent(new Event('input'));
+        }
+
+        function copyEmail() {
+            const email = document.getElementById('email').value;
+            navigator.clipboard.writeText(email).then(() => {
+                alert('Email copied to clipboard!');
+            });
+        }
+
+        function updateBarcode(value) {
+            try {
+                JsBarcode("#barcode", value || "987654", {
+                    format: "CODE128",
+                    width: 2,
+                    height: 40,
+                    displayValue: false
+                });
+            } catch (e) {
+                console.log('Barcode generation error:', e);
+            }
+        }
+
+        // Download ID card as image
+        async function downloadID() {
+            const card = document.getElementById('idCard');
+
+            try {
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+
+                const link = document.createElement('a');
+                const employeeId = document.getElementById('employeeId').value || '987654';
+                const name = document.getElementById('fullName').value || 'Adam_Smith';
+                link.download = `Staff_ID_${name.replace(/\s+/g, '_')}_${employeeId}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (error) {
+                console.error('Error generating ID:', error);
+                alert('Error generating ID card. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>
